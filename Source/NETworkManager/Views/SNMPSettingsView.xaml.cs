@@ -1,0 +1,29 @@
+﻿using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using NETworkManager.ViewModels;
+
+namespace NETworkManager.Views;
+
+public partial class SNMPSettingsView
+{
+    private readonly SNMPSettingsViewModel _viewModel = new();
+
+    public SNMPSettingsView()
+    {
+        InitializeComponent();
+        DataContext = _viewModel;
+    }
+
+    private void RowContextMenu_OnOpened(object sender, RoutedEventArgs e)
+    {
+        if (sender is ContextMenu menu)
+            menu.DataContext = _viewModel;
+    }
+
+    private void DataGridRow_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (_viewModel.EditOIDProfileCommand.CanExecute(null))
+            _viewModel.EditOIDProfileCommand.Execute(null);
+    }
+}

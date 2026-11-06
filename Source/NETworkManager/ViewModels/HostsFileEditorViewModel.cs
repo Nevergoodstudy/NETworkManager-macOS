@@ -1,0 +1,627 @@
+﻿using log4net;
+using MahApps.Metro.Controls;
+using MahApps.Metro.SimpleChildWindow;
+using NETworkManager.Localization.Resources;
+using NETworkManager.Models.Export;
+using NETworkManager.Models.HostsFileEditor;
+using NETworkManager.Settings;
+using NETworkManager.Utilities;
+using NETworkManager.Views;
+using System;
+using System.Collections;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Data;
+using System.Windows.Input;
+
+namespace NETworkManager.ViewModels;
+
+/// <summary>
+/// View model for the hosts file editor.
+/// </summary>
+public class HostsFileEditorViewModel : ViewModelBase
+{
+    #region Variables
+
+    private static readonly ILog Log = LogManager.GetLogger(typeof(HostsFileEditorViewModel));
+
+    /// <summary>
+    /// Indicates whether the view model is loading.
+    /// </summary>
+    private readonly bool _isLoading;
+
+    /// <summary>
+    /// Gets or sets the search text.
+    /// </summary>
+    public string Search
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+
+            ResultsView.Refresh();
+
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the collection of hosts file entries.
+    /// </summary>
+    public ObservableCollection<HostsFileEntry> Results
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    } = [];
+
+    /// <summary>
+    /// Gets the collection view for the hosts file entries.
+    /// </summary>
+    public ICollectionView ResultsView { get; }
+
+    /// <summary>
+    /// Gets or sets the selected hosts file entry.
+    /// </summary>
+    public HostsFileEntry SelectedResult
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the list of selected hosts file entries.
+    /// </summary>
+    public IList SelectedResults
+    {
+        get;
+        set
+        {
+            if (Equals(value, field))
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    } = new ArrayList();
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the view model is modifying an entry.
+    /// </summary>
+    public bool IsModifying
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the view model is currently refreshing.
+    /// </summary>
+    public bool IsRefreshing
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the status message is displayed.
+    /// </summary>
+    public bool IsStatusMessageDisplayed
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets the status message.
+    /// </summary>
+    public string StatusMessage
+    {
+        get;
+        private set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    #endregion
+
+    #region Constructor, LoadSettings
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HostsFileEditorViewModel"/> class.
+    /// </summary>
+    public HostsFileEditorViewModel()
+    {
+        _isLoading = true;
+
+        // Result view + search
+        ResultsView = CollectionViewSource.GetDefaultView(Results);
+        ResultsView.Filter = o =>
+        {
+            if (string.IsNullOrEmpty(Search))
+                return true;
+
+            if (o is not HostsFileEntry entry)
+                return false;
+
+            return entry.IPAddress.IndexOf(Search, StringComparison.OrdinalIgnoreCase) > -1 ||
+                   entry.Hostname.IndexOf(Search, StringComparison.OrdinalIgnoreCase) > -1 ||
+                   entry.Comment.IndexOf(Search, StringComparison.OrdinalIgnoreCase) > -1;
+        };
+
+        // Get hosts file entries
+        _ = Refresh(true);
+
+        // Watch hosts file for changes
+        HostsFileEditor.HostsFileChanged += (_, _) =>
+        {
+            Application.Current.Dispatcher.Invoke(() => { _ = Refresh(); });
+        };
+
+        _isLoading = false;
+    }
+
+    /// <summary>
+    /// Loads the settings.
+    /// </summary>
+    private void LoadSettings()
+    {
+    }
+
+    #endregion
+
+    #region ICommands & Actions
+
+    /// <summary>
+    /// Gets the command to refresh the entries.
+    /// </summary>
+    public ICommand RefreshCommand => new RelayCommand(parameter => { _ = RefreshAction(); }, Refresh_CanExecute);
+
+    /// <summary>
+    /// Checks if the refresh command can be executed.
+    /// </summary>
+    /// <param name="parameter">The command parameter.</param>
+    /// <returns><c>true</c> if the command can be executed; otherwise, <c>false</c>.</returns>
+    private bool Refresh_CanExecute(object parameter)
+    {
+        return Application.Current.MainWindow != null &&
+               !((MetroWindow)Application.Current.MainWindow).IsAnyDialogOpen &&
+               !ConfigurationManager.Current.IsChildWindowOpen &&
+               !IsRefreshing &&
+               !IsModifying;
+    }
+
+    /// <summary>
+    /// Action to refresh the entries.
+    /// </summary>
+    private async Task RefreshAction()
+    {
+        await Refresh();
+    }
+
+    /// <summary>
+    /// Gets the command to export the entries.
+    /// </summary>
+    public ICommand ExportCommand => new RelayCommand(parameter => { _ = ExportAction(); });
+
+    /// <summary>
+    /// Action to export the entries.
+    /// </summary>
+    private Task ExportAction()
+    {
+        var childWindow = new ExportChildWindow();
+
+        var childWindowViewModel = new ExportViewModel(async instance =>
+            {
+                childWindow.IsOpen = false;
+                ConfigurationManager.Current.IsChildWindowOpen = false;
+
+                try
+                {
+                    ExportManager.Export(instance.FilePath, instance.FileType,
+                        instance.ExportAll
+                            ? Results
+                            : new ObservableCollection<HostsFileEntry>(SelectedResults.Cast<HostsFileEntry>()
+                                .ToArray()));
+                }
+                catch (Exception ex)
+                {
+                    Log.Error("Error while exporting data as " + instance.FileType, ex);
+
+                    await DialogHelper.ShowMessageAsync(Application.Current.MainWindow, Strings.Error,
+                        Strings.AnErrorOccurredWhileExportingTheData + Environment.NewLine +
+                        Environment.NewLine + ex.Message, ChildWindowIcon.Error);
+                }
+
+                SettingsManager.Current.HostsFileEditor_ExportFileType = instance.FileType;
+                SettingsManager.Current.HostsFileEditor_ExportFilePath = instance.FilePath;
+            }, _ =>
+            {
+                childWindow.IsOpen = false;
+                ConfigurationManager.Current.IsChildWindowOpen = false;
+            }, [
+                ExportFileType.Csv, ExportFileType.Xml, ExportFileType.Json
+            ], true, SettingsManager.Current.HostsFileEditor_ExportFileType,
+            SettingsManager.Current.HostsFileEditor_ExportFilePath);
+
+        childWindow.Title = Strings.Export;
+
+        childWindow.DataContext = childWindowViewModel;
+
+        ConfigurationManager.Current.IsChildWindowOpen = true;
+
+        return Application.Current.MainWindow.ShowChildWindowAsync(childWindow);
+    }
+
+    /// <summary>
+    /// Gets the command to enable the selected entry.
+    /// </summary>
+    public ICommand EnableEntryCommand =>
+        new RelayCommand(parameter => { _ = EnableEntryAction(); }, ModifyEntry_CanExecute);
+
+    /// <summary>
+    /// Action to enable the selected entry.
+    /// </summary>
+    private async Task EnableEntryAction()
+    {
+        IsModifying = true;
+
+        var result = await HostsFileEditor.EnableEntryAsync(SelectedResult);
+
+        if (result != HostsFileEntryModifyResult.Success)
+            await ShowErrorMessageAsync(result);
+
+        IsModifying = false;
+    }
+
+    /// <summary>
+    /// Gets the command to disable the selected entry.
+    /// </summary>
+    public ICommand DisableEntryCommand =>
+        new RelayCommand(parameter => { _ = DisableEntryAction(); }, ModifyEntry_CanExecute);
+
+    /// <summary>
+    /// Action to disable the selected entry.
+    /// </summary>
+    private async Task DisableEntryAction()
+    {
+        IsModifying = true;
+
+        var result = await HostsFileEditor.DisableEntryAsync(SelectedResult);
+
+        if (result != HostsFileEntryModifyResult.Success)
+            await ShowErrorMessageAsync(result);
+
+        IsModifying = false;
+    }
+
+    /// <summary>
+    /// Gets the command to add a new entry.
+    /// </summary>
+    public ICommand AddEntryCommand =>
+        new RelayCommand(parameter => { _ = AddEntryAction(); }, ModifyEntry_CanExecute);
+
+    /// <summary>
+    /// Action to add a new entry.
+    /// </summary>
+    private async Task AddEntryAction()
+    {
+        IsModifying = true;
+
+        var childWindow = new HostsFileEditorEntryChildWindow();
+
+        var childWindowViewModel = new HostsFileEditorEntryViewModel(async instance =>
+        {
+            childWindow.IsOpen = false;
+            ConfigurationManager.Current.IsChildWindowOpen = false;
+
+            var result = await HostsFileEditor.AddEntryAsync(new HostsFileEntry
+                (
+                    instance.IsEnabled,
+                    instance.IPAddress,
+                    instance.Hostname,
+                    instance.Comment
+                )
+            );
+
+            if (result != HostsFileEntryModifyResult.Success)
+                await ShowErrorMessageAsync(result);
+
+            IsModifying = false;
+        }, _ =>
+        {
+            childWindow.IsOpen = false;
+            ConfigurationManager.Current.IsChildWindowOpen = false;
+
+            IsModifying = false;
+        });
+
+        childWindow.Title = Strings.AddEntry;
+
+        childWindow.DataContext = childWindowViewModel;
+
+        ConfigurationManager.Current.IsChildWindowOpen = true;
+
+        await Application.Current.MainWindow.ShowChildWindowAsync(childWindow);
+    }
+
+    /// <summary>
+    /// Gets the command to edit the selected entry.
+    /// </summary>
+    public ICommand EditEntryCommand =>
+        new RelayCommand(parameter => { _ = EditEntryAction(); }, ModifyEntry_CanExecute);
+
+    /// <summary>
+    /// Action to edit the selected entry.
+    /// </summary>
+    private async Task EditEntryAction()
+    {
+        IsModifying = true;
+
+        var childWindow = new HostsFileEditorEntryChildWindow();
+
+        var childWindowViewModel = new HostsFileEditorEntryViewModel(async instance =>
+        {
+            childWindow.IsOpen = false;
+            ConfigurationManager.Current.IsChildWindowOpen = false;
+
+            var result = await HostsFileEditor.EditEntryAsync(instance.Entry, new HostsFileEntry
+                (
+                    instance.IsEnabled,
+                    instance.IPAddress,
+                    instance.Hostname,
+                    instance.Comment
+                )
+            );
+
+            if (result != HostsFileEntryModifyResult.Success)
+                await ShowErrorMessageAsync(result);
+
+            IsModifying = false;
+        }, _ =>
+        {
+            childWindow.IsOpen = false;
+            ConfigurationManager.Current.IsChildWindowOpen = false;
+
+            IsModifying = false;
+        }, SelectedResult);
+
+        childWindow.Title = Strings.EditEntry;
+
+        childWindow.DataContext = childWindowViewModel;
+
+        ConfigurationManager.Current.IsChildWindowOpen = true;
+
+        await Application.Current.MainWindow.ShowChildWindowAsync(childWindow);
+    }
+
+    /// <summary>
+    /// Gets the command to delete the selected entry.
+    /// </summary>
+    public ICommand DeleteEntryCommand =>
+        new RelayCommand(parameter => { _ = DeleteEntryAction(); }, ModifyEntry_CanExecute);
+
+    /// <summary>
+    /// Action to delete the selected entry.
+    /// </summary>
+    private async Task DeleteEntryAction()
+    {
+        IsModifying = true;
+
+        var result = await DialogHelper.ShowConfirmationMessageAsync(
+            Application.Current.MainWindow,
+            Strings.DeleteEntry,
+            string.Format(Strings.DeleteHostsFileEntryMessage, SelectedResult.IPAddress, SelectedResult.Hostname,
+                string.IsNullOrEmpty(SelectedResult.Comment) ? "" : $"# {SelectedResult.Comment}"),
+            ChildWindowIcon.Info,
+            Strings.Delete);
+
+        if (!result)
+        {
+            IsModifying = false;
+            return;
+        }
+
+
+        var modifyResult = await HostsFileEditor.DeleteEntryAsync(SelectedResult);
+
+        if (modifyResult != HostsFileEntryModifyResult.Success)
+            await ShowErrorMessageAsync(modifyResult);
+
+        IsModifying = false;
+    }
+
+    /// <summary>
+    /// Checks if the entry modification commands can be executed.
+    /// </summary>
+    private bool ModifyEntry_CanExecute(object obj)
+    {
+        return ConfigurationManager.Current.IsAdmin &&
+               Application.Current.MainWindow != null &&
+               !((MetroWindow)Application.Current.MainWindow).IsAnyDialogOpen &&
+               !ConfigurationManager.Current.IsChildWindowOpen &&
+               !IsRefreshing &&
+               !IsModifying;
+    }
+
+    /// <summary>
+    /// Shows an error message for the given result.
+    /// </summary>
+    /// <param name="result">The result of the modification.</param>
+    private async Task ShowErrorMessageAsync(HostsFileEntryModifyResult result)
+    {
+        var message = result switch
+        {
+            HostsFileEntryModifyResult.ReadError => Strings.HostsFileReadErrorMessage,
+            HostsFileEntryModifyResult.WriteError => Strings.HostsFileWriteErrorMessage,
+            HostsFileEntryModifyResult.NotFound => Strings.HostsFileEntryNotFoundMessage,
+            HostsFileEntryModifyResult.BackupError => Strings.HostsFileBackupErrorMessage,
+            _ => Strings.UnkownError
+        };
+
+        await DialogHelper.ShowMessageAsync(Application.Current.MainWindow, Strings.Error, message,
+            ChildWindowIcon.Error);
+    }
+
+    /// <summary>
+    /// Gets the command to restart the application as administrator.
+    /// </summary>
+    public ICommand RestartAsAdminCommand => new RelayCommand(parameter => { _ = RestartAsAdminAction(); });
+
+    /// <summary>
+    /// Action to restart the application as administrator.
+    /// </summary>
+    private async Task RestartAsAdminAction()
+    {
+        try
+        {
+            (Application.Current.MainWindow as MainWindow)?.RestartApplication(true);
+        }
+        catch (Exception ex)
+        {
+            await DialogHelper.ShowMessageAsync(Application.Current.MainWindow, Strings.Error, ex.Message,
+                ChildWindowIcon.Error);
+        }
+    }
+
+    /// <summary>
+    /// Gets the command to open the hosts file with the system default editor.
+    /// </summary>
+    public ICommand OpenHostsFileCommand => new RelayCommand(parameter => { _ = OpenHostsFileAction(); });
+
+    /// <summary>
+    /// Opens the hosts file with the system default editor.
+    /// Shows an error dialog if the process cannot be started.
+    /// </summary>
+    private async Task OpenHostsFileAction()
+    {
+        try
+        {
+            ExternalProcessStarter.RunProcess(HostsFileEditor.HostsFilePath);
+        }
+        catch (Exception ex)
+        {
+            await DialogHelper.ShowMessageAsync(Application.Current.MainWindow, Strings.Error, ex.Message,
+                ChildWindowIcon.Error);
+        }
+    }
+
+    #endregion
+
+    #region Methods
+
+    /// <summary>
+    /// Refreshes the hosts file entries.
+    /// </summary>
+    /// <param name="init">Indicates whether this is the initial refresh.</param>
+    private async Task Refresh(bool init = false)
+    {
+        if (IsRefreshing)
+            return;
+
+        IsRefreshing = true;
+
+        StatusMessage = Strings.RefreshingDots;
+        IsStatusMessageDisplayed = true;
+
+        // Retry 3 times if the hosts file is locked
+        for (var i = 1; i < 4; i++)
+        {
+            // Wait for 2.5 seconds on refresh
+            if (init == false || i > 1)
+                await Task.Delay(GlobalStaticConfiguration.ApplicationUIRefreshInterval);
+
+            try
+            {
+                var entries = await HostsFileEditor.GetHostsFileEntriesAsync();
+
+                Results.Clear();
+
+                entries.ToList().ForEach(Results.Add);
+
+                StatusMessage = string.Format(Strings.ReloadedAtX, DateTime.Now.ToShortTimeString());
+                IsStatusMessageDisplayed = true;
+
+                break;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex);
+
+                StatusMessage = string.Format(Strings.FailedToLoadHostsFileMessage, ex.Message);
+
+                if (i < 3)
+                    StatusMessage += Environment.NewLine + string.Format(Strings.RetryingInXSecondsDots,
+                        GlobalStaticConfiguration.ApplicationUIRefreshInterval / 1000);
+
+                IsStatusMessageDisplayed = true;
+
+                await Task.Delay(GlobalStaticConfiguration.ApplicationUIRefreshInterval);
+            }
+        }
+
+        IsRefreshing = false;
+    }
+
+    /// <summary>
+    /// Called when the view becomes visible.
+    /// </summary>
+    public void OnViewVisible()
+    {
+    }
+
+    /// <summary>
+    /// Called when the view is hidden.
+    /// </summary>
+    public void OnViewHide()
+    {
+    }
+
+    #endregion
+}

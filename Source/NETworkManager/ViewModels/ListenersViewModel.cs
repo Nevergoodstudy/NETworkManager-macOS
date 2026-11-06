@@ -1,0 +1,424 @@
+﻿using log4net;
+using MahApps.Metro.Controls;
+using MahApps.Metro.SimpleChildWindow;
+using NETworkManager.Localization.Resources;
+using NETworkManager.Models.Export;
+using NETworkManager.Models.Network;
+using NETworkManager.Settings;
+using NETworkManager.Utilities;
+using NETworkManager.Views;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Data;
+using System.Windows.Input;
+using System.Windows.Threading;
+
+namespace NETworkManager.ViewModels;
+
+/// <summary>
+/// View model for the listeners view.
+/// </summary>
+public class ListenersViewModel : ViewModelBase
+{
+    #region Contructor, load settings
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ListenersViewModel"/> class.
+    /// </summary>
+    public ListenersViewModel()
+    {
+        _isLoading = true;
+
+        // Result view + search
+        ResultsView = CollectionViewSource.GetDefaultView(Results);
+
+        ((ListCollectionView)ResultsView).CustomSort = Comparer<ListenerInfo>.Create((x, y) =>
+            IPAddressHelper.CompareIPAddresses(x.IPAddress, y.IPAddress));
+
+        ResultsView.Filter = o =>
+        {
+            if (string.IsNullOrEmpty(Search))
+                return true;
+
+            if (o is not ListenerInfo info)
+                return false;
+
+            // Search by IP Address, Port and Protocol
+            return info.IPAddress.ToString().IndexOf(Search, StringComparison.OrdinalIgnoreCase) > -1 ||
+                   info.Port.ToString().IndexOf(Search, StringComparison.OrdinalIgnoreCase) > -1 ||
+                   info.Protocol.ToString().IndexOf(Search, StringComparison.OrdinalIgnoreCase) > -1;
+        };
+
+        // Get listeners
+        _ = Refresh(true);
+
+        // Auto refresh
+        _autoRefreshTimer.Tick += AutoRefreshTimer_Tick;
+
+        AutoRefreshTimes = CollectionViewSource.GetDefaultView(AutoRefreshTime.GetDefaults);
+        SelectedAutoRefreshTime = AutoRefreshTimes.SourceCollection.Cast<AutoRefreshTimeInfo>().FirstOrDefault(x =>
+            x.Value == SettingsManager.Current.Listeners_AutoRefreshTime.Value &&
+            x.TimeUnit == SettingsManager.Current.Listeners_AutoRefreshTime.TimeUnit);
+        AutoRefreshEnabled = SettingsManager.Current.Listeners_AutoRefreshEnabled;
+
+        _isLoading = false;
+    }
+
+    #endregion
+
+    #region Events
+
+    /// <summary>
+    /// Handles the Tick event of the auto-refresh timer.
+    /// </summary>
+    private async void AutoRefreshTimer_Tick(object sender, EventArgs e)
+    {
+        // Stop timer...
+        _autoRefreshTimer.Stop();
+
+        // Refresh
+        await Refresh();
+
+        // Restart timer...
+        _autoRefreshTimer.Start();
+    }
+
+    #endregion
+
+    #region Variables
+
+    private static readonly ILog Log = LogManager.GetLogger(typeof(ListenersViewModel));
+
+    /// <summary>
+    /// Indicates whether the view model is loading.
+    /// </summary>
+    private readonly bool _isLoading;
+
+    /// <summary>
+    /// The timer for auto-refresh.
+    /// </summary>
+    private readonly DispatcherTimer _autoRefreshTimer = new();
+
+    /// <summary>
+    /// Gets or sets the search text.
+    /// </summary>
+    public string Search
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+
+            ResultsView.Refresh();
+
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the collection of listener results.
+    /// </summary>
+    public ObservableCollection<ListenerInfo> Results
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    } = new();
+
+    /// <summary>
+    /// Gets the collection view for the listener results.
+    /// </summary>
+    public ICollectionView ResultsView { get; }
+
+    /// <summary>
+    /// Gets or sets the currently selected listener result.
+    /// </summary>
+    public ListenerInfo SelectedResult
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the list of selected listener results.
+    /// </summary>
+    public IList SelectedResults
+    {
+        get;
+        set
+        {
+            if (Equals(value, field))
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    } = new ArrayList();
+
+    /// <summary>
+    /// Gets or sets a value indicating whether auto-refresh is enabled.
+    /// </summary>
+    public bool AutoRefreshEnabled
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            if (!_isLoading)
+                SettingsManager.Current.Listeners_AutoRefreshEnabled = value;
+
+            field = value;
+
+            // Start timer to refresh automatically
+            if (value)
+            {
+                _autoRefreshTimer.Interval = AutoRefreshTime.CalculateTimeSpan(SelectedAutoRefreshTime);
+                _autoRefreshTimer.Start();
+            }
+            else
+            {
+                _autoRefreshTimer.Stop();
+            }
+
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets the collection view for the auto-refresh times.
+    /// </summary>
+    public ICollectionView AutoRefreshTimes { get; }
+
+    /// <summary>
+    /// Gets or sets the selected auto-refresh time.
+    /// </summary>
+    public AutoRefreshTimeInfo SelectedAutoRefreshTime
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            if (!_isLoading)
+                SettingsManager.Current.Listeners_AutoRefreshTime = value;
+
+            field = value;
+
+            if (AutoRefreshEnabled)
+            {
+                _autoRefreshTimer.Interval = AutoRefreshTime.CalculateTimeSpan(value);
+                _autoRefreshTimer.Start();
+            }
+
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the view model is currently refreshing.
+    /// </summary>
+    public bool IsRefreshing
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the status message is displayed.
+    /// </summary>
+    public bool IsStatusMessageDisplayed
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the status message.
+    /// </summary>
+    public string StatusMessage
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    #endregion
+
+    #region ICommands & Actions
+
+    /// <summary>
+    /// Gets the command to refresh the listeners.
+    /// </summary>
+    public ICommand RefreshCommand => new RelayCommand(parameter => { _ = RefreshAction(); }, Refresh_CanExecute);
+
+    /// <summary>
+    /// Checks if the refresh command can be executed.
+    /// </summary>
+    /// <param name="parameter">The command parameter.</param>
+    /// <returns><c>true</c> if the command can be executed; otherwise, <c>false</c>.</returns>
+    private bool Refresh_CanExecute(object parameter)
+    {
+        return Application.Current.MainWindow != null &&
+               !((MetroWindow)Application.Current.MainWindow).IsAnyDialogOpen &&
+               !ConfigurationManager.Current.IsChildWindowOpen &&
+               !IsRefreshing &&
+               !AutoRefreshEnabled;
+    }
+
+    /// <summary>
+    /// Action to refresh the listeners.
+    /// </summary>
+    private async Task RefreshAction()
+    {
+        IsStatusMessageDisplayed = false;
+
+        await Refresh();
+    }
+
+    /// <summary>
+    /// Gets the command to export the listeners.
+    /// </summary>
+    public ICommand ExportCommand => new RelayCommand(parameter => { _ = ExportAction(); });
+
+    /// <summary>
+    /// Action to export the listeners.
+    /// </summary>
+    private Task ExportAction()
+    {
+        var childWindow = new ExportChildWindow();
+
+        var childWindowViewModel = new ExportViewModel(async instance =>
+        {
+            childWindow.IsOpen = false;
+            ConfigurationManager.Current.IsChildWindowOpen = false;
+
+            try
+            {
+                ExportManager.Export(instance.FilePath, instance.FileType,
+                    instance.ExportAll
+                        ? Results
+                        : new ObservableCollection<ListenerInfo>(SelectedResults.Cast<ListenerInfo>().ToArray()));
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Error while exporting data as " + instance.FileType, ex);
+
+                await DialogHelper.ShowMessageAsync(Application.Current.MainWindow, Strings.Error,
+                   Strings.AnErrorOccurredWhileExportingTheData + Environment.NewLine +
+                   Environment.NewLine + ex.Message, ChildWindowIcon.Error);
+            }
+
+            SettingsManager.Current.Listeners_ExportFileType = instance.FileType;
+            SettingsManager.Current.Listeners_ExportFilePath = instance.FilePath;
+        }, _ =>
+        {
+            childWindow.IsOpen = false;
+            ConfigurationManager.Current.IsChildWindowOpen = false;
+        }, [
+            ExportFileType.Csv, ExportFileType.Xml, ExportFileType.Json
+        ], true, SettingsManager.Current.Listeners_ExportFileType, SettingsManager.Current.Listeners_ExportFilePath);
+
+        childWindow.Title = Strings.Export;
+
+        childWindow.DataContext = childWindowViewModel;
+
+        ConfigurationManager.Current.IsChildWindowOpen = true;
+
+        return Application.Current.MainWindow.ShowChildWindowAsync(childWindow);
+    }
+
+    #endregion
+
+    #region Methods
+
+    /// <summary>
+    /// Refreshes the listeners.
+    /// </summary>
+    /// <param name="init">Indicates whether this is the initial refresh.</param>
+    private async Task Refresh(bool init = false)
+    {
+        IsRefreshing = true;
+
+        StatusMessage = Strings.RefreshingDots;
+        IsStatusMessageDisplayed = true;
+
+        if (init == false)
+            await Task.Delay(GlobalStaticConfiguration.ApplicationUIRefreshInterval);
+
+        Results.Clear();
+
+        (await Listener.GetAllActiveListenersAsync()).ForEach(Results.Add);
+
+        StatusMessage = string.Format(Strings.ReloadedAtX, DateTime.Now.ToShortTimeString());
+        IsStatusMessageDisplayed = true;
+
+        IsRefreshing = false;
+    }
+
+    /// <summary>
+    /// Called when the view becomes visible.
+    /// </summary>
+    public void OnViewVisible()
+    {
+        // Restart timer...
+        if (AutoRefreshEnabled)
+            _autoRefreshTimer.Start();
+    }
+
+    /// <summary>
+    /// Called when the view is hidden.
+    /// </summary>
+    public void OnViewHide()
+    {
+        // Temporarily stop timer...
+        if (AutoRefreshEnabled)
+            _autoRefreshTimer.Stop();
+    }
+
+    #endregion
+}

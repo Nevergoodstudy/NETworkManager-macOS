@@ -1,0 +1,201 @@
+﻿using MahApps.Metro.SimpleChildWindow;
+using NETworkManager.Localization.Resources;
+using NETworkManager.Models.Network;
+using NETworkManager.Settings;
+using NETworkManager.Utilities;
+using NETworkManager.Views;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Data;
+using System.Windows.Input;
+
+namespace NETworkManager.ViewModels;
+
+public class SNTPLookupSettingsViewModel : ViewModelBase
+{
+    #region Variables
+
+    private readonly bool _isLoading;
+
+    private readonly ServerConnectionInfo _profileDialogDefaultValues =
+        new("time.example.com", 123, TransportProtocol.Tcp);
+
+    public ICollectionView SNTPServers
+    {
+        get;
+        private init
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public ServerConnectionInfoProfile SelectedSNTPServer
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    } = new();
+
+    private List<string> ServerInfoProfileNames =>
+        SettingsManager.Current.SNTPLookup_SNTPServers.Select(x => x.Name).ToList();
+
+    public int Timeout
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            if (!_isLoading)
+                SettingsManager.Current.SNTPLookup_Timeout = value;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    #endregion
+
+    #region Constructor, load settings
+
+    public SNTPLookupSettingsViewModel()
+    {
+        _isLoading = true;
+
+        SNTPServers = CollectionViewSource.GetDefaultView(SettingsManager.Current.SNTPLookup_SNTPServers);
+        SNTPServers.SortDescriptions.Add(new SortDescription(nameof(ServerConnectionInfoProfile.Name),
+            ListSortDirection.Ascending));
+
+        SelectedSNTPServer = SNTPServers.Cast<ServerConnectionInfoProfile>().FirstOrDefault();
+
+        LoadSettings();
+
+        _isLoading = false;
+    }
+
+    private void LoadSettings()
+    {
+        Timeout = SettingsManager.Current.SNTPLookup_Timeout;
+    }
+
+    #endregion
+
+    #region ICommand & Actions
+
+    public ICommand AddServerCommand => new RelayCommand(_ => AddServerAction());
+
+    private void AddServerAction()
+    {
+        _ = AddServer();
+    }
+
+    public ICommand EditServerCommand => new RelayCommand(_ => EditServerAction());
+
+    private void EditServerAction()
+    {
+        _ = EditServer();
+    }
+
+    public ICommand DeleteServerCommand => new RelayCommand(_ => DeleteServerAction(), DeleteServer_CanExecute);
+
+    private bool DeleteServer_CanExecute(object obj)
+    {
+        return SNTPServers.Cast<ServerConnectionInfoProfile>().Count() > 1;
+    }
+
+    private void DeleteServerAction()
+    {
+        _ = DeleteServer();
+    }
+
+    #endregion
+
+    #region Methods
+
+    private async Task AddServer()
+    {
+        var childWindow = new ServerConnectionInfoProfileChildWindow();
+
+        var childWindowViewModel = new ServerConnectionInfoProfileViewModel(instance =>
+        {
+            childWindow.IsOpen = false;
+            ConfigurationManager.Current.IsChildWindowOpen = false;
+
+            SettingsManager.Current.SNTPLookup_SNTPServers.Add(
+                new ServerConnectionInfoProfile(instance.Name, [.. instance.Servers]));
+        }, _ =>
+        {
+            childWindow.IsOpen = false;
+            ConfigurationManager.Current.IsChildWindowOpen = false;
+        },
+            (ServerInfoProfileNames, false, false), _profileDialogDefaultValues);
+
+
+        childWindow.Title = Strings.AddSNTPServer;
+
+        childWindow.DataContext = childWindowViewModel;
+
+        ConfigurationManager.Current.IsChildWindowOpen = true;
+
+        await Application.Current.MainWindow.ShowChildWindowAsync(childWindow);
+    }
+
+    public async Task EditServer()
+    {
+        var childWindow = new ServerConnectionInfoProfileChildWindow();
+
+        var childWindowViewModel = new ServerConnectionInfoProfileViewModel(instance =>
+        {
+            childWindow.IsOpen = false;
+            ConfigurationManager.Current.IsChildWindowOpen = false;
+
+            SettingsManager.Current.SNTPLookup_SNTPServers.Remove(SelectedSNTPServer);
+            SettingsManager.Current.SNTPLookup_SNTPServers.Add(
+                new ServerConnectionInfoProfile(instance.Name, [.. instance.Servers]));
+        }, _ =>
+        {
+            childWindow.IsOpen = false;
+            ConfigurationManager.Current.IsChildWindowOpen = false;
+        },
+        (ServerInfoProfileNames, true, false),
+            _profileDialogDefaultValues, SelectedSNTPServer);
+
+        childWindow.Title = Strings.EditSNTPServer;
+
+        childWindow.DataContext = childWindowViewModel;
+
+        ConfigurationManager.Current.IsChildWindowOpen = true;
+
+        await Application.Current.MainWindow.ShowChildWindowAsync(childWindow);
+    }
+
+    private async Task DeleteServer()
+    {
+        var result = await DialogHelper.ShowConfirmationMessageAsync(Application.Current.MainWindow,
+            Strings.DeleteSNTPServer,
+            Strings.DeleteSNTPServerMessage,
+            ChildWindowIcon.Info,
+            Strings.Delete);
+
+        if (!result)
+            return;
+
+        SettingsManager.Current.SNTPLookup_SNTPServers.Remove(SelectedSNTPServer);
+    }
+
+    #endregion
+}

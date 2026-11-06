@@ -1,0 +1,4475 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0"/>
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string"/>
+              <xsd:attribute name="type" type="xsd:string"/>
+              <xsd:attribute name="mimetype" type="xsd:string"/>
+              <xsd:attribute ref="xml:space"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string"/>
+              <xsd:attribute name="name" type="xsd:string"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2"/>
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1"/>
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3"/>
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4"/>
+              <xsd:attribute ref="xml:space"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required"/>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="About" xml:space="preserve">
+    <value>關於</value>
+  </data>
+  <data name="Accent" xml:space="preserve">
+    <value>醒目</value>
+  </data>
+  <data name="AddCredentials" xml:space="preserve">
+    <value>新增憑證</value>
+  </data>
+  <data name="AddEntry" xml:space="preserve">
+    <value>新增項目</value>
+  </data>
+  <data name="AddProfile" xml:space="preserve">
+    <value>新增設定檔</value>
+  </data>
+  <data name="AreYouSure" xml:space="preserve">
+    <value>您確定嗎？</value>
+  </data>
+  <data name="ARP" xml:space="preserve">
+    <value>ARP</value>
+  </data>
+  <data name="NeighborTable" xml:space="preserve">
+    <value>鄰居表單</value>
+  </data>
+  <data name="NeighborTableAdminMessage" xml:space="preserve">
+    <value>唯讀模式。若要修改鄰居表單，需要提升權限！</value>
+  </data>
+  <data name="NeighborState_Unreachable" xml:space="preserve">
+    <value>無法抵達</value>
+  </data>
+  <data name="NeighborState_Incomplete" xml:space="preserve">
+    <value>不完整</value>
+  </data>
+  <data name="NeighborState_Probe" xml:space="preserve">
+    <value>探測器</value>
+  </data>
+  <data name="NeighborState_Delay" xml:space="preserve">
+    <value>延遲</value>
+  </data>
+  <data name="NeighborState_Stale" xml:space="preserve">
+    <value>過時</value>
+  </data>
+  <data name="NeighborState_Reachable" xml:space="preserve">
+    <value>可抵達</value>
+  </data>
+  <data name="NeighborState_Permanent" xml:space="preserve">
+    <value>永久性</value>
+  </data>
+  <data name="Authentication" xml:space="preserve">
+    <value>身份驗證</value>
+  </data>
+  <data name="Autostart" xml:space="preserve">
+    <value>自動啟動</value>
+  </data>
+  <data name="Calculator" xml:space="preserve">
+    <value>計算器</value>
+  </data>
+  <data name="CommandLineArguments" xml:space="preserve">
+    <value>命令列參數</value>
+  </data>
+  <data name="Configure" xml:space="preserve">
+    <value>配置</value>
+  </data>
+  <data name="Confirm" xml:space="preserve">
+    <value>確認</value>
+  </data>
+  <data name="Connect" xml:space="preserve">
+    <value>連線</value>
+  </data>
+  <data name="ConnectAs" xml:space="preserve">
+    <value>連線身分</value>
+  </data>
+  <data name="CopyProfile" xml:space="preserve">
+    <value>複製設定檔</value>
+  </data>
+  <data name="Credentials" xml:space="preserve">
+    <value>憑證</value>
+  </data>
+  <data name="Data" xml:space="preserve">
+    <value>資料</value>
+  </data>
+  <data name="DefaultApplication" xml:space="preserve">
+    <value>預設應用程式</value>
+  </data>
+  <data name="DeleteCredentials" xml:space="preserve">
+    <value>刪除憑證</value>
+  </data>
+  <data name="DeleteProfile" xml:space="preserve">
+    <value>刪除設定檔</value>
+  </data>
+  <data name="Destination" xml:space="preserve">
+    <value>目的地</value>
+  </data>
+  <data name="Details" xml:space="preserve">
+    <value>詳細資料</value>
+  </data>
+  <data name="Disconnected" xml:space="preserve">
+    <value>已中斷連線</value>
+  </data>
+  <data name="Display" xml:space="preserve">
+    <value>顯示</value>
+  </data>
+  <data name="DNS" xml:space="preserve">
+    <value>DNS</value>
+  </data>
+  <data name="DNSLookup" xml:space="preserve">
+    <value>DNS 查詢</value>
+  </data>
+  <data name="DontFragment" xml:space="preserve">
+    <value>不要分段</value>
+  </data>
+  <data name="EditCredentials" xml:space="preserve">
+    <value>編輯憑證</value>
+  </data>
+  <data name="EditGroup" xml:space="preserve">
+    <value>編輯群組</value>
+  </data>
+  <data name="EditProfile" xml:space="preserve">
+    <value>編輯設定檔</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>錯誤</value>
+  </data>
+  <data name="Export" xml:space="preserve">
+    <value>匯出</value>
+  </data>
+  <data name="Filter" xml:space="preserve">
+    <value>篩選</value>
+  </data>
+  <data name="General" xml:space="preserve">
+    <value>一般</value>
+  </data>
+  <data name="Headers" xml:space="preserve">
+    <value>標頭</value>
+  </data>
+  <data name="History" xml:space="preserve">
+    <value>歷程</value>
+  </data>
+  <data name="HotKeys" xml:space="preserve">
+    <value>熱鍵</value>
+  </data>
+  <data name="HTTPHeaders" xml:space="preserve">
+    <value>HTTP 標頭</value>
+  </data>
+  <data name="Import" xml:space="preserve">
+    <value>匯入</value>
+  </data>
+  <data name="Information" xml:space="preserve">
+    <value>資訊</value>
+  </data>
+  <data name="Interface" xml:space="preserve">
+    <value>介面</value>
+  </data>
+  <data name="IPScanner" xml:space="preserve">
+    <value>IP 掃描器</value>
+  </data>
+  <data name="Keyboard" xml:space="preserve">
+    <value>鍵盤</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>語言</value>
+  </data>
+  <data name="Libraries" xml:space="preserve">
+    <value>程式庫</value>
+  </data>
+  <data name="License" xml:space="preserve">
+    <value>授權</value>
+  </data>
+  <data name="LocalDevicesAndResources" xml:space="preserve">
+    <value>本機裝置與資源</value>
+  </data>
+  <data name="Location" xml:space="preserve">
+    <value>位置</value>
+  </data>
+  <data name="Lookup" xml:space="preserve">
+    <value>查詢</value>
+  </data>
+  <data name="MACAddress" xml:space="preserve">
+    <value>MAC 位址</value>
+  </data>
+  <data name="MasterPassword" xml:space="preserve">
+    <value>主密碼</value>
+  </data>
+  <data name="Multithreading" xml:space="preserve">
+    <value>多執行緒</value>
+  </data>
+  <data name="Network" xml:space="preserve">
+    <value>網路</value>
+  </data>
+  <data name="NetworkInterface" xml:space="preserve">
+    <value>網路介面</value>
+  </data>
+  <data name="NetworkInterfaceConfigurationAppliedSuccessfully" xml:space="preserve">
+    <value>Configuration applied</value>
+  </data>
+  <data name="NetworkInterfaceConfigureAdminMessage" xml:space="preserve">
+    <value>Configuring the network interface requires elevated rights!</value>
+  </data>
+  <data name="NewTab" xml:space="preserve">
+    <value>新標籤</value>
+  </data>
+  <data name="Next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="OUI" xml:space="preserve">
+    <value>OUI</value>
+  </data>
+  <data name="Options" xml:space="preserve">
+    <value>選項</value>
+  </data>
+  <data name="OverwriteQuestion" xml:space="preserve">
+    <value>覆寫？</value>
+  </data>
+  <data name="Ping" xml:space="preserve">
+    <value>Ping</value>
+  </data>
+  <data name="Port" xml:space="preserve">
+    <value>連接埠</value>
+  </data>
+  <data name="Portable" xml:space="preserve">
+    <value>可攜式</value>
+  </data>
+  <data name="PortScanner" xml:space="preserve">
+    <value>連接埠掃描器</value>
+  </data>
+  <data name="Profiles" xml:space="preserve">
+    <value>設定檔</value>
+  </data>
+  <data name="PuTTY" xml:space="preserve">
+    <value>PuTTY</value>
+  </data>
+  <data name="Query" xml:space="preserve">
+    <value>查詢</value>
+  </data>
+  <data name="RemoteDesktop" xml:space="preserve">
+    <value>遠端桌面</value>
+  </data>
+  <data name="Reset" xml:space="preserve">
+    <value>重設</value>
+  </data>
+  <data name="ResolvePTR" xml:space="preserve">
+    <value>解析 PTR</value>
+  </data>
+  <data name="Resources" xml:space="preserve">
+    <value>資源</value>
+  </data>
+  <data name="Result" xml:space="preserve">
+    <value>結果</value>
+  </data>
+  <data name="Route" xml:space="preserve">
+    <value>路由</value>
+  </data>
+  <data name="Scan" xml:space="preserve">
+    <value>掃描</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>搜尋</value>
+  </data>
+  <data name="SelectAProfileDots" xml:space="preserve">
+    <value>選擇一個設定檔</value>
+  </data>
+  <data name="SetMasterPassword" xml:space="preserve">
+    <value>設定主密碼</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>設定</value>
+  </data>
+  <data name="SNMP" xml:space="preserve">
+    <value>SNMP</value>
+  </data>
+  <data name="Socket" xml:space="preserve">
+    <value>通訊端</value>
+  </data>
+  <data name="Statistics" xml:space="preserve">
+    <value>統計資料</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>狀態</value>
+  </data>
+  <data name="Subnet" xml:space="preserve">
+    <value>子網路</value>
+  </data>
+  <data name="Subnetting" xml:space="preserve">
+    <value>子網路</value>
+  </data>
+  <data name="Success" xml:space="preserve">
+    <value>成功！</value>
+  </data>
+  <data name="Theme" xml:space="preserve">
+    <value>主題</value>
+  </data>
+  <data name="Traceroute" xml:space="preserve">
+    <value>路徑追蹤</value>
+  </data>
+  <data name="Tray" xml:space="preserve">
+    <value>系統匣</value>
+  </data>
+  <data name="Update" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="v1v2c" xml:space="preserve">
+    <value>v1/v2c</value>
+  </data>
+  <data name="v3" xml:space="preserve">
+    <value>v3</value>
+  </data>
+  <data name="ValidationFailed" xml:space="preserve">
+    <value>驗證失敗！</value>
+  </data>
+  <data name="WakeOnLAN" xml:space="preserve">
+    <value>LAN 遠端喚醒</value>
+  </data>
+  <data name="Website" xml:space="preserve">
+    <value>網站</value>
+  </data>
+  <data name="Window" xml:space="preserve">
+    <value>視窗</value>
+  </data>
+  <data name="WrongPassword" xml:space="preserve">
+    <value>密碼錯誤！</value>
+  </data>
+  <data name="Client" xml:space="preserve">
+    <value>用戶端</value>
+  </data>
+  <data name="Administrator" xml:space="preserve">
+    <value>系統管理員</value>
+  </data>
+  <data name="AlwaysShowIconInTray" xml:space="preserve">
+    <value>永遠顯示系統匣中圖示</value>
+  </data>
+  <data name="Attempts" xml:space="preserve">
+    <value>嘗試次數</value>
+  </data>
+  <data name="AverageTime" xml:space="preserve">
+    <value>平均時間</value>
+  </data>
+  <data name="Broadcast" xml:space="preserve">
+    <value>廣播</value>
+  </data>
+  <data name="Buffer" xml:space="preserve">
+    <value>緩衝</value>
+  </data>
+  <data name="Bytes" xml:space="preserve">
+    <value>位元組</value>
+  </data>
+  <data name="CIDR" xml:space="preserve">
+    <value>CIDR</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>關閉</value>
+  </data>
+  <data name="DefaultGateway" xml:space="preserve">
+    <value>預設閘道</value>
+  </data>
+  <data name="DeleteDots" xml:space="preserve">
+    <value>刪除...</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>描述</value>
+  </data>
+  <data name="Placeholder" xml:space="preserve">
+    <value>Placeholder</value>
+  </data>
+  <data name="HelpMessage_CustomCommandFilePath" xml:space="preserve">
+    <value>Path to the file or executable to run. The following placeholders can be used:</value>
+  </data>
+  <data name="HelpMessage_CustomCommandArguments" xml:space="preserve">
+    <value>Arguments passed to the file or executable. The following placeholders can be used:</value>
+  </data>
+  <data name="HelpMessage_ProfileHostPlaceholder" xml:space="preserve">
+    <value>The following placeholder can be used:</value>
+  </data>
+  <data name="DHCPEnabled" xml:space="preserve">
+    <value>DHCP 已啟用</value>
+  </data>
+  <data name="DHCPLeaseExpires" xml:space="preserve">
+    <value>DHCP 租約過期</value>
+  </data>
+  <data name="DHCPLeaseObtained" xml:space="preserve">
+    <value>已取得 DHCP 租約</value>
+  </data>
+  <data name="DHCPServer" xml:space="preserve">
+    <value>DHCP 伺服器</value>
+  </data>
+  <data name="DNSServers" xml:space="preserve">
+    <value>DNS 伺服器</value>
+  </data>
+  <data name="DNSSuffix" xml:space="preserve">
+    <value>DNS 尾碼</value>
+  </data>
+  <data name="DynamicIPv4Address" xml:space="preserve">
+    <value>動態 IPv4 位址</value>
+  </data>
+  <data name="DynamicIPv4DNSServer" xml:space="preserve">
+    <value>動態 IPv4 DNS 伺服器</value>
+  </data>
+  <data name="Hop" xml:space="preserve">
+    <value>躍點</value>
+  </data>
+  <data name="Hops" xml:space="preserve">
+    <value>躍點</value>
+  </data>
+  <data name="Hostname" xml:space="preserve">
+    <value>主機名稱</value>
+  </data>
+  <data name="IPAddress" xml:space="preserve">
+    <value>IP 位址</value>
+  </data>
+  <data name="IPAddresses" xml:space="preserve">
+    <value>IP 位址</value>
+  </data>
+  <data name="IPv4" xml:space="preserve">
+    <value>IPv4</value>
+  </data>
+  <data name="IPv4Address" xml:space="preserve">
+    <value>IPv4 位址</value>
+  </data>
+  <data name="IPv4AddressAddedSuccessfully" xml:space="preserve">
+    <value>IPv4 address added</value>
+  </data>
+  <data name="IPv4AddressRemovedSuccessfully" xml:space="preserve">
+    <value>IPv4 address removed</value>
+  </data>
+  <data name="IPv4AddressReleasedAndRenewedSuccessfully" xml:space="preserve">
+    <value>IPv4 address released and renewed</value>
+  </data>
+  <data name="IPv4AddressReleasedSuccessfully" xml:space="preserve">
+    <value>IPv4 address released</value>
+  </data>
+  <data name="IPv4AddressRenewedSuccessfully" xml:space="preserve">
+    <value>IPv4 address renewed</value>
+  </data>
+  <data name="IPv6AddressReleasedAndRenewedSuccessfully" xml:space="preserve">
+    <value>IPv6 address released and renewed</value>
+  </data>
+  <data name="IPv6AddressReleasedSuccessfully" xml:space="preserve">
+    <value>IPv6 address released</value>
+  </data>
+  <data name="IPv6AddressRenewedSuccessfully" xml:space="preserve">
+    <value>IPv6 address renewed</value>
+  </data>
+  <data name="IPv4DefaultGateway" xml:space="preserve">
+    <value>IPv4 預設閘道</value>
+  </data>
+  <data name="IPv6" xml:space="preserve">
+    <value>IPv6</value>
+  </data>
+  <data name="IPv6Address" xml:space="preserve">
+    <value>IPv6 位址</value>
+  </data>
+  <data name="IPv6AddressLinkLocal" xml:space="preserve">
+    <value>連結-本機 IPv6 位址</value>
+  </data>
+  <data name="IPv6DefaultGateway" xml:space="preserve">
+    <value>IPv6 預設閘道</value>
+  </data>
+  <data name="Maximum" xml:space="preserve">
+    <value>最大</value>
+  </data>
+  <data name="MaximumHops" xml:space="preserve">
+    <value>最大跳點</value>
+  </data>
+  <data name="MinimizeInsteadOfTerminating" xml:space="preserve">
+    <value>將主視窗最小化，而非結束應用程式</value>
+  </data>
+  <data name="MinimizeToTrayInsteadOfTaskbar" xml:space="preserve">
+    <value>最小化至系統匣，而非工作列</value>
+  </data>
+  <data name="Minimum" xml:space="preserve">
+    <value>最小</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>名稱</value>
+  </data>
+  <data name="NetworkAddress" xml:space="preserve">
+    <value>網路位址</value>
+  </data>
+  <data name="NewSubnetmaskOrCIDR" xml:space="preserve">
+    <value>新子網路遮罩或 CIDR</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>否</value>
+  </data>
+  <data name="ObtainAnIPAddressAutomatically" xml:space="preserve">
+    <value>自動取得 IP 位址</value>
+  </data>
+  <data name="ObtainDNSServerAddressAutomatically" xml:space="preserve">
+    <value>自動取得 DNS 伺服器位址</value>
+  </data>
+  <data name="PacketLoss" xml:space="preserve">
+    <value>封包遺失</value>
+  </data>
+  <data name="PacketsTransmitted" xml:space="preserve">
+    <value>傳輸的封包</value>
+  </data>
+  <data name="PhysicalAddress" xml:space="preserve">
+    <value>實體位址</value>
+  </data>
+  <data name="PreferredProtocolWhenResolvingHostname" xml:space="preserve">
+    <value>解析主機名稱時的首選協定：</value>
+  </data>
+  <data name="PrimaryDNSServer" xml:space="preserve">
+    <value>主要 DNS 伺服器</value>
+  </data>
+  <data name="ReceivedLost" xml:space="preserve">
+    <value>已接收 / 遺失</value>
+  </data>
+  <data name="ResolveHostname" xml:space="preserve">
+    <value>解析主機名稱</value>
+  </data>
+  <data name="RestartRequired" xml:space="preserve">
+    <value>需要重新啟動</value>
+  </data>
+  <data name="SaveSettingsInApplicationFolder" xml:space="preserve">
+    <value>在應用程式的資料夾中儲存檔案</value>
+  </data>
+  <data name="SecondaryDNSServer" xml:space="preserve">
+    <value>次要 DNS 伺服器</value>
+  </data>
+  <data name="Show" xml:space="preserve">
+    <value>顯示</value>
+  </data>
+  <data name="ShowTheFollowingApplicationOnStartup" xml:space="preserve">
+    <value>啟動時顯示以下應用程式：</value>
+  </data>
+  <data name="Slogan" xml:space="preserve">
+    <value>一個用於管理網路並排除網路問題的強大開源工具！</value>
+  </data>
+  <data name="Speed" xml:space="preserve">
+    <value>速度</value>
+  </data>
+  <data name="StartMinimizedInTray" xml:space="preserve">
+    <value>啟動時最小化至系統匣</value>
+  </data>
+  <data name="StartWithWindows" xml:space="preserve">
+    <value>隨 Windows 啟動 （目前使用者）</value>
+  </data>
+  <data name="StaticIPv4Address" xml:space="preserve">
+    <value>靜態 IPv4 位址</value>
+  </data>
+  <data name="StaticIPv4DNSServer" xml:space="preserve">
+    <value>動態 IPv4 DNS 伺服器</value>
+  </data>
+  <data name="SubnetMask" xml:space="preserve">
+    <value>子網路遮罩</value>
+  </data>
+  <data name="Threads" xml:space="preserve">
+    <value>執行緒</value>
+  </data>
+  <data name="Time" xml:space="preserve">
+    <value>時間</value>
+  </data>
+  <data name="Time1" xml:space="preserve">
+    <value>時間 1</value>
+  </data>
+  <data name="Time2" xml:space="preserve">
+    <value>時間 2</value>
+  </data>
+  <data name="Time3" xml:space="preserve">
+    <value>時間 3</value>
+  </data>
+  <data name="Timeout" xml:space="preserve">
+    <value>逾時</value>
+  </data>
+  <data name="TimeoutMS" xml:space="preserve">
+    <value>逾時（毫秒）</value>
+  </data>
+  <data name="TimeMSToWaitBetweenEachPing" xml:space="preserve">
+    <value>每次 Ping 之間等待時間（毫秒）</value>
+  </data>
+  <data name="TTL" xml:space="preserve">
+    <value>TTL</value>
+  </data>
+  <data name="Type" xml:space="preserve">
+    <value>類型</value>
+  </data>
+  <data name="UseTheFollowingDNSServerAddresses" xml:space="preserve">
+    <value>使用下列的 DNS 伺服器位址：</value>
+  </data>
+  <data name="UseTheFollowingIPAddress" xml:space="preserve">
+    <value>使用下列的 IP 位址：</value>
+  </data>
+  <data name="WakeUp" xml:space="preserve">
+    <value>喚醒</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>是</value>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>新增</value>
+  </data>
+  <data name="AddATabToPerformADNSLookup" xml:space="preserve">
+    <value>新增分頁以執行 DNS 查詢...</value>
+  </data>
+  <data name="AddATabToPerformANetworkScan" xml:space="preserve">
+    <value>新增標籤執行來網路掃描...</value>
+  </data>
+  <data name="AddATabToPerformAnSNMPAction" xml:space="preserve">
+    <value>新增標籤執行來 SNMP 動作...</value>
+  </data>
+  <data name="AddATabToPerformAPing" xml:space="preserve">
+    <value>新增標籤執行來 ping...</value>
+  </data>
+  <data name="AddATabToPerformAPortScan" xml:space="preserve">
+    <value>新增標籤執行來連接埠掃描...</value>
+  </data>
+  <data name="AddATabToPerformATrace" xml:space="preserve">
+    <value>新增標籤執行來追蹤...</value>
+  </data>
+  <data name="AddDNSSuffixToHostname" xml:space="preserve">
+    <value>為主機名稱加入 DNS 後綴（主要）</value>
+  </data>
+  <data name="AdditionalCommandLine" xml:space="preserve">
+    <value>其他命令列</value>
+  </data>
+  <data name="Additionals" xml:space="preserve">
+    <value>其他</value>
+  </data>
+  <data name="AddProfileDots" xml:space="preserve">
+    <value>新增設定檔...</value>
+  </data>
+  <data name="AdjustScreenAutomatically" xml:space="preserve">
+    <value>自動調整螢幕</value>
+  </data>
+  <data name="Answers" xml:space="preserve">
+    <value>答案</value>
+  </data>
+  <data name="ApplicationWillBeRestartedAfterwards" xml:space="preserve">
+    <value>應用程式將在此後重新啟動！</value>
+  </data>
+  <data name="Apply" xml:space="preserve">
+    <value>套用</value>
+  </data>
+  <data name="ApplyWindowsKeyCombinationsLikeAltTab" xml:space="preserve">
+    <value>套用 Windows 快捷鍵組合（例如 ALT+TAB）:</value>
+  </data>
+  <data name="Auth" xml:space="preserve">
+    <value>身份驗證</value>
+  </data>
+  <data name="AuthenticationLevel" xml:space="preserve">
+    <value>身份驗證等級</value>
+  </data>
+  <data name="Authorities" xml:space="preserve">
+    <value>授權伺服器</value>
+  </data>
+  <data name="AutomaticallyUpdateEvery" xml:space="preserve">
+    <value>自動更新，每</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>返回</value>
+  </data>
+  <data name="Backup" xml:space="preserve">
+    <value>備份</value>
+  </data>
+  <data name="Baud" xml:space="preserve">
+    <value>傳輸速率</value>
+  </data>
+  <data name="CanceledByUserMessage" xml:space="preserve">
+    <value>使用者已取消作業。</value>
+  </data>
+  <data name="CapsLockIsEnabled" xml:space="preserve">
+    <value>Caps lock 已啟用！</value>
+  </data>
+  <data name="ChartTimeInSeconds" xml:space="preserve">
+    <value>圖表時間（秒）</value>
+  </data>
+  <data name="CheckForUpdatesAtStartup" xml:space="preserve">
+    <value>在啟動時檢查更新</value>
+  </data>
+  <data name="Class" xml:space="preserve">
+    <value>類別</value>
+  </data>
+  <data name="ClearFilter" xml:space="preserve">
+    <value>清除篩選</value>
+  </data>
+  <data name="ColorDepthBit" xml:space="preserve">
+    <value>色彩深度（位元）</value>
+  </data>
+  <data name="Community" xml:space="preserve">
+    <value>社群</value>
+  </data>
+  <data name="ConfigureThePathToPuTTYInTheSettingsDots" xml:space="preserve">
+    <value>在設定中配置 PuTTY 的路徑…</value>
+  </data>
+  <data name="ConfirmClose" xml:space="preserve">
+    <value>確認關閉</value>
+  </data>
+  <data name="ConfirmCloseMessage" xml:space="preserve">
+    <value>你確定要關閉應用程式嗎？</value>
+  </data>
+  <data name="ConnectAsDots" xml:space="preserve">
+    <value>連線身分...</value>
+  </data>
+  <data name="ConnectExternal" xml:space="preserve">
+    <value>連線外部</value>
+  </data>
+  <data name="ConnectTheNetworkCardToConfigureIt" xml:space="preserve">
+    <value>將網路卡連接到網路以進行配置！</value>
+  </data>
+  <data name="Copy" xml:space="preserve">
+    <value>複製</value>
+  </data>
+  <data name="CopyAsDots" xml:space="preserve">
+    <value>複製成...</value>
+  </data>
+  <data name="CopyDots" xml:space="preserve">
+    <value>複製...</value>
+  </data>
+  <data name="CouldNotResolveHostnameFor" xml:space="preserve">
+    <value>無法解析主機名稱："{0}"</value>
+  </data>
+  <data name="Credential" xml:space="preserve">
+    <value>認證</value>
+  </data>
+  <data name="ProfileEncryptionDisclaimer" xml:space="preserve">
+    <value>設定檔會以 AES 加密，256‑bit 金鑰、128‑bit 塊長，CBC 模式，存放於磁碟。加密金鑰由主密碼透過 Rfc2898DeriveBytes（PBKDF2）經 1,000,000 次迭代所推導。執行時，密碼會在設定檔載入後以 SecureString 儲存；但某些功能需要將其轉成普通字串，在此期間內密碼會保持未加密狀態，直至垃圾回收器清理。
+
+請先備份您的設定檔，再啟用加密！</value>
+  </data>
+  <data name="Custom" xml:space="preserve">
+    <value>自訂</value>
+  </data>
+  <data name="CustomScreenSize" xml:space="preserve">
+    <value>自訂螢幕尺寸：</value>
+  </data>
+  <data name="DataHasBeenUpdated" xml:space="preserve">
+    <value>資料已更新！</value>
+  </data>
+  <data name="DecryptAndLoadCredentialsMessage" xml:space="preserve">
+    <value>必須先將憑證解密並載入，才能進行管理。</value>
+  </data>
+  <data name="Default" xml:space="preserve">
+    <value>預設值</value>
+  </data>
+  <data name="BaudRate" xml:space="preserve">
+    <value>傳輸速率</value>
+  </data>
+  <data name="DefaultPort" xml:space="preserve">
+    <value>預設連接埠：</value>
+  </data>
+  <data name="RloginPort" xml:space="preserve">
+    <value>Rlogin 連接埠</value>
+  </data>
+  <data name="SSHPort" xml:space="preserve">
+    <value>SSH 連接埠</value>
+  </data>
+  <data name="TelnetPort" xml:space="preserve">
+    <value>Telnet 連接埠</value>
+  </data>
+  <data name="DeleteCredentialMessage" xml:space="preserve">
+    <value>所選擇的憑證將被永久刪除。</value>
+  </data>
+  <data name="DeleteEntry" xml:space="preserve">
+    <value>刪除項目</value>
+  </data>
+  <data name="DeleteProfileMessage" xml:space="preserve">
+    <value>所選擇的設定檔將被永久刪除。</value>
+  </data>
+  <data name="DNSAutoconfiguration" xml:space="preserve">
+    <value>DNS 自動配置</value>
+  </data>
+  <data name="DNSLookupDots" xml:space="preserve">
+    <value>DNS 查詢...</value>
+  </data>
+  <data name="DNSServer" xml:space="preserve">
+    <value>DNS 伺服器</value>
+  </data>
+  <data name="Domain" xml:space="preserve">
+    <value>網域</value>
+  </data>
+  <data name="Duration" xml:space="preserve">
+    <value>持續時間</value>
+  </data>
+  <data name="EditDots" xml:space="preserve">
+    <value>編輯...</value>
+  </data>
+  <data name="Enable" xml:space="preserve">
+    <value>啟用</value>
+  </data>
+  <data name="EnableCredentialSecuritySupportProvider" xml:space="preserve">
+    <value>啟用憑證安全支援提供者</value>
+  </data>
+  <data name="EndTime" xml:space="preserve">
+    <value>結束時間</value>
+  </data>
+  <data name="EnterASubnetToCalculateItDots" xml:space="preserve">
+    <value>輸入子網路以進行計算…</value>
+  </data>
+  <data name="EnterSubnetAndANewSubnetmaskToCreateSubnets" xml:space="preserve">
+    <value>輸入子網路及新子網遮罩以產生子網路…</value>
+  </data>
+  <data name="ErrorCheckingApiGithubComVerifyYourNetworkConnection" xml:space="preserve">
+    <value>無法連線至 'api.github.com'，請檢查您的網路連線！</value>
+  </data>
+  <data name="ErrorInResponse" xml:space="preserve">
+    <value>回應發生錯誤！</value>
+  </data>
+  <data name="ErrorInResponseCheckIfYouHaveWritePermissions" xml:space="preserve">
+    <value>回應出現錯誤！請檢查您是否擁有寫入權限。</value>
+  </data>
+  <data name="Expand" xml:space="preserve">
+    <value>展開</value>
+  </data>
+  <data name="FirstUsableIPAddress" xml:space="preserve">
+    <value>首先可使用 IP 位址</value>
+  </data>
+  <data name="FixedScreenSize" xml:space="preserve">
+    <value>固定螢幕尺寸：</value>
+  </data>
+  <data name="Found" xml:space="preserve">
+    <value>找到了</value>
+  </data>
+  <data name="Group" xml:space="preserve">
+    <value>群組</value>
+  </data>
+  <data name="Height" xml:space="preserve">
+    <value>高度</value>
+  </data>
+  <data name="Host" xml:space="preserve">
+    <value>主機</value>
+  </data>
+  <data name="HostnameOrIPAddress" xml:space="preserve">
+    <value>主機名稱或 IP 位址</value>
+  </data>
+  <data name="Hosts" xml:space="preserve">
+    <value>主機</value>
+  </data>
+  <data name="ID" xml:space="preserve">
+    <value>ID</value>
+  </data>
+  <data name="InheritHostFromGeneral" xml:space="preserve">
+    <value>從一般設定繼承主機</value>
+  </data>
+  <data name="IPRange" xml:space="preserve">
+    <value>IP 範圍</value>
+  </data>
+  <data name="LastUsableIPAddress" xml:space="preserve">
+    <value>最後可使用 IP 位址</value>
+  </data>
+  <data name="LocalIPAddress" xml:space="preserve">
+    <value>本機 IP 位址</value>
+  </data>
+  <data name="LocalPort" xml:space="preserve">
+    <value>本機連接埠</value>
+  </data>
+  <data name="MACAddressOrVendor" xml:space="preserve">
+    <value>MAC 位址或廠商</value>
+  </data>
+  <data name="MagicPacketSentMessage" xml:space="preserve">
+    <value>Magic 封包傳送成功！</value>
+  </data>
+  <data name="MaximumNumberOfHopsReached" xml:space="preserve">
+    <value>已達到最大跳數（{0}）或路由器！</value>
+  </data>
+  <data name="MessageSize" xml:space="preserve">
+    <value>訊息大小</value>
+  </data>
+  <data name="Mode" xml:space="preserve">
+    <value>模式</value>
+  </data>
+  <data name="Multicast" xml:space="preserve">
+    <value>多點傳送</value>
+  </data>
+  <data name="MultipleInstances" xml:space="preserve">
+    <value>多重執行個體</value>
+  </data>
+  <data name="NetworkLocationCannotBeReachedMessage" xml:space="preserve">
+    <value>無法連線至網路位址。請檢查您的電腦是否已連接到網路。如需了解網路疑難排解資訊，請參閱 Windows 幫助。</value>
+  </data>
+  <data name="NewConnectionDots" xml:space="preserve">
+    <value>新連線...</value>
+  </data>
+  <data name="NoDNSRecordFoundCheckYourInputAndSettings" xml:space="preserve">
+    <value>未找到「{0}」的 DNS 記錄！請檢查您的輸入與設定。</value>
+  </data>
+  <data name="NoEnabledNetworkAdaptersFound" xml:space="preserve">
+    <value>找不到啟用網路介面卡！</value>
+  </data>
+  <data name="NoPortsFoundCheckYourInput" xml:space="preserve">
+    <value>找不到連接埠。檢查您的輸入！</value>
+  </data>
+  <data name="NoProfilesFoundCreateOne" xml:space="preserve">
+    <value>未找到任何設定檔！
+請先建立一個…</value>
+  </data>
+  <data name="NothingFound" xml:space="preserve">
+    <value>沒有找到！</value>
+  </data>
+  <data name="NothingToDoCheckYourInput" xml:space="preserve">
+    <value>不執行任何動作。檢查您的輸入！</value>
+  </data>
+  <data name="NoUpdateAvailable" xml:space="preserve">
+    <value>沒有可用的更新！</value>
+  </data>
+  <data name="NoValidFileFoundToImport" xml:space="preserve">
+    <value>找不到任何有效的檔案可供匯入。</value>
+  </data>
+  <data name="NoVendorFoundCheckYourInput" xml:space="preserve">
+    <value>找不到廠商。檢查您的輸入！</value>
+  </data>
+  <data name="NumberOfErrorsAfterWhichIsCanceled" xml:space="preserve">
+    <value>錯誤次數超過此值即取消：</value>
+  </data>
+  <data name="NumberOfStoredEntries" xml:space="preserve">
+    <value>已儲存項目數</value>
+  </data>
+  <data name="OID" xml:space="preserve">
+    <value>OID</value>
+  </data>
+  <data name="OnlyCsvFilesAllowed" xml:space="preserve">
+    <value>Only CSV files are allowed!</value>
+  </data>
+  <data name="OnlyWhenUsingTheFullScreen" xml:space="preserve">
+    <value>只有在使用全螢幕時</value>
+  </data>
+  <data name="RemoteDesktopKeyboardHookMode_OnTheRemoteComputer" xml:space="preserve">
+    <value>在遠端電腦上</value>
+  </data>
+  <data name="RemoteDesktopKeyboardHookMode_OnThisComputer" xml:space="preserve">
+    <value>在此電腦上</value>
+  </data>
+  <data name="Open" xml:space="preserve">
+    <value>打開</value>
+  </data>
+  <data name="OpenLicense" xml:space="preserve">
+    <value>打開授權</value>
+  </data>
+  <data name="OpenProject" xml:space="preserve">
+    <value>打開專案</value>
+  </data>
+  <data name="OpenWebsite" xml:space="preserve">
+    <value>打開網站</value>
+  </data>
+  <data name="Override" xml:space="preserve">
+    <value>覆寫</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>密碼</value>
+  </data>
+  <data name="PasswordsDoNotMatch" xml:space="preserve">
+    <value>密碼不相符！</value>
+  </data>
+  <data name="Path" xml:space="preserve">
+    <value>路徑</value>
+  </data>
+  <data name="PortOrService" xml:space="preserve">
+    <value>連接埠或服務</value>
+  </data>
+  <data name="Ports" xml:space="preserve">
+    <value>連接埠</value>
+  </data>
+  <data name="Priv" xml:space="preserve">
+    <value>私有</value>
+  </data>
+  <data name="Profile" xml:space="preserve">
+    <value>設定檔</value>
+  </data>
+  <data name="ProfilesReloaded" xml:space="preserve">
+    <value>設定檔已重新載入</value>
+  </data>
+  <data name="Protocol" xml:space="preserve">
+    <value>通訊協定</value>
+  </data>
+  <data name="PuTTYProcessHasEnded" xml:space="preserve">
+    <value>PuTTY 程式已結束！</value>
+  </data>
+  <data name="Questions" xml:space="preserve">
+    <value>問題</value>
+  </data>
+  <data name="RAW" xml:space="preserve">
+    <value>原始</value>
+  </data>
+  <data name="Recursion" xml:space="preserve">
+    <value>遞迴</value>
+  </data>
+  <data name="RedirectClipboard" xml:space="preserve">
+    <value>重新導向剪貼簿</value>
+  </data>
+  <data name="RedirectDevices" xml:space="preserve">
+    <value>重新導向裝置</value>
+  </data>
+  <data name="RedirectDrives" xml:space="preserve">
+    <value>重新導向磁碟機</value>
+  </data>
+  <data name="RedirectPorts" xml:space="preserve">
+    <value>重新導向連接埠</value>
+  </data>
+  <data name="RedirectPrinters" xml:space="preserve">
+    <value>重新導向印表機</value>
+  </data>
+  <data name="RedirectSmartcards" xml:space="preserve">
+    <value>重新導向智慧卡</value>
+  </data>
+  <data name="RemainingTime" xml:space="preserve">
+    <value>剩餘時間</value>
+  </data>
+  <data name="RemoteIPAddress" xml:space="preserve">
+    <value>遠端 IP 位址</value>
+  </data>
+  <data name="RemotePort" xml:space="preserve">
+    <value>遠端連接埠</value>
+  </data>
+  <data name="Repeat" xml:space="preserve">
+    <value>重複</value>
+  </data>
+  <data name="ResolveCNAMEOnANYRequests" xml:space="preserve">
+    <value>對 ANY 請求解析 CNAME</value>
+  </data>
+  <data name="Responses" xml:space="preserve">
+    <value>回應</value>
+  </data>
+  <data name="Rlogin" xml:space="preserve">
+    <value>遠端登入</value>
+  </data>
+  <data name="Scanned" xml:space="preserve">
+    <value>已掃描</value>
+  </data>
+  <data name="SearchedApplicationNotFound" xml:space="preserve">
+    <value>已搜尋應用程式未找到！</value>
+  </data>
+  <data name="SearchedLanguageNotFound" xml:space="preserve">
+    <value>未找到搜尋語言！</value>
+  </data>
+  <data name="SearchedSettingNotFound" xml:space="preserve">
+    <value>未找到搜尋設定！</value>
+  </data>
+  <data name="Security" xml:space="preserve">
+    <value>安全性</value>
+  </data>
+  <data name="SelectAScreenResolution" xml:space="preserve">
+    <value>選擇螢幕解析度</value>
+  </data>
+  <data name="ThisWillResetAllSettings" xml:space="preserve">
+    <value>此將重置所有設定！</value>
+  </data>
+  <data name="Serial" xml:space="preserve">
+    <value>序列</value>
+  </data>
+  <data name="SerialLine" xml:space="preserve">
+    <value>序列埠</value>
+  </data>
+  <data name="Service" xml:space="preserve">
+    <value>服務</value>
+  </data>
+  <data name="SettingsFileFoundWasCorruptOrNotCompatibleMessage" xml:space="preserve">
+    <value>找到的設定檔已損毀或與此版本不相容！您可在 GitHub 上回報此問題。
+
+已在設定資料夾中建立設定檔備份，並將設定重置。
+
+設定檔案未受到任何影響！</value>
+  </data>
+  <data name="ShowClosedPorts" xml:space="preserve">
+    <value>顯示關閉連接埠</value>
+  </data>
+  <data name="ShowCurrentApplicationTitle" xml:space="preserve">
+    <value>顯示目前應用程式標題</value>
+  </data>
+  <data name="ShowOnlyMostCommonQueryTypes" xml:space="preserve">
+    <value>僅顯示最常見的查詢類型</value>
+  </data>
+  <data name="ShowUnreachableIPAddressesAndPorts" xml:space="preserve">
+    <value>顯示不可達的 IP 位址與連接埠。</value>
+  </data>
+  <data name="ShowStatistics" xml:space="preserve">
+    <value>顯示統計資料</value>
+  </data>
+  <data name="SSH" xml:space="preserve">
+    <value>SSH</value>
+  </data>
+  <data name="StartTime" xml:space="preserve">
+    <value>開始時間</value>
+  </data>
+  <data name="State" xml:space="preserve">
+    <value>狀態</value>
+  </data>
+  <data name="Subnet1" xml:space="preserve">
+    <value>子網路 1</value>
+  </data>
+  <data name="Subnet2" xml:space="preserve">
+    <value>子網路 2</value>
+  </data>
+  <data name="Tags" xml:space="preserve">
+    <value>標籤​</value>
+  </data>
+  <data name="Telnet" xml:space="preserve">
+    <value>Telnet</value>
+  </data>
+  <data name="TheApplicationCanBeStartedWithoutParameters" xml:space="preserve">
+    <value>此應用程式可以在未提供任何參數時啟動！</value>
+  </data>
+  <data name="TheFollowingHostnamesCouldNotBeResolved" xml:space="preserve">
+    <value>以下主機名稱無法解析：</value>
+  </data>
+  <data name="TheFollowingParametersAreAvailable" xml:space="preserve">
+    <value>以下參數可用：</value>
+  </data>
+  <data name="TheFollowingParametersCanNotBeProcesses" xml:space="preserve">
+    <value>以下參數無法處理：</value>
+  </data>
+  <data name="TheProcessCanTakeUpSomeTimeAndResources" xml:space="preserve">
+    <value>此過程可能會佔用較長時間及系統資源（CPU／RAM）。</value>
+  </data>
+  <data name="TheSettingsLocationIsNotAffected" xml:space="preserve">
+    <value>設定位置不會被改動！</value>
+  </data>
+  <data name="TimeoutOnSNMPQuery" xml:space="preserve">
+    <value>SNMP 查詢逾時。可能主機無法連線，或社群字串／密碼錯誤。</value>
+  </data>
+  <data name="TimeoutWhenQueryingDNSServerMessage" xml:space="preserve">
+    <value>使用 IP 位址「{0}」查詢 DNS 伺服器時逾時！</value>
+  </data>
+  <data name="Timestamp" xml:space="preserve">
+    <value>時間戳記</value>
+  </data>
+  <data name="Trace" xml:space="preserve">
+    <value>追蹤</value>
+  </data>
+  <data name="UnkownError" xml:space="preserve">
+    <value>未知錯誤！</value>
+  </data>
+  <data name="UntrayBringWindowToForeground" xml:space="preserve">
+    <value>從托盤移除／將視窗提升至前景</value>
+  </data>
+  <data name="URL" xml:space="preserve">
+    <value>網址</value>
+  </data>
+  <data name="UseCredentials" xml:space="preserve">
+    <value>使用認證</value>
+  </data>
+  <data name="UseCurrentViewSize" xml:space="preserve">
+    <value>以目前的檢視尺寸作為螢幕尺寸</value>
+  </data>
+  <data name="UseCustomDNSServer" xml:space="preserve">
+    <value>使用自訂 DNS 伺服器</value>
+  </data>
+  <data name="UseCustomDNSSuffix" xml:space="preserve">
+    <value>使用自訂 DNS 尾碼</value>
+  </data>
+  <data name="UseResolverCache" xml:space="preserve">
+    <value>使用解析快取</value>
+  </data>
+  <data name="UserInterfaceLocked" xml:space="preserve">
+    <value>使用已鎖定介面！</value>
+  </data>
+  <data name="Username" xml:space="preserve">
+    <value>使用者名稱</value>
+  </data>
+  <data name="Vendor" xml:space="preserve">
+    <value>廠商</value>
+  </data>
+  <data name="Version" xml:space="preserve">
+    <value>版本</value>
+  </data>
+  <data name="VersionxxIsAvailable" xml:space="preserve">
+    <value>「{0}」版本現已可用！</value>
+  </data>
+  <data name="WalkMode" xml:space="preserve">
+    <value>行走模式</value>
+  </data>
+  <data name="Width" xml:space="preserve">
+    <value>寬度</value>
+  </data>
+  <data name="WrongPasswordDecryptionFailedMessage" xml:space="preserve">
+    <value>無法使用所給的密碼解密設定檔。</value>
+  </data>
+  <data name="WrongPasswordMessage" xml:space="preserve">
+    <value>輸入的密碼不正確。</value>
+  </data>
+  <data name="AddDots" xml:space="preserve">
+    <value>新增...</value>
+  </data>
+  <data name="AddEntryDots" xml:space="preserve">
+    <value>新增項目...</value>
+  </data>
+  <data name="Calculate" xml:space="preserve">
+    <value>計算</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="Change" xml:space="preserve">
+    <value>變更</value>
+  </data>
+  <data name="ChangeMasterPasswordDots" xml:space="preserve">
+    <value>變更設定主密碼...</value>
+  </data>
+  <data name="Check" xml:space="preserve">
+    <value>檢查</value>
+  </data>
+  <data name="CheckForUpdates" xml:space="preserve">
+    <value>檢查更新</value>
+  </data>
+  <data name="Closed" xml:space="preserve">
+    <value>已關閉</value>
+  </data>
+  <data name="Continue" xml:space="preserve">
+    <value>繼續</value>
+  </data>
+  <data name="CustomColon" xml:space="preserve">
+    <value>自訂：</value>
+  </data>
+  <data name="Cut" xml:space="preserve">
+    <value>剪下</value>
+  </data>
+  <data name="DecryptAndLoadDots" xml:space="preserve">
+    <value>解密並載入...</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>刪除</value>
+  </data>
+  <data name="DeleteTable" xml:space="preserve">
+    <value>刪除表格</value>
+  </data>
+  <data name="EnterLocationDots" xml:space="preserve">
+    <value>輸入位置...</value>
+  </data>
+  <data name="Everything" xml:space="preserve">
+    <value>所有事物</value>
+  </data>
+  <data name="FilterDots" xml:space="preserve">
+    <value>篩選...</value>
+  </data>
+  <data name="FlushDNSCache" xml:space="preserve">
+    <value>清除 DNS 快取</value>
+  </data>
+  <data name="FlushDNSCacheSuccessfully" xml:space="preserve">
+    <value>DNS cache flushed</value>
+  </data>
+  <data name="HelpMessage_Credentials" xml:space="preserve">
+    <value>請先將憑證解密並載入，然後再進行選取。</value>
+  </data>
+  <data name="HelpMessage_ParameterHelp" xml:space="preserve">
+    <value>顯示這個對話方塊。</value>
+  </data>
+  <data name="HelpMessage_ParameterResetSettings" xml:space="preserve">
+    <value>重置所有應用程式的設定。</value>
+  </data>
+  <data name="HelpMessage_PasswordNotDisplayedCanBeOverwritten" xml:space="preserve">
+    <value>在編輯時密碼不會被顯示，但可進行覆寫。</value>
+  </data>
+  <data name="HelpMessage_RDPAuthenticationLevel" xml:space="preserve">
+    <value>[0] 若伺服器身份驗證失敗，將不顯示警告直接連線至電腦。
+[1] 若伺服器身份驗證失敗，不建立任何連線。
+[2] 若伺服器身份驗證失敗，會顯示警告並允許使用者選擇「連線」或「拒絕」。
+[3] 未設定任何身份驗證要求。</value>
+  </data>
+  <data name="HelpMessage_Tags" xml:space="preserve">
+    <value>標籤可協助您依主題／專案組織設定檔。多個標籤以分號 ";" 分隔。使用 'tag=xxx' 進行搜尋。</value>
+  </data>
+  <data name="TimeUnit_Hour" xml:space="preserve">
+    <value>小時(H)</value>
+  </data>
+  <data name="LocationOfTheImport" xml:space="preserve">
+    <value>匯出檔案的位置...</value>
+  </data>
+  <data name="TimeUnit_Minute" xml:space="preserve">
+    <value>分鐘(M)</value>
+  </data>
+  <data name="MoveAndRestart" xml:space="preserve">
+    <value>移動 &amp; 重新啟動</value>
+  </data>
+  <data name="NetworkConnectionsDots" xml:space="preserve">
+    <value>網路連線...</value>
+  </data>
+  <data name="NotChanged" xml:space="preserve">
+    <value>（未變更）</value>
+  </data>
+  <data name="Off" xml:space="preserve">
+    <value>關</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>確定</value>
+  </data>
+  <data name="On" xml:space="preserve">
+    <value>開</value>
+  </data>
+  <data name="OpenLocation" xml:space="preserve">
+    <value>打開位置</value>
+  </data>
+  <data name="OpenSettings" xml:space="preserve">
+    <value>打開設定</value>
+  </data>
+  <data name="Overwrite" xml:space="preserve">
+    <value>覆寫</value>
+  </data>
+  <data name="Parse" xml:space="preserve">
+    <value>Parse</value>
+  </data>
+  <data name="Paste" xml:space="preserve">
+    <value>貼上</value>
+  </data>
+  <data name="Reconnect" xml:space="preserve">
+    <value>重新連線</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>重新整理</value>
+  </data>
+  <data name="RestartNow" xml:space="preserve">
+    <value>立即重新啟動</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>儲存</value>
+  </data>
+  <data name="SearchDots" xml:space="preserve">
+    <value>搜尋...</value>
+  </data>
+  <data name="TimeUnit_Second" xml:space="preserve">
+    <value>秒(S)</value>
+  </data>
+  <data name="Send" xml:space="preserve">
+    <value>發送</value>
+  </data>
+  <data name="SetMasterPasswordDots" xml:space="preserve">
+    <value>設定主密碼...</value>
+  </data>
+  <data name="ShowLocalLicenses" xml:space="preserve">
+    <value>使用本地授權</value>
+  </data>
+  <data name="SubnetCalculator" xml:space="preserve">
+    <value>子網路計算器</value>
+  </data>
+  <data name="Validate" xml:space="preserve">
+    <value>驗證</value>
+  </data>
+  <data name="Connections" xml:space="preserve">
+    <value>連線</value>
+  </data>
+  <data name="EnterValidIPScanRange" xml:space="preserve">
+    <value>輸入有效的 IP 範圍！</value>
+  </data>
+  <data name="EnterValidIPv4Address" xml:space="preserve">
+    <value>輸入有效的 IPv4 位址！</value>
+  </data>
+  <data name="EnterValidMACAddress" xml:space="preserve">
+    <value>輸入有效的 MAC 位址（例如：00:F1:23:AB:F2:35）！</value>
+  </data>
+  <data name="EnterValidPort" xml:space="preserve">
+    <value>輸入有效的連接埠 (1 - 65535)！</value>
+  </data>
+  <data name="EnterValidSubnetmask" xml:space="preserve">
+    <value>輸入有效的子網遮罩（例如：255.255.255.0）！</value>
+  </data>
+  <data name="EnterValidSubnetmaskOrCIDR" xml:space="preserve">
+    <value>輸入有效的子網遮罩或 CIDR（例如：255.255.255.0 或 /24）！</value>
+  </data>
+  <data name="FieldCannotBeEmpty" xml:space="preserve">
+    <value>欄位不可空白！</value>
+  </data>
+  <data name="FileDoesNotExist" xml:space="preserve">
+    <value>檔案不存在！</value>
+  </data>
+  <data name="FolderDoesNotExist" xml:space="preserve">
+    <value>資料夾不存在！</value>
+  </data>
+  <data name="Listeners" xml:space="preserve">
+    <value>監聽器</value>
+  </data>
+  <data name="Amber" xml:space="preserve">
+    <value>琥珀色</value>
+  </data>
+  <data name="Appearance" xml:space="preserve">
+    <value>外觀</value>
+  </data>
+  <data name="Applications" xml:space="preserve">
+    <value>應用程式</value>
+  </data>
+  <data name="Theme_Dark" xml:space="preserve">
+    <value>深色</value>
+  </data>
+  <data name="Theme_Light" xml:space="preserve">
+    <value>淺色</value>
+  </data>
+  <data name="Black" xml:space="preserve">
+    <value>黑色</value>
+  </data>
+  <data name="Blue" xml:space="preserve">
+    <value>藍色</value>
+  </data>
+  <data name="Brown" xml:space="preserve">
+    <value>褐色</value>
+  </data>
+  <data name="Cobalt" xml:space="preserve">
+    <value>深藍色</value>
+  </data>
+  <data name="Crimson" xml:space="preserve">
+    <value>深紅色</value>
+  </data>
+  <data name="Cyan" xml:space="preserve">
+    <value>青色</value>
+  </data>
+  <data name="Emerald" xml:space="preserve">
+    <value>深綠色</value>
+  </data>
+  <data name="EnterOneOrMoreValidIPAddresses" xml:space="preserve">
+    <value>輸入一或多個有效的 IP 位址！</value>
+  </data>
+  <data name="EnterValidBaud" xml:space="preserve">
+    <value>輸入有效的傳輸速率！</value>
+  </data>
+  <data name="EnterValidHosts" xml:space="preserve">
+    <value>輸入有效的主機 (多主機不能以 ";" 結尾)！</value>
+  </data>
+  <data name="EnterValidIPAddress" xml:space="preserve">
+    <value>輸入有效的 IP 位址！</value>
+  </data>
+  <data name="EnterValidNumber" xml:space="preserve">
+    <value>輸入有效的數量！</value>
+  </data>
+  <data name="EnterValidOID" xml:space="preserve">
+    <value>輸入有效的 OID！</value>
+  </data>
+  <data name="EnterValidPortOrPortRange" xml:space="preserve">
+    <value>輸入有效的連接埠和 / 或連接埠範圍 (1 - 65535)！</value>
+  </data>
+  <data name="EnterValidSubnet" xml:space="preserve">
+    <value>輸入有效的子網路 (如 192.168.178.133/26)！</value>
+  </data>
+  <data name="EnterValidWebsiteUri" xml:space="preserve">
+    <value>輸入有效的網站 (如 https://example.com/index.html)</value>
+  </data>
+  <data name="Green" xml:space="preserve">
+    <value>綠色</value>
+  </data>
+  <data name="ImportExport" xml:space="preserve">
+    <value>匯入 / 匯出</value>
+  </data>
+  <data name="Indigo" xml:space="preserve">
+    <value>靛藍色</value>
+  </data>
+  <data name="IPStatus_DestinationHostUnreachable" xml:space="preserve">
+    <value>目的地主機無法連線。</value>
+  </data>
+  <data name="IPStatus_DestinationNetworkUnreachable" xml:space="preserve">
+    <value>目的地網路無法連線。</value>
+  </data>
+  <data name="IPStatus_DestinationPortUnreachable" xml:space="preserve">
+    <value>目的地連接埠無法連線。</value>
+  </data>
+  <data name="IPStatus_Success" xml:space="preserve">
+    <value>成功</value>
+  </data>
+  <data name="IPStatus_TimedOut" xml:space="preserve">
+    <value>要求已逾時。</value>
+  </data>
+  <data name="IPStatus_TtlExpired" xml:space="preserve">
+    <value>TTL 在傳輸途中已逾時。</value>
+  </data>
+  <data name="KeyMustHave8CharactersOrMore" xml:space="preserve">
+    <value>金鑰必須有 8 個字元或以上！</value>
+  </data>
+  <data name="Lime" xml:space="preserve">
+    <value>亮綠色</value>
+  </data>
+  <data name="Live" xml:space="preserve">
+    <value>即時</value>
+  </data>
+  <data name="Magenta" xml:space="preserve">
+    <value>洋紅色</value>
+  </data>
+  <data name="Mauve" xml:space="preserve">
+    <value>紫紅色</value>
+  </data>
+  <data name="Olive" xml:space="preserve">
+    <value>橄欖色</value>
+  </data>
+  <data name="OnlyNumbersCanBeEntered" xml:space="preserve">
+    <value>只能輸入數字！</value>
+  </data>
+  <data name="Orange" xml:space="preserve">
+    <value>橙色</value>
+  </data>
+  <data name="Pink" xml:space="preserve">
+    <value>粉紅色</value>
+  </data>
+  <data name="Purple" xml:space="preserve">
+    <value>紫色</value>
+  </data>
+  <data name="Red" xml:space="preserve">
+    <value>紅色</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_AtClientWinsockFDCLOSE" xml:space="preserve">
+    <value>通訊端已關閉。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_ByServer" xml:space="preserve">
+    <value>遠端中斷連線由伺服器。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_ClientDecompressionError" xml:space="preserve">
+    <value>解壓縮錯誤。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_ConnectionTimedOut" xml:space="preserve">
+    <value>連線逾時。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_DecryptionError" xml:space="preserve">
+    <value>解密錯誤。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_DNSLookupFailed" xml:space="preserve">
+    <value>DNS 名稱查詢失敗。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_DNSLookupFailed2" xml:space="preserve">
+    <value>DNS 查詢失敗。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_EncryptionError" xml:space="preserve">
+    <value>加密錯誤。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_GetHostByNameFailed" xml:space="preserve">
+    <value>Windows Sockets 的 gethostbyname 呼叫失敗。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_HostNotFound" xml:space="preserve">
+    <value>找不到主機。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_InternalError" xml:space="preserve">
+    <value>內部錯誤。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_InternalSecurityError" xml:space="preserve">
+    <value>內部安全性錯誤。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_InternalSecurityError2" xml:space="preserve">
+    <value>內部安全性錯誤。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_InvalidEncryption" xml:space="preserve">
+    <value>所指定的加密方式無效。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_InvalidIP" xml:space="preserve">
+    <value>指定了錯誤的 IP 位址。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_InvalidIPAddr" xml:space="preserve">
+    <value>指定了 IP 位址無效。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_InvalidSecurityData" xml:space="preserve">
+    <value>安全性資料無效。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_InvalidServerSecurityInfo" xml:space="preserve">
+    <value>伺服器安全性資料無效。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_LicensingFailed" xml:space="preserve">
+    <value>授權協商失敗。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_LicensingTimeout" xml:space="preserve">
+    <value>授權逾時。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_LocalNotError" xml:space="preserve">
+    <value>本機中斷連接。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_NoInfo" xml:space="preserve">
+    <value>沒有任何資訊。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_OutOfMemory" xml:space="preserve">
+    <value>記憶體不足。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_OutOfMemory2" xml:space="preserve">
+    <value>記憶體不足。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_OutOfMemory3" xml:space="preserve">
+    <value>記憶體不足。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_RemoteByUser" xml:space="preserve">
+    <value>遠端中斷連線由使用者。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_ServerCertificateUnpackErr" xml:space="preserve">
+    <value>無法解壓伺服器憑證。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SocketConnectFailed" xml:space="preserve">
+    <value>Windows Sockets 連線失敗了。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SocketRecvFailed" xml:space="preserve">
+    <value>Windows Sockets 的 recv 呼叫失敗。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrAccountDisabled" xml:space="preserve">
+    <value>此帳戶已停用。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrAccountExpired" xml:space="preserve">
+    <value>此帳戶已到期。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrAccountLockedOut" xml:space="preserve">
+    <value>此帳戶已鎖定。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrAccountRestriction" xml:space="preserve">
+    <value>此帳戶已限制。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrCertExpired" xml:space="preserve">
+    <value>收到的證書已過期。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrDelegationPolicy" xml:space="preserve">
+    <value>此政策不支援將憑證委派至目標伺服器。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrFreshCredRequiredByServer" xml:space="preserve">
+    <value>伺服器身份驗證政策不允許使用已儲存的憑證進行連線請求。使用者必須輸入新的憑證。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrLogonFailure" xml:space="preserve">
+    <value>登入失敗。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrNoAuthenticatingAuthority" xml:space="preserve">
+    <value>無法連線至授權機構進行驗證。認證方的網域名稱可能錯誤、網域不可達，或信任關係失敗。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrNoSuchUser" xml:space="preserve">
+    <value>指定使用者沒有帳號。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrPasswordExpired" xml:space="preserve">
+    <value>此密碼已到期。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrPasswordMustChange" xml:space="preserve">
+    <value>使用者密碼必須在第一次登入前先更改。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrPolicyNTLMOnly" xml:space="preserve">
+    <value>除非已完成雙向驗證，否則不允許將憑證委派至目標伺服器。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrSmartcardCardBlocked" xml:space="preserve">
+    <value>智慧卡被封鎖。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrSmartcardWrongPIN" xml:space="preserve">
+    <value>提供給智慧卡的 PIN 不正確。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_TimeoutOccurred" xml:space="preserve">
+    <value>發生逾時。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_TimerError" xml:space="preserve">
+    <value>內部計時器錯誤。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_WinsockSendFailed" xml:space="preserve">
+    <value>Windows Sockets 的 send 呼叫失敗。</value>
+  </data>
+  <data name="Sienna" xml:space="preserve">
+    <value>赭色</value>
+  </data>
+  <data name="SpacesAreNotAllowed" xml:space="preserve">
+    <value>不允許有空格！</value>
+  </data>
+  <data name="Steel" xml:space="preserve">
+    <value>鐵灰色</value>
+  </data>
+  <data name="Taupe" xml:space="preserve">
+    <value>褐灰色</value>
+  </data>
+  <data name="TcpState_Closed" xml:space="preserve">
+    <value>已關閉</value>
+  </data>
+  <data name="TcpState_CloseWait" xml:space="preserve">
+    <value>CloseWait</value>
+  </data>
+  <data name="TcpState_Closing" xml:space="preserve">
+    <value>關閉中</value>
+  </data>
+  <data name="TcpState_DeleteTcb" xml:space="preserve">
+    <value>DeleteTcb</value>
+  </data>
+  <data name="TcpState_Established" xml:space="preserve">
+    <value>已建立</value>
+  </data>
+  <data name="TcpState_FinWait1" xml:space="preserve">
+    <value>FinWait1</value>
+  </data>
+  <data name="TcpState_FinWait2" xml:space="preserve">
+    <value>FinWait2</value>
+  </data>
+  <data name="TcpState_LastAck" xml:space="preserve">
+    <value>LastAck</value>
+  </data>
+  <data name="TcpState_Listen" xml:space="preserve">
+    <value>監聽</value>
+  </data>
+  <data name="TcpState_SynReceived" xml:space="preserve">
+    <value>SynReceived</value>
+  </data>
+  <data name="TcpState_SynSent" xml:space="preserve">
+    <value>SynSent</value>
+  </data>
+  <data name="TcpState_TimeWait" xml:space="preserve">
+    <value>TimeWait</value>
+  </data>
+  <data name="TcpState_Unknown" xml:space="preserve">
+    <value>未知</value>
+  </data>
+  <data name="Teal" xml:space="preserve">
+    <value>藍綠色</value>
+  </data>
+  <data name="Violet" xml:space="preserve">
+    <value>紫羅蘭色</value>
+  </data>
+  <data name="White" xml:space="preserve">
+    <value>白色</value>
+  </data>
+  <data name="Yellow" xml:space="preserve">
+    <value>黃色</value>
+  </data>
+  <data name="ProfileWithThisNameAlreadyExists" xml:space="preserve">
+    <value>已存在同名設定檔！</value>
+  </data>
+  <data name="PortState_Closed" xml:space="preserve">
+    <value>已關閉</value>
+  </data>
+  <data name="PortState_Open" xml:space="preserve">
+    <value>打開</value>
+  </data>
+  <data name="AtLeastOneApplicationMustBeVisible" xml:space="preserve">
+    <value>至少要有一個應用程式可見！</value>
+  </data>
+  <data name="HiddenApplications" xml:space="preserve">
+    <value>隱藏應用程式</value>
+  </data>
+  <data name="VisibleApplications" xml:space="preserve">
+    <value>可見應用程式</value>
+  </data>
+  <data name="VisibleApplicationsInTheBar" xml:space="preserve">
+    <value>工具列中可見的應用程式：</value>
+  </data>
+  <data name="Whois" xml:space="preserve">
+    <value>Whois</value>
+  </data>
+  <data name="AddATabToQueryWhois" xml:space="preserve">
+    <value>新增「Whois 查詢」分頁</value>
+  </data>
+  <data name="EnterValidDomain" xml:space="preserve">
+    <value>輸入有效的網域名稱（例如 example.com）以進行檢查！</value>
+  </data>
+  <data name="EnterValidUsername" xml:space="preserve">
+    <value>請輸入有效的 Windows 使用者名稱（例如：「user」、「DOMAIN\user」或「user@domain.com」）！</value>
+  </data>
+  <data name="WhoisServerNotFoundForTheDomain" xml:space="preserve">
+    <value>無法為域名「{0}」找到對應的 Whois 伺服器。</value>
+  </data>
+  <data name="Routing" xml:space="preserve">
+    <value>路由</value>
+  </data>
+  <data name="Release" xml:space="preserve">
+    <value>釋放</value>
+  </data>
+  <data name="ReleaseRenew" xml:space="preserve">
+    <value>釋放 &amp; 續約</value>
+  </data>
+  <data name="Renew" xml:space="preserve">
+    <value>續約</value>
+  </data>
+  <data name="WindowsDNSSettings" xml:space="preserve">
+    <value>視窗 DNS 設定</value>
+  </data>
+  <data name="DeleteDNSServer" xml:space="preserve">
+    <value>刪除 DNS 伺服器</value>
+  </data>
+  <data name="DeleteDNSServerMessage" xml:space="preserve">
+    <value>所選的 DNS 伺服器將被永久刪除。</value>
+  </data>
+  <data name="AddDNSServer" xml:space="preserve">
+    <value>新增 DNS 伺服器</value>
+  </data>
+  <data name="EditDNSServer" xml:space="preserve">
+    <value>編輯 DNS 伺服器</value>
+  </data>
+  <data name="DNSServerWithThisNameAlreadyExists" xml:space="preserve">
+    <value>已存在此名稱的 DNS 伺服器！</value>
+  </data>
+  <data name="RestartSession" xml:space="preserve">
+    <value>重新啟動工作階段</value>
+  </data>
+  <data name="TigerVNC" xml:space="preserve">
+    <value>TigerVNC</value>
+  </data>
+  <data name="ConfigureThePathToTigerVNCInTheSettingsDots" xml:space="preserve">
+    <value>在設定中配置 TigerVNC 的路徑。</value>
+  </data>
+  <data name="TigerVNCProcessHasEnded" xml:space="preserve">
+    <value>TigerVNC 處理程序已經結束!</value>
+  </data>
+  <data name="ConnectingDots" xml:space="preserve">
+    <value>連線中...</value>
+  </data>
+  <data name="ResolveMACAddressAndVendor" xml:space="preserve">
+    <value>解析 MAC 位址或廠商</value>
+  </data>
+  <data name="Note" xml:space="preserve">
+    <value>注意事項</value>
+  </data>
+  <data name="ExportAll" xml:space="preserve">
+    <value>全部匯出</value>
+  </data>
+  <data name="ExportDots" xml:space="preserve">
+    <value>匯出...</value>
+  </data>
+  <data name="ExportSelected" xml:space="preserve">
+    <value>匯出已選擇</value>
+  </data>
+  <data name="LocationDots" xml:space="preserve">
+    <value>位置...</value>
+  </data>
+  <data name="File" xml:space="preserve">
+    <value>檔案</value>
+  </data>
+  <data name="EnterValidFilePath" xml:space="preserve">
+    <value>輸入有效的檔案路徑！</value>
+  </data>
+  <data name="All" xml:space="preserve">
+    <value>全部</value>
+  </data>
+  <data name="Format" xml:space="preserve">
+    <value>格式</value>
+  </data>
+  <data name="Selected" xml:space="preserve">
+    <value>已選擇</value>
+  </data>
+  <data name="AnErrorOccurredWhileExportingTheData" xml:space="preserve">
+    <value>匯出資料時發生錯誤，請參閱以下錯誤訊息以了解詳細資訊：</value>
+  </data>
+  <data name="Design" xml:space="preserve">
+    <value>設計</value>
+  </data>
+  <data name="HighlightTimeouts" xml:space="preserve">
+    <value>醒目提示逾時</value>
+  </data>
+  <data name="EnterSubnetsToCreateAWideSubnet" xml:space="preserve">
+    <value>輸入子網路以建立廣域子網...</value>
+  </data>
+  <data name="WideSubnet" xml:space="preserve">
+    <value>廣域子網路</value>
+  </data>
+  <data name="AddTabDots" xml:space="preserve">
+    <value>新增標籤...</value>
+  </data>
+  <data name="AddIPv4AddressDots" xml:space="preserve">
+    <value>新增 IPv4 位址...</value>
+  </data>
+  <data name="AddIPv4Address" xml:space="preserve">
+    <value>新增 IPv4 位址</value>
+  </data>
+  <data name="MaxHostThreads" xml:space="preserve">
+    <value>最大同時主機執行緒數</value>
+  </data>
+  <data name="MaxPortThreads" xml:space="preserve">
+    <value>最大同時連接埠執行緒數</value>
+  </data>
+  <data name="PowerShell" xml:space="preserve">
+    <value>PowerShell</value>
+  </data>
+  <data name="ConfigureThePathToPowerShellInTheSettingsDots" xml:space="preserve">
+    <value>在設定中配置 PowerShell 的路徑。</value>
+  </data>
+  <data name="PowerShellProcessHasEnded" xml:space="preserve">
+    <value>PowerShell 程式已結束！</value>
+  </data>
+  <data name="ExecutionPolicy" xml:space="preserve">
+    <value>執行原則</value>
+  </data>
+  <data name="RemoteConsole" xml:space="preserve">
+    <value>遠端主控台</value>
+  </data>
+  <data name="FilePath" xml:space="preserve">
+    <value>檔案路徑</value>
+  </data>
+  <data name="OverrideDefaultSettings" xml:space="preserve">
+    <value>覆寫預設設定</value>
+  </data>
+  <data name="ResolveIPv4AddressForThisHost" xml:space="preserve">
+    <value>為此主機解析 IPv4 位址。</value>
+  </data>
+  <data name="Hide" xml:space="preserve">
+    <value>隱藏</value>
+  </data>
+  <data name="TotalBytesReceived" xml:space="preserve">
+    <value>已接收總位元組數</value>
+  </data>
+  <data name="TotalBytesSent" xml:space="preserve">
+    <value>已傳送總位元組數</value>
+  </data>
+  <data name="Download" xml:space="preserve">
+    <value>已下載</value>
+  </data>
+  <data name="Bandwidth" xml:space="preserve">
+    <value>頻寬</value>
+  </data>
+  <data name="Upload" xml:space="preserve">
+    <value>已上傳</value>
+  </data>
+  <data name="ApplyWindowsKeyCombinations" xml:space="preserve">
+    <value>套用 Windows 按鍵組合</value>
+  </data>
+  <data name="CredentialSecuritySupportProvider" xml:space="preserve">
+    <value>憑證安全支援提供者</value>
+  </data>
+  <data name="BackgroundJob" xml:space="preserve">
+    <value>背景工作</value>
+  </data>
+  <data name="HelpMessage_BackgroundJob" xml:space="preserve">
+    <value>背景工作程式會每隔 x 分鐘 自動儲存設定與使用者檔。
+
+設定為 0 時，將停用此功能。
+
+變更此值後，必須重新啟動應用程式才能生效。</value>
+  </data>
+  <data name="RunBackgroundJobEveryXMinute" xml:space="preserve">
+    <value>每隔 x 分鐘 執行背景工作</value>
+  </data>
+  <data name="YourSystemOSIsIncompatibleWithTheLatestRelease" xml:space="preserve">
+    <value>您的作業系統與最新版本不相容！</value>
+  </data>
+  <data name="Dashboard" xml:space="preserve">
+    <value>儀表板</value>
+  </data>
+  <data name="AllSettingsCanBeChangedLaterInTheSettings" xml:space="preserve">
+    <value>所有設定都可以稍後在設定頁面中更改！</value>
+  </data>
+  <data name="CheckPublicIPAddress" xml:space="preserve">
+    <value>檢查公用 IP 位址</value>
+  </data>
+  <data name="WelcomeMessage" xml:space="preserve">
+    <value>感謝您使用 NETworkManager！
+
+如果您喜歡這個專案，請考慮支持它的開發——無論是於 GitHub 上留下星標、捐款，或僅僅將它分享給他人。您的支援能幫助專案持續運行並不斷成長。</value>
+  </data>
+  <data name="HelpMessage_CheckForUpdatesAtStartup" xml:space="preserve">
+    <value>啟動程式時，背景會檢查 GitHub 上是否有新版本可供下載。
+
+網址：https://api.github.com/</value>
+  </data>
+  <data name="HelpMessage_CheckPublicIPAddress" xml:space="preserve">
+    <value>公共 IP 位址是透過 ipify.org 確定的。
+
+網址：https://api.ipify.org 和 https://api6.ipify.org</value>
+  </data>
+  <data name="Privacy" xml:space="preserve">
+    <value>隱私權</value>
+  </data>
+  <data name="Welcome" xml:space="preserve">
+    <value>歡迎</value>
+  </data>
+  <data name="ExternalServices" xml:space="preserve">
+    <value>外部服務</value>
+  </data>
+  <data name="StarForkProjectOnGitHub" xml:space="preserve">
+    <value>在 GitHub 上星標/分叉此專案。</value>
+  </data>
+  <data name="HelpTranslateOnTransifex" xml:space="preserve">
+    <value>在 Transifex 上協助翻譯此專案。</value>
+  </data>
+  <data name="ContactOrContactMeViaX" xml:space="preserve">
+    <value>透過 X 追蹤我或與我聯絡。</value>
+  </data>
+  <data name="Connection" xml:space="preserve">
+    <value>連線</value>
+  </data>
+  <data name="Computer" xml:space="preserve">
+    <value>電腦</value>
+  </data>
+  <data name="GatewayRouter" xml:space="preserve">
+    <value>閘道 / 路由器</value>
+  </data>
+  <data name="Internet" xml:space="preserve">
+    <value>網際網路</value>
+  </data>
+  <data name="CheckNetworkAdapterConfigurationAndDNSServerConfigurationMessage" xml:space="preserve">
+    <value>請檢查您的網路介面卡設定（DNS），並確認 DNS 伺服器已正確配置。</value>
+  </data>
+  <data name="CheckNetworkAdapterConfigurationAndNetworkConnectionMessage" xml:space="preserve">
+    <value>請檢查您的網路介面卡設定（DHCP、靜態 IP），以及您是否已連接至網路。</value>
+  </data>
+  <data name="CouldNotDetectGatewayIPAddressMessage" xml:space="preserve">
+    <value>無法偵測閘道 IP 位址！</value>
+  </data>
+  <data name="CouldNotDetectLocalIPAddressMessage" xml:space="preserve">
+    <value>無法偵測本機 IP 位址！</value>
+  </data>
+  <data name="CouldNotGetPublicIPAddressFromXXXMessage" xml:space="preserve">
+    <value>無法透過 WebRequest（HTTP/HTTPS）從「{0}」取得公共 IP 位址！請檢查您的網路連線（防火牆、代理伺服器等）。</value>
+  </data>
+  <data name="NoADNSRecordsResolvedForXXXMessage" xml:space="preserve">
+    <value>未解析出任何 A 類 DNS 記錄於「{0}」！</value>
+  </data>
+  <data name="NoPTRDNSRecordResolvedForXXXMessage" xml:space="preserve">
+    <value>未解析出任何 PTR DNS 記錄於「{0}」！</value>
+  </data>
+  <data name="XADNSRecordsResolvedForXXXMessage" xml:space="preserve">
+    <value>「{0}」A 類 DNS 記錄已解析為「{1}」！</value>
+  </data>
+  <data name="PTRDNSRecordResolvedForXXXMessage" xml:space="preserve">
+    <value>PTR DNS 記錄已解析為「{0}」！</value>
+  </data>
+  <data name="GotXXXAsPublicIPAddressFromXXXMessage" xml:space="preserve">
+    <value>已從「{1}」取得公共 IP 位址：「{0}」！</value>
+  </data>
+  <data name="ResolvedXXXAsHostnameForIPAddressXXXMessage" xml:space="preserve">
+    <value>已將「{1}」解析為主機名稱：「{0}」！</value>
+  </data>
+  <data name="PublicIPAddressCheckIsDisabled" xml:space="preserve">
+    <value>公共 IP 位址檢查
+已停用！</value>
+  </data>
+  <data name="TCPIPStackIsAvailableMessage" xml:space="preserve">
+    <value>TCP/IP 堆疊可用。「{0}」能透過 ICMP 連通！</value>
+  </data>
+  <data name="TCPIPStackIsNotAvailableMessage" xml:space="preserve">
+    <value>TCP/IP 堆疊不可用…「{0}」無法透過 ICMP 連通！</value>
+  </data>
+  <data name="XXXDetectedAsGatewayIPAddress" xml:space="preserve">
+    <value>已偵測到「{0}」為閘道器 IP 位址！</value>
+  </data>
+  <data name="XXXDetectedAsLocalIPAddressMessage" xml:space="preserve">
+    <value>已偵測到「{0}」為本機 IP 位址！</value>
+  </data>
+  <data name="XXXIsNotReachableViaICMPMessage" xml:space="preserve">
+    <value>「{0}」無法透過 ICMP 連通！</value>
+  </data>
+  <data name="XXXIsReachableViaICMPMessage" xml:space="preserve">
+    <value>「{0}」能透過 ICMP 連通！</value>
+  </data>
+  <data name="UseCustomIPv4AddressAPI" xml:space="preserve">
+    <value>使用自訂 IPv4 位址 API</value>
+  </data>
+  <data name="HelpMessage_CustomPublicIPv4AddressAPI" xml:space="preserve">
+    <value>可透過 HTTP 或 HTTPS 連線的網路服務 URL，回傳一個 IPv4 位址「例如 "xx.xx.xx.xx"」作為回應。</value>
+  </data>
+  <data name="CouldNotParsePublicIPAddressFromXXXMessage" xml:space="preserve">
+    <value>無法從「{0}」解析出公共 IP 位址！請嘗試其他服務或使用預設設定…</value>
+  </data>
+  <data name="CouldNotConnectToXXXMessage" xml:space="preserve">
+    <value>無法連線到 "{0}"！</value>
+  </data>
+  <data name="IPv4ProtocolAvailable" xml:space="preserve">
+    <value>IPv4 通訊協定可用</value>
+  </data>
+  <data name="IPv6ProtocolAvailable" xml:space="preserve">
+    <value>IPv6 通訊協定可用</value>
+  </data>
+  <data name="CopyNoun" xml:space="preserve">
+    <value>複製</value>
+  </data>
+  <data name="Official" xml:space="preserve">
+    <value>官方</value>
+  </data>
+  <data name="NetworkConnectionType" xml:space="preserve">
+    <value>網路連線類型</value>
+  </data>
+  <data name="DesktopBackground" xml:space="preserve">
+    <value>桌面背景</value>
+  </data>
+  <data name="DesktopComposition" xml:space="preserve">
+    <value>桌面轉譯</value>
+  </data>
+  <data name="Experience" xml:space="preserve">
+    <value>體驗</value>
+  </data>
+  <data name="FontSmoothing" xml:space="preserve">
+    <value>字型平滑處理</value>
+  </data>
+  <data name="MenuAndWindowAnimation" xml:space="preserve">
+    <value>功能表及視窗動畫</value>
+  </data>
+  <data name="Performance" xml:space="preserve">
+    <value>效能</value>
+  </data>
+  <data name="PersistentBitmapCaching" xml:space="preserve">
+    <value>持續性點陣圖快取</value>
+  </data>
+  <data name="ReconnectIfTheConnectionIsDropped" xml:space="preserve">
+    <value>如果連線中斷的話，重新連線</value>
+  </data>
+  <data name="RemoteDesktopNetworkConnectionType_BroadbandHigh" xml:space="preserve">
+    <value>高速寬頻 (2 Mbps - 10 Mbps)</value>
+  </data>
+  <data name="RemoteDesktopNetworkConnectionType_BroadbandLow" xml:space="preserve">
+    <value>低速寬頻 (256 kbps - 2 Mbps)</value>
+  </data>
+  <data name="RemoteDesktopNetworkConnectionType_DetectAutomatically" xml:space="preserve">
+    <value>自動偵測連線品質</value>
+  </data>
+  <data name="RemoteDesktopNetworkConnectionType_LAN" xml:space="preserve">
+    <value>LAN (10 Mbps 或較高)</value>
+  </data>
+  <data name="RemoteDesktopNetworkConnectionType_Modem" xml:space="preserve">
+    <value>數據機 (56 kbps)</value>
+  </data>
+  <data name="RemoteDesktopNetworkConnectionType_Satellite" xml:space="preserve">
+    <value>衛星 (2 Mbps - 16 Mbps 並含高延遲)</value>
+  </data>
+  <data name="RemoteDesktopNetworkConnectionType_WAN" xml:space="preserve">
+    <value>WAN (10 Mbps 或更快並含高延遲)</value>
+  </data>
+  <data name="ShowWindowContentsWhileDragging" xml:space="preserve">
+    <value>拖曳時顯示視窗內容</value>
+  </data>
+  <data name="VisualStyles" xml:space="preserve">
+    <value>視覺樣式</value>
+  </data>
+  <data name="ViewOnly" xml:space="preserve">
+    <value>View only</value>
+  </data>
+  <data name="ViewOnlyDescription" xml:space="preserve">
+    <value>Block keyboard and mouse input to the remote session</value>
+  </data>
+  <data name="RemoteAudio" xml:space="preserve">
+    <value>遠端音訊</value>
+  </data>
+  <data name="RemoteAudioPlayback" xml:space="preserve">
+    <value>遠端音效播放</value>
+  </data>
+  <data name="RemoteAudioRecording" xml:space="preserve">
+    <value>遠端音效錄製</value>
+  </data>
+  <data name="RemoteDesktopAudioCaptureRedirectionMode_DoNotRecord" xml:space="preserve">
+    <value>不錄製</value>
+  </data>
+  <data name="RemoteDesktopAudioCaptureRedirectionMode_RecordFromThisComputer" xml:space="preserve">
+    <value>從這部電腦錄製</value>
+  </data>
+  <data name="RemoteDesktopAudioRedirectionMode_DoNotPlay" xml:space="preserve">
+    <value>不要播放</value>
+  </data>
+  <data name="RemoteDesktopAudioRedirectionMode_PlayOnRemoteComputer" xml:space="preserve">
+    <value>在遠端電腦上播放</value>
+  </data>
+  <data name="RemoteDesktopAudioRedirectionMode_PlayOnThisComputer" xml:space="preserve">
+    <value>在這部電腦上播放</value>
+  </data>
+  <data name="Gateway" xml:space="preserve">
+    <value>閘道</value>
+  </data>
+  <data name="CustomCommands" xml:space="preserve">
+    <value>自訂命令</value>
+  </data>
+  <data name="AddCustomCommand" xml:space="preserve">
+    <value>新增自訂命令</value>
+  </data>
+  <data name="Arguments" xml:space="preserve">
+    <value>參數</value>
+  </data>
+  <data name="DeleteCustomCommand" xml:space="preserve">
+    <value>刪除自訂命令</value>
+  </data>
+  <data name="EditCustomCommand" xml:space="preserve">
+    <value>編輯自訂命令</value>
+  </data>
+  <data name="Program" xml:space="preserve">
+    <value>程式</value>
+  </data>
+  <data name="Private" xml:space="preserve">
+    <value>私密</value>
+  </data>
+  <data name="Public" xml:space="preserve">
+    <value>公開</value>
+  </data>
+  <data name="DeleteCustomCommandMessage" xml:space="preserve">
+    <value>所選的自訂命令將被永久刪除。</value>
+  </data>
+  <data name="Restart" xml:space="preserve">
+    <value>重新啟動</value>
+  </data>
+  <data name="WarningMessage_CouldNotResolveIPAddressForHostname" xml:space="preserve">
+    <value>無法為主機名稱解析 IP 位址！</value>
+  </data>
+  <data name="CtrlAltDel" xml:space="preserve">
+    <value>Ctrl+Alt+Del</value>
+  </data>
+  <data name="TaskManager" xml:space="preserve">
+    <value>Task Manager (Ctrl+Shift+Esc)</value>
+  </data>
+  <data name="Lock" xml:space="preserve">
+    <value>Lock (Win+L)</value>
+  </data>
+  <data name="ShowDesktop" xml:space="preserve">
+    <value>Show Desktop (Win+D)</value>
+  </data>
+  <data name="Explorer" xml:space="preserve">
+    <value>Explorer (Win+E)</value>
+  </data>
+  <data name="RunDialog" xml:space="preserve">
+    <value>Run dialog (Win+R)</value>
+  </data>
+  <data name="KeyboardShortcuts" xml:space="preserve">
+    <value>鍵盤快捷鍵</value>
+  </data>
+  <data name="AdjustScreen" xml:space="preserve">
+    <value>調整螢幕</value>
+  </data>
+  <data name="Fullscreen" xml:space="preserve">
+    <value>全螢幕</value>
+  </data>
+  <data name="CouldNotSendKeystroke" xml:space="preserve">
+    <value>無法傳送按鍵輸入！</value>
+  </data>
+  <data name="Disconnect" xml:space="preserve">
+    <value>已中斷連線</value>
+  </data>
+  <data name="DetectLocalIPAddressAndSubnetmask" xml:space="preserve">
+    <value>偵測本機 IP 位址和子網路遮罩</value>
+  </data>
+  <data name="CouldNotDetectSubnetmask" xml:space="preserve">
+    <value>無法偵測子網路遮罩！</value>
+  </data>
+  <data name="DetectingNetworkDots" xml:space="preserve">
+    <value>偵測網路中...</value>
+  </data>
+  <data name="ClosingInXSecondsDots" xml:space="preserve">
+    <value>{0} 秒鐘後關閉中...</value>
+  </data>
+  <data name="NetworkUnavailable" xml:space="preserve">
+    <value>網路無法使用!</value>
+  </data>
+  <data name="IPAddressToDetectLocalIPAddressBasedOnRouting" xml:space="preserve">
+    <value>根據路由偵測本機 IP 位址</value>
+  </data>
+  <data name="ShowStatusWindowOnNetworkChange" xml:space="preserve">
+    <value>在網路變更時顯示狀態視窗</value>
+  </data>
+  <data name="TimeInSecondsHowLongTheStatusWindowIsShown" xml:space="preserve">
+    <value>以秒為單位，表示狀態窗口顯示的時長。</value>
+  </data>
+  <data name="WiFi" xml:space="preserve">
+    <value>WiFi</value>
+  </data>
+  <data name="Networks" xml:space="preserve">
+    <value>網路</value>
+  </data>
+  <data name="SearchingForNetworksDots" xml:space="preserve">
+    <value>正在搜尋網路...</value>
+  </data>
+  <data name="NoWiFiAdaptersFound" xml:space="preserve">
+    <value>找不到 WiFi 介面卡！</value>
+  </data>
+  <data name="SearchingWiFiAdaptersDots" xml:space="preserve">
+    <value>正在搜尋 WiFi 介面卡...</value>
+  </data>
+  <data name="NoWiFiNetworksFound" xml:space="preserve">
+    <value>找不到 WiFi 網路！</value>
+  </data>
+  <data name="Channels" xml:space="preserve">
+    <value>頻道</value>
+  </data>
+  <data name="Channel" xml:space="preserve">
+    <value>頻道</value>
+  </data>
+  <data name="ChannelWidth" xml:space="preserve">
+    <value>通道寬度</value>
+  </data>
+  <data name="GHz2dot4" xml:space="preserve">
+    <value>2.4 GHz</value>
+  </data>
+  <data name="GHz5" xml:space="preserve">
+    <value>5 GHz</value>
+  </data>
+  <data name="GHz2dot4And5" xml:space="preserve">
+    <value>2.4 &amp; 5 GHz</value>
+  </data>
+  <data name="SignalStrength" xml:space="preserve">
+    <value>訊號強度</value>
+  </data>
+  <data name="CurrentDownloadSpeed" xml:space="preserve">
+    <value>目前下載速度</value>
+  </data>
+  <data name="CurrentUploadSpeed" xml:space="preserve">
+    <value>目前上傳速度</value>
+  </data>
+  <data name="MeasuredTime" xml:space="preserve">
+    <value>測量時間</value>
+  </data>
+  <data name="NetworkUsage" xml:space="preserve">
+    <value>網路使用量</value>
+  </data>
+  <data name="TotalDownload" xml:space="preserve">
+    <value>總下載</value>
+  </data>
+  <data name="TotalUpload" xml:space="preserve">
+    <value>總上傳</value>
+  </data>
+  <data name="Retries" xml:space="preserve">
+    <value>重試</value>
+  </data>
+  <data name="UseCache" xml:space="preserve">
+    <value>使用快取</value>
+  </data>
+  <data name="UseOnlyTCP" xml:space="preserve">
+    <value>僅使用 TCP。</value>
+  </data>
+  <data name="QueryClass" xml:space="preserve">
+    <value>查詢類別</value>
+  </data>
+  <data name="DomainName" xml:space="preserve">
+    <value>網域名稱</value>
+  </data>
+  <data name="TimeoutS" xml:space="preserve">
+    <value>逾時（秒）</value>
+  </data>
+  <data name="ReportIssueOrCreateFeatureRequest" xml:space="preserve">
+    <value>回報問題或提出功能需求。</value>
+  </data>
+  <data name="BeaconInterval" xml:space="preserve">
+    <value>信號發送間隔</value>
+  </data>
+  <data name="Encryption" xml:space="preserve">
+    <value>加密</value>
+  </data>
+  <data name="Infrastructure" xml:space="preserve">
+    <value>基礎結構</value>
+  </data>
+  <data name="NetworkKind" xml:space="preserve">
+    <value>網路種類</value>
+  </data>
+  <data name="PhyKind" xml:space="preserve">
+    <value>物理層類型</value>
+  </data>
+  <data name="Uptime" xml:space="preserve">
+    <value>上線時長</value>
+  </data>
+  <data name="ShowErrorMessage" xml:space="preserve">
+    <value>顯示錯誤訊息</value>
+  </data>
+  <data name="PingMonitor" xml:space="preserve">
+    <value>Ping 監視器</value>
+  </data>
+  <data name="AddHost" xml:space="preserve">
+    <value>新增主機</value>
+  </data>
+  <data name="AddAHostToMonitor" xml:space="preserve">
+    <value>新增主機進行監控</value>
+  </data>
+  <data name="Pause" xml:space="preserve">
+    <value>暫停</value>
+  </data>
+  <data name="Resume" xml:space="preserve">
+    <value>繼續</value>
+  </data>
+  <data name="CouldNotResolveIPAddressFor" xml:space="preserve">
+    <value>無法解析 ip 位址："{0}"</value>
+  </data>
+  <data name="PingMonitorNotification" xml:space="preserve">
+    <value>通知</value>
+  </data>
+  <data name="ShowNotificationPopupOnStatusChange" xml:space="preserve">
+    <value>在狀態變更時顯示通知彈窗</value>
+  </data>
+  <data name="PlaySoundOnStatusChange" xml:space="preserve">
+    <value>在狀態變更時播放聲音</value>
+  </data>
+  <data name="NotificationSuccessThreshold" xml:space="preserve">
+    <value>成功門檻</value>
+  </data>
+  <data name="HelpMessage_NotificationSuccessThreshold" xml:space="preserve">
+    <value>顯示「主機已連線」通知前所需的連續成功 Ping 次數。較高的值可減少因主機狀態頻繁變動所產生的雜訊。</value>
+  </data>
+  <data name="NotificationFailureThreshold" xml:space="preserve">
+    <value>失敗門檻</value>
+  </data>
+  <data name="HelpMessage_NotificationFailureThreshold" xml:space="preserve">
+    <value>顯示「主機已斷線」通知前所需的連續失敗 Ping 次數（逾時）。較高的值可減少因主機狀態頻繁變動所產生的雜訊。</value>
+  </data>
+  <data name="NotificationDurationInSeconds" xml:space="preserve">
+    <value>顯示時間（秒）</value>
+  </data>
+  <data name="HostIsUp" xml:space="preserve">
+    <value>主機已連線</value>
+  </data>
+  <data name="HostIsDown" xml:space="preserve">
+    <value>主機已斷線</value>
+  </data>
+  <data name="TheApplicationWillBeRestarted" xml:space="preserve">
+    <value>應用程式將重新啟動...</value>
+  </data>
+  <data name="ClouldNotExportFileSeeErrorMessageXX" xml:space="preserve">
+    <value>不能匯出檔案！參閱錯誤訊息："{0}"</value>
+  </data>
+  <data name="FileExportedToXX" xml:space="preserve">
+    <value>檔案已匯出到 "{0}"！</value>
+  </data>
+  <data name="ClouldNotImportFileSeeErrorMessageXX" xml:space="preserve">
+    <value>不能匯入檔案！參閱錯誤訊息："{0}"</value>
+  </data>
+  <data name="LocationCannotBeChangedInThePortableVersion" xml:space="preserve">
+    <value>可攜版中無法變更位置！</value>
+  </data>
+  <data name="IsEncrypted" xml:space="preserve">
+    <value>已加密</value>
+  </data>
+  <data name="OpenTheDocumentation" xml:space="preserve">
+    <value>開啟文件。</value>
+  </data>
+  <data name="ExampleProfileFileName" xml:space="preserve">
+    <value>客戶 1</value>
+  </data>
+  <data name="AddProfileFile" xml:space="preserve">
+    <value>新增設定檔檔案</value>
+  </data>
+  <data name="DisableEncryptionDots" xml:space="preserve">
+    <value>停用加密...</value>
+  </data>
+  <data name="EditProfileFile" xml:space="preserve">
+    <value>編輯設定檔檔案</value>
+  </data>
+  <data name="EnableEncryptionDots" xml:space="preserve">
+    <value>啟用加密</value>
+  </data>
+  <data name="EncryptionDots" xml:space="preserve">
+    <value>加密...</value>
+  </data>
+  <data name="ProfileNameAlreadyExists" xml:space="preserve">
+    <value>設定檔名稱已經存在！</value>
+  </data>
+  <data name="Rename" xml:space="preserve">
+    <value>重新命名</value>
+  </data>
+  <data name="DeleteProfileFile" xml:space="preserve">
+    <value>刪除設定檔檔案</value>
+  </data>
+  <data name="ResetProfilesMessage" xml:space="preserve">
+    <value>此設定檔中的所有設定檔將被永久刪除！</value>
+  </data>
+  <data name="Patch" xml:space="preserve">
+    <value>修補</value>
+  </data>
+  <data name="RestartTheApplicationToChangeTheLanguage" xml:space="preserve">
+    <value>重新啟動應用程式來變更語言！</value>
+  </data>
+  <data name="CurrentlyDownloaded" xml:space="preserve">
+    <value>目前已下載</value>
+  </data>
+  <data name="CurrentlyUploaded" xml:space="preserve">
+    <value>目前已上傳</value>
+  </data>
+  <data name="LldpCdp" xml:space="preserve">
+    <value>LLDP / CDP</value>
+  </data>
+  <data name="RestartAsAdmin" xml:space="preserve">
+    <value>系統管理員身分重新啟動</value>
+  </data>
+  <data name="NetworkPacketsCaptureAdminMessage" xml:space="preserve">
+    <value>分析網路封包需要提升權限！</value>
+  </data>
+  <data name="Capture" xml:space="preserve">
+    <value>擷取</value>
+  </data>
+  <data name="Device" xml:space="preserve">
+    <value>裝置</value>
+  </data>
+  <data name="DurationS" xml:space="preserve">
+    <value>持續時間（秒）</value>
+  </data>
+  <data name="Model" xml:space="preserve">
+    <value>型號</value>
+  </data>
+  <data name="VLAN" xml:space="preserve">
+    <value>VLAN</value>
+  </data>
+  <data name="CaptureNetworkPacketsToViewLLDPorCDPInformation" xml:space="preserve">
+    <value>捕捉網路封包以檢視 LLDP 或 CDP 資訊！</value>
+  </data>
+  <data name="NoDiscoveryProtocolPackagesReceived" xml:space="preserve">
+    <value>未收到任何探測協定封包！</value>
+  </data>
+  <data name="CapturingNetworkPackagesDots" xml:space="preserve">
+    <value>正在擷取網路封包...</value>
+  </data>
+  <data name="DiscoveryProtocol" xml:space="preserve">
+    <value>Discovery 通訊協定</value>
+  </data>
+  <data name="DiscoveryProtocol_Cdp" xml:space="preserve">
+    <value>CDP</value>
+  </data>
+  <data name="DiscoveryProtocol_Lldp" xml:space="preserve">
+    <value>LLDP</value>
+  </data>
+  <data name="DiscoveryProtocol_LldpCdp" xml:space="preserve">
+    <value>LLDP / CDP</value>
+  </data>
+  <data name="XXSecondsRemainingDots" xml:space="preserve">
+    <value>{0} 秒數剩餘...</value>
+  </data>
+  <data name="Help" xml:space="preserve">
+    <value>說明</value>
+  </data>
+  <data name="HelpMessage_ParameterApplication" xml:space="preserve">
+    <value>啟動時顯示的應用程式</value>
+  </data>
+  <data name="Parameter" xml:space="preserve">
+    <value>參數</value>
+  </data>
+  <data name="Value" xml:space="preserve">
+    <value>值</value>
+  </data>
+  <data name="WebConsole" xml:space="preserve">
+    <value>網頁主控台</value>
+  </data>
+  <data name="Reload" xml:space="preserve">
+    <value>重新載入</value>
+  </data>
+  <data name="Browser" xml:space="preserve">
+    <value>瀏覽器</value>
+  </data>
+  <data name="WebViewControlCertificateIsInvalidMessage" xml:space="preserve">
+    <value>WebView 控制項（Microsoft Edge）無法連線到使用不正確憑證的網站！</value>
+  </data>
+  <data name="MicrosoftWindowsSDKContractsIsNotAvailable" xml:space="preserve">
+    <value>此功能需使用 Microsoft.Windows.SDK.Contracts，但該套件在此系統（如 Windows Server）中無法取得。</value>
+  </data>
+  <data name="ApplicationName_NeighborTable" xml:space="preserve">
+    <value>鄰居表單</value>
+  </data>
+  <data name="ApplicationName_Connections" xml:space="preserve">
+    <value>連線</value>
+  </data>
+  <data name="ApplicationName_Dashboard" xml:space="preserve">
+    <value>儀表板</value>
+  </data>
+  <data name="ApplicationName_DiscoveryProtocol" xml:space="preserve">
+    <value>Discovery 通訊協定</value>
+  </data>
+  <data name="ApplicationName_DNSLookup" xml:space="preserve">
+    <value>DNS 查詢</value>
+  </data>
+  <data name="ApplicationName_HTTPHeaders" xml:space="preserve">
+    <value>HTTP 標頭</value>
+  </data>
+  <data name="ApplicationName_IPScanner" xml:space="preserve">
+    <value>IP 掃描器</value>
+  </data>
+  <data name="ApplicationName_Listeners" xml:space="preserve">
+    <value>監聽器</value>
+  </data>
+  <data name="ApplicationName_Lookup" xml:space="preserve">
+    <value>查詢</value>
+  </data>
+  <data name="ApplicationName_NetworkInterface" xml:space="preserve">
+    <value>網路介面</value>
+  </data>
+  <data name="ApplicationName_Ping" xml:space="preserve">
+    <value>Ping</value>
+  </data>
+  <data name="ApplicationName_PingMonitor" xml:space="preserve">
+    <value>Ping 監控</value>
+  </data>
+  <data name="ApplicationName_PortScanner" xml:space="preserve">
+    <value>Port 掃描器</value>
+  </data>
+  <data name="ApplicationName_PowerShell" xml:space="preserve">
+    <value>PowerShell</value>
+  </data>
+  <data name="ApplicationName_PuTTY" xml:space="preserve">
+    <value>PuTTY</value>
+  </data>
+  <data name="ApplicationName_RemoteDesktop" xml:space="preserve">
+    <value>遠端桌面</value>
+  </data>
+  <data name="ApplicationName_SNMP" xml:space="preserve">
+    <value>SNMP</value>
+  </data>
+  <data name="ApplicationName_SubnetCalculator" xml:space="preserve">
+    <value>子網路計算器</value>
+  </data>
+  <data name="ApplicationName_TigerVNC" xml:space="preserve">
+    <value>TigerVNC</value>
+  </data>
+  <data name="ApplicationName_Traceroute" xml:space="preserve">
+    <value>路徑追蹤</value>
+  </data>
+  <data name="ApplicationName_WakeOnLAN" xml:space="preserve">
+    <value>網路喚醒</value>
+  </data>
+  <data name="ApplicationName_WebConsole" xml:space="preserve">
+    <value>網頁主控台</value>
+  </data>
+  <data name="ApplicationName_Whois" xml:space="preserve">
+    <value>Whois</value>
+  </data>
+  <data name="ApplicationName_WiFi" xml:space="preserve">
+    <value>WiFi</value>
+  </data>
+  <data name="Accent_Amber" xml:space="preserve">
+    <value>琥珀色</value>
+  </data>
+  <data name="Accent_Black" xml:space="preserve">
+    <value>黑色</value>
+  </data>
+  <data name="Accent_Blue" xml:space="preserve">
+    <value>藍色</value>
+  </data>
+  <data name="Accent_Brown" xml:space="preserve">
+    <value>褐色</value>
+  </data>
+  <data name="Accent_Cobalt" xml:space="preserve">
+    <value>深藍色</value>
+  </data>
+  <data name="Accent_Crimson" xml:space="preserve">
+    <value>深紅色</value>
+  </data>
+  <data name="Accent_Cyan" xml:space="preserve">
+    <value>青色</value>
+  </data>
+  <data name="Accent_Emerald" xml:space="preserve">
+    <value>深綠色</value>
+  </data>
+  <data name="Accent_Green" xml:space="preserve">
+    <value>綠色</value>
+  </data>
+  <data name="Accent_Indigo" xml:space="preserve">
+    <value>靛藍色</value>
+  </data>
+  <data name="Accent_Lime" xml:space="preserve">
+    <value>亮綠色</value>
+  </data>
+  <data name="Accent_Magenta" xml:space="preserve">
+    <value>洋紅色</value>
+  </data>
+  <data name="Accent_Mauve" xml:space="preserve">
+    <value>紫紅色</value>
+  </data>
+  <data name="Accent_Olive" xml:space="preserve">
+    <value>橄欖色</value>
+  </data>
+  <data name="Accent_Orange" xml:space="preserve">
+    <value>橙色</value>
+  </data>
+  <data name="Accent_Purple" xml:space="preserve">
+    <value>紫色</value>
+  </data>
+  <data name="Accent_Red" xml:space="preserve">
+    <value>紅色</value>
+  </data>
+  <data name="Accent_Sienna" xml:space="preserve">
+    <value>赭色</value>
+  </data>
+  <data name="Accent_Taupe" xml:space="preserve">
+    <value>褐灰色</value>
+  </data>
+  <data name="Accent_Teal" xml:space="preserve">
+    <value>藍綠色</value>
+  </data>
+  <data name="Accent_Violet" xml:space="preserve">
+    <value>粉紅色</value>
+  </data>
+  <data name="Accent_Yellow" xml:space="preserve">
+    <value>黃色</value>
+  </data>
+  <data name="Accent_Steel" xml:space="preserve">
+    <value>鐵灰色</value>
+  </data>
+  <data name="ProfileName_General" xml:space="preserve">
+    <value>一般</value>
+  </data>
+  <data name="SettingsGroup_Application" xml:space="preserve">
+    <value>應用程式</value>
+  </data>
+  <data name="SettingsGroup_General" xml:space="preserve">
+    <value>一般</value>
+  </data>
+  <data name="SettingsName_Appearance" xml:space="preserve">
+    <value>外觀</value>
+  </data>
+  <data name="SettingsName_Autostart" xml:space="preserve">
+    <value>自動啟動</value>
+  </data>
+  <data name="SettingsName_General" xml:space="preserve">
+    <value>一般</value>
+  </data>
+  <data name="SettingsName_HotKeys" xml:space="preserve">
+    <value>熱鍵</value>
+  </data>
+  <data name="SettingsName_Language" xml:space="preserve">
+    <value>語言</value>
+  </data>
+  <data name="SettingsName_Profiles" xml:space="preserve">
+    <value>設定檔</value>
+  </data>
+  <data name="SettingsName_Settings" xml:space="preserve">
+    <value>設定</value>
+  </data>
+  <data name="SettingsName_Status" xml:space="preserve">
+    <value>狀態</value>
+  </data>
+  <data name="SettingsName_Update" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="SettingsName_Window" xml:space="preserve">
+    <value>視窗</value>
+  </data>
+  <data name="EnableLog" xml:space="preserve">
+    <value>啟用記錄</value>
+  </data>
+  <data name="LogFileName" xml:space="preserve">
+    <value>記錄檔名稱</value>
+  </data>
+  <data name="LogPath" xml:space="preserve">
+    <value>記錄路徑</value>
+  </data>
+  <data name="LogMode" xml:space="preserve">
+    <value>記錄模式</value>
+  </data>
+  <data name="Log" xml:space="preserve">
+    <value>記錄</value>
+  </data>
+  <data name="SSHLog" xml:space="preserve">
+    <value>SSH 記錄</value>
+  </data>
+  <data name="SSHRawLog" xml:space="preserve">
+    <value>SSH 原始記錄</value>
+  </data>
+  <data name="PuTTYLogMode_SessionLog" xml:space="preserve">
+    <value>會話記錄</value>
+  </data>
+  <data name="PuTTYLogMode_SSHLog" xml:space="preserve">
+    <value>SSH 記錄</value>
+  </data>
+  <data name="PuTTYLogMode_SSHRawLog" xml:space="preserve">
+    <value>SSH 和原始記錄</value>
+  </data>
+  <data name="EnterValidFileName" xml:space="preserve">
+    <value>輸入有效的檔案名稱！</value>
+  </data>
+  <data name="Lost" xml:space="preserve">
+    <value>遺失</value>
+  </data>
+  <data name="Received" xml:space="preserve">
+    <value>已接收</value>
+  </data>
+  <data name="StatusChange" xml:space="preserve">
+    <value>狀態變更</value>
+  </data>
+  <data name="UpdateAvailable" xml:space="preserve">
+    <value>有可用的更新！</value>
+  </data>
+  <data name="PrivateKeyFile" xml:space="preserve">
+    <value>私密金鑰檔案</value>
+  </data>
+  <data name="Preview" xml:space="preserve">
+    <value>預覽</value>
+  </data>
+  <data name="PortProfiles" xml:space="preserve">
+    <value>連接埠設定檔</value>
+  </data>
+  <data name="AddPortProfile" xml:space="preserve">
+    <value>新增連接埠設定檔</value>
+  </data>
+  <data name="DeletePortProfile" xml:space="preserve">
+    <value>刪除連接埠設定檔</value>
+  </data>
+  <data name="EditPortProfile" xml:space="preserve">
+    <value>編輯連接埠設定檔</value>
+  </data>
+  <data name="DeletePortProfileMessage" xml:space="preserve">
+    <value>所選的連接埠設定檔將被永久刪除。</value>
+  </data>
+  <data name="SelectPortProfile" xml:space="preserve">
+    <value>選擇連接埠設定檔</value>
+  </data>
+  <data name="OpenPortProfilesDots" xml:space="preserve">
+    <value>開啟連接埠設定檔...</value>
+  </data>
+  <data name="ShowSplashScreenOnStart" xml:space="preserve">
+    <value>啟動時顯示啟動畫面</value>
+  </data>
+  <data name="SplashScreen" xml:space="preserve">
+    <value>啟動畫面</value>
+  </data>
+  <data name="DownloadMicrosoftEdgeWebView2Runtime" xml:space="preserve">
+    <value>下載 Microsoft Edge WebView2 Runtime</value>
+  </data>
+  <data name="MicrosoftEdgeWebView2RuntimeIsNotAvailable" xml:space="preserve">
+    <value>Microsoft Edge WebView2 Runtime 無法使用！</value>
+  </data>
+  <data name="Frequency" xml:space="preserve">
+    <value>頻率</value>
+  </data>
+  <data name="SSID" xml:space="preserve">
+    <value>SSID</value>
+  </data>
+  <data name="ProfileFileCouldNotBeLoaded" xml:space="preserve">
+    <value>無法載入設定檔！</value>
+  </data>
+  <data name="ProfileFileCouldNotBeLoadedMessage" xml:space="preserve">
+    <value>設定檔無法載入，可能已損毀。您可以嘗試從備份還原該檔案或將其刪除。
+
+如果此情況在未預期時發生，或於更新後出現，請至 GitHub 報告錯誤。
+
+
+錯誤訊息：
+「{0}」</value>
+  </data>
+  <data name="EditGroupDots" xml:space="preserve">
+    <value>編輯群組...</value>
+  </data>
+  <data name="DecryptionError" xml:space="preserve">
+    <value>解密錯誤</value>
+  </data>
+  <data name="DecryptionErrorMessage" xml:space="preserve">
+    <value>無法解密檔案。您可至 GitHub 報告此問題。</value>
+  </data>
+  <data name="EncryptionError" xml:space="preserve">
+    <value>加密錯誤</value>
+  </data>
+  <data name="EncryptionErrorMessage" xml:space="preserve">
+    <value>無法加密檔案。您可至 GitHub 報告此問題。</value>
+  </data>
+  <data name="CurrentPassword" xml:space="preserve">
+    <value>目前密碼</value>
+  </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>新密碼</value>
+  </data>
+  <data name="ChangeMasterPassword" xml:space="preserve">
+    <value>更改主密碼</value>
+  </data>
+  <data name="UnlockProfile" xml:space="preserve">
+    <value>解鎖設定檔</value>
+  </data>
+  <data name="UnlockTheProfileFileMessage" xml:space="preserve">
+    <value>請先解鎖設定檔案才能使用設定檔！</value>
+  </data>
+  <data name="Disclaimer" xml:space="preserve">
+    <value>免責聲明</value>
+  </data>
+  <data name="Merge" xml:space="preserve">
+    <value>合併</value>
+  </data>
+  <data name="UseOther" xml:space="preserve">
+    <value>使用其他</value>
+  </data>
+  <data name="Move" xml:space="preserve">
+    <value>移動</value>
+  </data>
+  <data name="LastScanAtX" xml:space="preserve">
+    <value>上一次掃描時間：{0}</value>
+  </data>
+  <data name="HiddenNetwork" xml:space="preserve">
+    <value>隱藏網路</value>
+  </data>
+  <data name="DevelopedAndMaintainedByX" xml:space="preserve">
+    <value>由 {0} 進行開發與維護，並在此感謝…</value>
+  </data>
+  <data name="ExternalService_ipify_Description" xml:space="preserve">
+    <value>簡易公共 IP 位址 API</value>
+  </data>
+  <data name="Library_AirspaceFixer_Description" xml:space="preserve">
+    <value>AirspacePanel 可解決在 WPF 主機中使用 WinForms 時所遇到的所有 Airspace 問題。</value>
+  </data>
+  <data name="Library_ControlzEx_Description" xml:space="preserve">
+    <value>為 WPF 共享的 Controlz 和…更多</value>
+  </data>
+  <data name="Library_DnsClientNET_Description" xml:space="preserve">
+    <value>DnsClient.NET 是一個簡潔而又強大、效能極佳的開源函式庫，為 .NET Framework 設計，可用於執行 DNS 查詢</value>
+  </data>
+  <data name="Library_Dragablz_Description" xml:space="preserve">
+    <value>WPF 可拖曳與分離標籤控制項</value>
+  </data>
+  <data name="Library_IPNetwork_Description" xml:space="preserve">
+    <value>這是一個 C# 函式庫，為 .NET 開發者提供複雜網路、IP、IPv4 / IPv6、子網遮罩、CIDR、子網、分割子網、超網及其計算等功能。</value>
+  </data>
+  <data name="Library_LiveCharts_Description" xml:space="preserve">
+    <value>美觀且具互動性的圖表、地圖與儀表。</value>
+  </data>
+  <data name="Library_LoadingIndicatorsWPF_Description" xml:space="preserve">
+    <value>WPF 載入指示器集合</value>
+  </data>
+  <data name="Library_MahAppsMetroIconPacks_Description" xml:space="preserve">
+    <value>WPF 與 UWP 統一套的優秀圖示集...</value>
+  </data>
+  <data name="Library_MahAppsMetro_Description" xml:space="preserve">
+    <value>Metro / Modern UI 樣式 WPF 應用程式開發工具包。</value>
+  </data>
+  <data name="Library_NewtonsoftJson_Description" xml:space="preserve">
+    <value>Json.NET 是一款流行且極速的 JSON 框架，供 .NET 開發使用</value>
+  </data>
+  <data name="Library_Octokit_Description" xml:space="preserve">
+    <value>用於 .NET 的 GitHub API 客戶端函式庫</value>
+  </data>
+  <data name="Library_PSDicoveryProtocol_Description" xml:space="preserve">
+    <value>捕捉並解析本機或遠端電腦上的 CDP 與 LLDP 封包</value>
+  </data>
+  <data name="Library_SharpSNMP_Description" xml:space="preserve">
+    <value>Sharp SNMP 函式庫 — 供 .NET 與 Mono 使用的開源 SNMP</value>
+  </data>
+  <data name="Resource_Flag_Description" xml:space="preserve">
+    <value>SVG 格式的全球國旗圖集。</value>
+  </data>
+  <data name="Resource_ListTLD_Description" xml:space="preserve">
+    <value>來自 iana.org 的頂級網域列表，用於從 whois.iana.org 通過連接埠 43 查詢各 TLD 的 whois 伺服器</value>
+  </data>
+  <data name="Resource_OUI_Description" xml:space="preserve">
+    <value>來自 IEEE.org 的 OUI 資料。</value>
+  </data>
+  <data name="Resource_ServiceNamePortNumber_Description" xml:space="preserve">
+    <value>由 iana.org 所維護之「服務名稱及傳輸協議埠號註冊表」。</value>
+  </data>
+  <data name="License_ApacheLicense2dot0" xml:space="preserve">
+    <value>Apache 許可證 2.0</value>
+  </data>
+  <data name="License_BDS2Clause" xml:space="preserve">
+    <value>BSD-2-條款</value>
+  </data>
+  <data name="License_MITLicense" xml:space="preserve">
+    <value>MIT 授權協議</value>
+  </data>
+  <data name="License_Unlicense" xml:space="preserve">
+    <value>未授權</value>
+  </data>
+  <data name="Library_CsWinRT_Description" xml:space="preserve">
+    <value>C#/WinRT 為 C# 語言提供打包好的 WinRT 投影支援</value>
+  </data>
+  <data name="Library_PowerShellSDK_Description" xml:space="preserve">
+    <value>PowerShell 主機執行環境</value>
+  </data>
+  <data name="Library_WebView2_Description" xml:space="preserve">
+    <value>WebView2 控制項允許您在本機應用程式中嵌入 Web 技術（HTML、CSS 和 JavaScript），並由 Microsoft Edge（Chromium）提供支援。</value>
+  </data>
+  <data name="Library_XamlBehaviorsWpf_Description" xml:space="preserve">
+    <value>使用 WPF 的 XAML 行為輕鬆為您的應用程式添加互動性。</value>
+  </data>
+  <data name="License_MicrosoftWebView2License" xml:space="preserve">
+    <value>Microsoft WebView2 許可協議</value>
+  </data>
+  <data name="WarningMessage_ProfileFileNotEncryptedStoringPasswords" xml:space="preserve">
+    <value>目前的設定檔未加密，密碼將以純文字形式存放於磁碟上！ 
+
+請至 設定 &gt; Profile 啟用設定檔加密，以安全方式儲存憑證。</value>
+  </data>
+  <data name="ICMPv4" xml:space="preserve">
+    <value>ICMPv4</value>
+  </data>
+  <data name="ICMPv6" xml:space="preserve">
+    <value>ICMPv6</value>
+  </data>
+  <data name="CheckIsDisabled" xml:space="preserve">
+    <value>檢查已停用！</value>
+  </data>
+  <data name="EnterValidIPv6Address" xml:space="preserve">
+    <value>輸入有效的 IPv6 位址！</value>
+  </data>
+  <data name="HelpMessage_PublicIPv4Address" xml:space="preserve">
+    <value>可通過 ICMP 連線的公開 IPv4 位址。</value>
+  </data>
+  <data name="HelpMessage_PublicIPv6Address" xml:space="preserve">
+    <value>可通過 ICMP 連線的公開 IPv6 位址。</value>
+  </data>
+  <data name="PublicIPv4Address" xml:space="preserve">
+    <value>公開 IPv4 位址</value>
+  </data>
+  <data name="PublicIPv6Address" xml:space="preserve">
+    <value>公開 IPv6 位址</value>
+  </data>
+  <data name="UseCustomIPv6AddressAPI" xml:space="preserve">
+    <value>使用自訂 IPv6 位址 API</value>
+  </data>
+  <data name="TimeToLive" xml:space="preserve">
+    <value>存活時間</value>
+  </data>
+  <data name="ChassisId" xml:space="preserve">
+    <value>機箱 Id</value>
+  </data>
+  <data name="Management" xml:space="preserve">
+    <value>管理</value>
+  </data>
+  <data name="DeviceDescription" xml:space="preserve">
+    <value>裝置描述</value>
+  </data>
+  <data name="PortDescription" xml:space="preserve">
+    <value>連接埠描述</value>
+  </data>
+  <data name="RemoveIPv4Address" xml:space="preserve">
+    <value>移除 IPv4 位址</value>
+  </data>
+  <data name="AdditionalConfigDots" xml:space="preserve">
+    <value>額外設定...</value>
+  </data>
+  <data name="RemoveIPv4AddressDots" xml:space="preserve">
+    <value>移除 IPv4 位址…</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_TotalLoginTimeLimitReached" xml:space="preserve">
+    <value>遠端會話因達到總登入時長上限而結束。此限制由伺服器管理員或網路政策設定。</value>
+  </data>
+  <data name="EnterValidHostname" xml:space="preserve">
+    <value>輸入有效的主機名稱！</value>
+  </data>
+  <data name="EnterValidHostnameAndPort" xml:space="preserve">
+    <value>輸入有效的主機名稱與埠號！</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_UnableToReconnectToRemoteSession" xml:space="preserve">
+    <value>無法重新連線至遠端會話。</value>
+  </data>
+  <data name="Migrate" xml:space="preserve">
+    <value>遷移</value>
+  </data>
+  <data name="ReportOnGitHub" xml:space="preserve">
+    <value>在 GitHub 上回報問題</value>
+  </data>
+  <data name="Groups" xml:space="preserve">
+    <value>群組</value>
+  </data>
+  <data name="AddGroup" xml:space="preserve">
+    <value>新增群組</value>
+  </data>
+  <data name="DeleteGroup" xml:space="preserve">
+    <value>刪除群組</value>
+  </data>
+  <data name="DeleteGroupMessage" xml:space="preserve">
+    <value>所選的群組與其中所有設定檔將被永久刪除。</value>
+  </data>
+  <data name="ErrorMessage_NameIsAlreadyUsed" xml:space="preserve">
+    <value>此名稱已被使用！</value>
+  </data>
+  <data name="Resize" xml:space="preserve">
+    <value>調整大小</value>
+  </data>
+  <data name="DeleteProfiles" xml:space="preserve">
+    <value>刪除設定檔</value>
+  </data>
+  <data name="DeleteProfilesMessage" xml:space="preserve">
+    <value>所選的設定檔將被永久刪除。</value>
+  </data>
+  <data name="UseCustomThemes" xml:space="preserve">
+    <value>使用自訂主題</value>
+  </data>
+  <data name="CustomThemes" xml:space="preserve">
+    <value>自訂主題</value>
+  </data>
+  <data name="ResetSettingsQuestion" xml:space="preserve">
+    <value>重設設定？</value>
+  </data>
+  <data name="SettingsResetExclamationMark" xml:space="preserve">
+    <value>已重設設定！</value>
+  </data>
+  <data name="InstanceId" xml:space="preserve">
+    <value>實例編號</value>
+  </data>
+  <data name="LocalConnection" xml:space="preserve">
+    <value>本地連線</value>
+  </data>
+  <data name="LocalInterface" xml:space="preserve">
+    <value>本地介面</value>
+  </data>
+  <data name="Library_log4net_Description" xml:space="preserve">
+    <value>log4net 是一款協助程式開發者將記錄輸出至多種目標的工具。</value>
+  </data>
+  <data name="Enabled" xml:space="preserve">
+    <value>已啟用</value>
+  </data>
+  <data name="Region" xml:space="preserve">
+    <value>區域</value>
+  </data>
+  <data name="ProfilesAndRegionsToSync" xml:space="preserve">
+    <value>要同步的設定檔與區域</value>
+  </data>
+  <data name="DefaultProfile" xml:space="preserve">
+    <value>預設設定檔</value>
+  </data>
+  <data name="DefaultRegion" xml:space="preserve">
+    <value>預設區域</value>
+  </data>
+  <data name="GroupNameCannotStartWithX" xml:space="preserve">
+    <value>群組名稱不能以「{0}」開頭！</value>
+  </data>
+  <data name="CheckForPreReleases" xml:space="preserve">
+    <value>檢查預發佈版本</value>
+  </data>
+  <data name="SyncIsDisabled" xml:space="preserve">
+    <value>同步已停用！</value>
+  </data>
+  <data name="Command" xml:space="preserve">
+    <value>命令</value>
+  </data>
+  <data name="ApplyThemeToPowerShellConsole" xml:space="preserve">
+    <value>將主題套用至 PowerShell 主控台</value>
+  </data>
+  <data name="PowerShellConsoleColorCanBeChangedUnderSettingsGeneralApperance" xml:space="preserve">
+    <value>PowerShell 控制台的配色可以在「設定 &gt; 一般 &gt; 外觀」中，改成與應用程式主題相同。</value>
+  </data>
+  <data name="HelpMessage_ApplyThemeToPowerShellConsole" xml:space="preserve">
+    <value>If you enable this option, the default PowerShell console settings in the registry under HKCU:\Console are overridden so that the PowerShell console window matches the application theme. This is a global system setting that may affect the appearance of the normal PowerShell window.
+
+Only the PowerShell consoles configured in the PowerShell settings are modified. Both Windows PowerShell and PWSH (PowerShell 7 and higher) are supported.
+
+Click in the upper right corner on the help / documentation button (left of the minimize button) or navigate to https://borntoberoot.net/NETworkManager/Documentation/Settings/Appearance for more details. Here are the values documented which will be adjusted.
+
+If the option is disabled again, the values are no longer modified. However, the original values are NOT restored.</value>
+  </data>
+  <data name="InputCannotEndWithSemicolon" xml:space="preserve">
+    <value>輸入不能以「;」結尾！</value>
+  </data>
+  <data name="InputDoesNotContainAnyText" xml:space="preserve">
+    <value>輸入不包含任何文字！</value>
+  </data>
+  <data name="ApplicationName_BitCalculator" xml:space="preserve">
+    <value>位元計算器</value>
+  </data>
+  <data name="BitCalculator" xml:space="preserve">
+    <value>位元計算器</value>
+  </data>
+  <data name="Notation" xml:space="preserve">
+    <value>符號表記</value>
+  </data>
+  <data name="Input" xml:space="preserve">
+    <value>輸入</value>
+  </data>
+  <data name="Unit" xml:space="preserve">
+    <value>單位</value>
+  </data>
+  <data name="Bits" xml:space="preserve">
+    <value>位元</value>
+  </data>
+  <data name="Gigabits" xml:space="preserve">
+    <value>十億位元 Gb</value>
+  </data>
+  <data name="Gigabytes" xml:space="preserve">
+    <value>十億位元組 GB</value>
+  </data>
+  <data name="Kilobits" xml:space="preserve">
+    <value>千位元 Kb</value>
+  </data>
+  <data name="Kilobytes" xml:space="preserve">
+    <value>千位元組 KB</value>
+  </data>
+  <data name="Megabits" xml:space="preserve">
+    <value>百萬位元 Mb</value>
+  </data>
+  <data name="Megabytes" xml:space="preserve">
+    <value>百萬位元組 MB</value>
+  </data>
+  <data name="Petabits" xml:space="preserve">
+    <value>千兆位元 Pb</value>
+  </data>
+  <data name="Petabytes" xml:space="preserve">
+    <value>千兆位元組 PB</value>
+  </data>
+  <data name="Terabits" xml:space="preserve">
+    <value>兆位元 Tb</value>
+  </data>
+  <data name="Terabytes" xml:space="preserve">
+    <value>兆位元組 TB</value>
+  </data>
+  <data name="EnterANumberAndSelectAUnitToCalculateTheUnitsDots" xml:space="preserve">
+    <value>輸入一個數值並選擇單位以進行單位換算…</value>
+  </data>
+  <data name="SettingsName_Network" xml:space="preserve">
+    <value>網路</value>
+  </data>
+  <data name="Proxy" xml:space="preserve">
+    <value>代理</value>
+  </data>
+  <data name="ResolveIPAddressForThisHost" xml:space="preserve">
+    <value>為此主機解析 IP 位址（首選 IPv4）。</value>
+  </data>
+  <data name="NoValidPowerShellPath" xml:space="preserve">
+    <value>有效的 PowerShell 路徑必須以「pwsh.exe」或「powershell.exe」結尾！</value>
+  </data>
+  <data name="NoValidPuTTYPath" xml:space="preserve">
+    <value>有效的 PuTTY 路徑必須以「PuTTY.exe」結尾！</value>
+  </data>
+  <data name="NoValidTigerVNCPath" xml:space="preserve">
+    <value>有效的 TigerVNC 路徑必須以「vncviewer-*.exe」或「vncviewer64-*.exe」結尾！</value>
+  </data>
+  <data name="ApplicationName_SNTPLookup" xml:space="preserve">
+    <value>SNTP 查詢</value>
+  </data>
+  <data name="Library_nulastudioNetBeauty_Description" xml:space="preserve">
+    <value>將 .NET Framework / .NET Core 應用程式的執行元件及其相依套件搬到子目錄中，提升結構整潔與外觀。</value>
+  </data>
+  <data name="AddATabToPerformASNTPLookup" xml:space="preserve">
+    <value>新增一個分頁以執行 SNTP 查詢……</value>
+  </data>
+  <data name="SNTPServers" xml:space="preserve">
+    <value>SNTP 伺服器(s)</value>
+  </data>
+  <data name="HelpMessage_CustomPublicIPv6AddressAPI" xml:space="preserve">
+    <value>可透過 HTTP/HTTPS 訪問、且回傳 IPv6 位址「如 xxxx:xx:xxx::xx」的網路服務 URL。</value>
+  </data>
+  <data name="IPEndPoint" xml:space="preserve">
+    <value>IP 終端點</value>
+  </data>
+  <data name="LocalEndTime" xml:space="preserve">
+    <value>本地結束時間</value>
+  </data>
+  <data name="LocalStartTime" xml:space="preserve">
+    <value>本地開始時間</value>
+  </data>
+  <data name="NetworkTime" xml:space="preserve">
+    <value>網路時間</value>
+  </data>
+  <data name="Offset" xml:space="preserve">
+    <value>偏移</value>
+  </data>
+  <data name="RoundTripDelay" xml:space="preserve">
+    <value>往返延遲</value>
+  </data>
+  <data name="Server" xml:space="preserve">
+    <value>伺服器</value>
+  </data>
+  <data name="SNTPLookup" xml:space="preserve">
+    <value>SNTP 查詢</value>
+  </data>
+  <data name="AddSNTPServer" xml:space="preserve">
+    <value>新增 SNTP 伺服器</value>
+  </data>
+  <data name="DeleteSNTPServer" xml:space="preserve">
+    <value>刪除 SNTP 伺服器</value>
+  </data>
+  <data name="DeleteSNTPServerMessage" xml:space="preserve">
+    <value>所選的 SNTP 伺服器將被永久刪除。</value>
+  </data>
+  <data name="EditSNTPServer" xml:space="preserve">
+    <value>編輯 SNTP 伺服器</value>
+  </data>
+  <data name="SNTPServerWithThisNameAlreadyExists" xml:space="preserve">
+    <value>已存在此名稱的 SNTP 伺服器！</value>
+  </data>
+  <data name="EnterValidHostnameOrIPAddress" xml:space="preserve">
+    <value>輸入有效的主機名稱（例如 server-01 或 example.com），或是有效的 IP 位址（例如 192.168.178.1）。</value>
+  </data>
+  <data name="Servers" xml:space="preserve">
+    <value>伺服器（數）</value>
+  </data>
+  <data name="EnterMasterPasswordToUnlockProfile" xml:space="preserve">
+    <value>輸入主密碼以解鎖設定檔：</value>
+  </data>
+  <data name="UnlockProfileFile" xml:space="preserve">
+    <value>解鎖設定檔案</value>
+  </data>
+  <data name="PortState_TimedOut" xml:space="preserve">
+    <value>逾時</value>
+  </data>
+  <data name="Hostkey" xml:space="preserve">
+    <value>主機金鑰</value>
+  </data>
+  <data name="SettingsAreResetAndApplicationWillBeRestartedMessage" xml:space="preserve">
+    <value>設定將被重設，之後程式會重新啟動！</value>
+  </data>
+  <data name="SettingsHaveBeenReset" xml:space="preserve">
+    <value>設定已經重設！</value>
+  </data>
+  <data name="PingStatus" xml:space="preserve">
+    <value>Ping 狀態</value>
+  </data>
+  <data name="ThreadPoolAdditionalMinThreads" xml:space="preserve">
+    <value>執行緒池額外最小執行緒數。</value>
+  </data>
+  <data name="HelpMessage_ThreadPoolAdditionalMinThreads" xml:space="preserve">
+    <value>此設定指定應用程式 ThreadPool 在需要時所產生的最小執行緒數。對於 IP 掃描器或埠掃描器等功能，調整此值可提升效能。
+	
+此值會加到預設的「最小執行緒」上（即 CPU 執行緒數）。設為 0 時使用系統預設設定。若該值高於 ThreadPool 的預設最大執行緒，則以此值作為最大值。
+
+過度調整可能會造成效能下降。
+
+更改後需重新啟動程式才能生效；是否成功設定可在 %LocalAppData%\NETworkManager\NETworkManager.log 中查閱。</value>
+  </data>
+  <data name="MaxThreadsOnlyGoToSettingsGeneralGeneral" xml:space="preserve">
+    <value>此設定僅調整每個主機／埠掃描時同時執行的最大執行緒數。請至 設定 &gt; 一般 &gt; 一般，調整應用程式的（最小）執行緒數。</value>
+  </data>
+  <data name="PortStatus" xml:space="preserve">
+    <value>連接埠狀態</value>
+  </data>
+  <data name="PingDetails" xml:space="preserve">
+    <value>Ping 詳情</value>
+  </data>
+  <data name="NoOpenPortsFound" xml:space="preserve">
+    <value>未發現開啟的連接埠！</value>
+  </data>
+  <data name="PortScanIsDisabled" xml:space="preserve">
+    <value>連接埠掃描已被停用！</value>
+  </data>
+  <data name="ScanPorts" xml:space="preserve">
+    <value>掃描連接埠</value>
+  </data>
+  <data name="CouldNotFindApplicationXXXMessage" xml:space="preserve">
+    <value>未能找到「{0}」此應用程式。也許該項目已被隱藏於設定內？</value>
+  </data>
+  <data name="StatusWindow" xml:space="preserve">
+    <value>狀態視窗</value>
+  </data>
+  <data name="ShowAddressBar" xml:space="preserve">
+    <value>顯示地址列</value>
+  </data>
+  <data name="WarnMessage_MultipleInstances" xml:space="preserve">
+    <value>不建議啟用此設定。多個程式實例會共用相同的設定與使用者檔；最後關閉的實例可能覆蓋其他實例所作的更改。</value>
+  </data>
+  <data name="BypassForLocalAddresses" xml:space="preserve">
+    <value>本機位址的繞過</value>
+  </data>
+  <data name="EnableGatewayServer" xml:space="preserve">
+    <value>啟用閘道伺服器</value>
+  </data>
+  <data name="LogonMethod" xml:space="preserve">
+    <value>登入方式</value>
+  </data>
+  <data name="GatewayServer" xml:space="preserve">
+    <value>閘道伺服器</value>
+  </data>
+  <data name="ServerName" xml:space="preserve">
+    <value>伺服器名稱</value>
+  </data>
+  <data name="ShareGatewayCredentialsWithRemoteComputer" xml:space="preserve">
+    <value>與遠端電腦共用網關憑證。</value>
+  </data>
+  <data name="RemoteDesktopGatewayServerLogonMethod_Any" xml:space="preserve">
+    <value>允許我稍後再選擇</value>
+  </data>
+  <data name="RemoteDesktopGatewayServerLogonMethod_Smartcard" xml:space="preserve">
+    <value>智慧卡或 Windows Hello 商業版</value>
+  </data>
+  <data name="RemoteDesktopGatewayServerLogonMethod_Userpass" xml:space="preserve">
+    <value>請求密碼（NTLM）</value>
+  </data>
+  <data name="UseGatewayCredentials" xml:space="preserve">
+    <value>使用網關憑證。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331661" xml:space="preserve">
+    <value>由於遠端桌面閘道伺服器暫時無法使用，您的電腦無法連線至遠端主機。請稍後再試或聯絡網路管理員尋求協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331651" xml:space="preserve">
+    <value>您的電腦無法連線至遠端主機，原因可能為下列之一：1) 請求的遠端桌面閘道伺服器位址與其 SSL 憑證主旨名稱不符。2) 憑證已過期或被吊銷。3) 根憑證機構不信任該憑證。  請聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331653" xml:space="preserve">
+    <value>此電腦無法驗證 RD Gateway "" 的身份。連線至無法確認身分的伺服器並不安全，請聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331654" xml:space="preserve">
+    <value>您的電腦無法連線至遠端主機，因為請求的遠端桌面閘道伺服器位址與憑證主旨名稱不符。請聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331655" xml:space="preserve">
+    <value>您的電腦無法連線至遠端主機，因為遠端桌面閘道伺服器的憑證已過期或被吊銷。請聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331657" xml:space="preserve">
+    <value>發送資料至遠端桌面閘道伺服器時出錯。伺服器暫時無法使用，或網路連線中斷。請稍後重試，或聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331658" xml:space="preserve">
+    <value>從遠端桌面閘道伺服器接收資料時發生錯誤。伺服器可能暫時無法使用，或網路連線中斷。請稍後再試，或聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331660" xml:space="preserve">
+    <value>您的電腦無法連線至遠端主機，因為遠端桌面閘道伺服器位址不可達或不正確。輸入有效的遠端桌面閘道伺服器位址。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331663" xml:space="preserve">
+    <value>由於遠端桌面閘道伺服器資源不足，暫時無法使用，您的電腦無法連線至遠端主機。請稍後再試或聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331672" xml:space="preserve">
+    <value>遠端桌面閘道伺服器已終止連線。請稍後再嘗試重新連線，或聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331673" xml:space="preserve">
+    <value>遠端桌面閘道伺服器的管理員已終止連線。請稍後再嘗試重新連線，或聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331675" xml:space="preserve">
+    <value>遠端桌面無法連線至 "" 主機，原因可能為下列之一：1) 您的帳號不在 RD 閘道的授權清單中。2) 您以 NetBIOS 格式（如 computer1）指定了遠端主機，但 RD 閘道預期使用 FQDN 或 IP 位址格式（例如 computer1.fabrikam.com 或 157.60.0.1）。  請聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331676" xml:space="preserve">
+    <value>遠端桌面無法連線至 "" 主機，原因可能為下列之一：1) 您的帳號未被授權存取 RD 閘道 ""。2) 您的電腦未被授權存取 RD 閘道 ""。3) 您使用了不相容的驗證方式（例如，RD 閘道可能要求智慧卡，但您提供的是密碼）。  請聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331679" xml:space="preserve">
+    <value>您的電腦無法連線至遠端主機，因為網路管理員已限制存取此 RD 閘道伺服器。請聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331680" xml:space="preserve">
+    <value>您的電腦無法連線至遠端主機，因為網頁代理伺服器需要驗證。若要允許未經驗證的流量透過網頁代理到 RD 閘道伺服器，請聯絡網路管理員。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331682" xml:space="preserve">
+    <value>由於遠端桌面閘道伺服器已達到允許的最大連線數，您的電腦無法連線至遠端主機。請稍後再試或聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331683" xml:space="preserve">
+    <value>您的電腦無法連線至遠端主機，因為遠端桌面閘道伺服器不支援此請求。請聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331684" xml:space="preserve">
+    <value>您的電腦無法連線至遠端主機，因為客戶端不支援遠端桌面閘道的某項功能。請聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331685" xml:space="preserve">
+    <value>您的電腦無法連線至遠端主機，因為遠端桌面閘道伺服器與此電腦不相容。請聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331688" xml:space="preserve">
+    <value>您的電腦無法連線至遠端主機，因為在遠端桌面閘道伺服器上未設定任何憑證可供使用。請聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331689" xml:space="preserve">
+    <value>您的電腦無法連線至遠端主機，因為您嘗試存取的 RD 閘道伺服器未被此電腦管理員允許。若您是該管理員，請將此遠端桌面閘道伺服器名稱加入電腦上「受信任的遠端桌面閘道伺服器」清單，再重新嘗試連線。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331690" xml:space="preserve">
+    <value>您的電腦無法連線至遠端主機，因為您的電腦或裝置未符合網路存取保護設定的要求，原因可能為下列之一：1) RD 閘道伺服器名稱與其公開金鑰憑證主旨不符。2) 憑證已過期或被吊銷。3) 根憑證機構不信任該憑證。4) 憑證關鍵延伸不支援加密。5) 您的電腦無法驗證憑證撤銷清單。  請聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331691" xml:space="preserve">
+    <value>您的電腦無法連線至遠端主機，因為需使用帳號與密碼以驗證至 RD 閘道伺服器，而非智慧卡憑證。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331692" xml:space="preserve">
+    <value>您的電腦無法連線至遠端主機，因為需要使用智慧卡憑證以驗證至 RD 閘道伺服器，而非帳號與密碼。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331700" xml:space="preserve">
+    <value>您的電腦無法連線至遠端主機，因為送往 RD 閘道伺服器的 Cookie 無效。請聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331701" xml:space="preserve">
+    <value>您的電腦無法連線至遠端主機，因為 RD 閘道伺服器拒絕了 Cookie。請聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331703" xml:space="preserve">
+    <value>您的電腦無法連線至遠端主機，因為 RD 閘道伺服器預期的驗證方式與您所使用的不符。請聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331704" xml:space="preserve">
+    <value>RD 閘道連線已結束，原因是周期性使用者驗證失敗。請重新以正確的帳號與密碼進行連線；若仍無法成功，請聯絡網路管理員進一步協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331705" xml:space="preserve">
+    <value>RD 閘道連線已結束，原因是周期性使用者授權失敗。請重新以正確的帳號與密碼進行連線；若仍無法成功，請聯絡網路管理員進一步協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331707" xml:space="preserve">
+    <value>您的電腦無法連線至遠端主機，因為 RD 閘道與遠端主機未能交換政策。可能的原因包括：     1. 遠端主機不支援與 RD 閘道交換政策。      2. 遠端主機設定不允許建立新連線。     3. RD 閘道與遠端主機之間的連線已中斷。     請聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331713" xml:space="preserve">
+    <value>RD 閘道連線已結束，原因是周期性使用者授權失敗。您的電腦或裝置未符合網路存取保護（NAP）設定的要求。請聯絡網路管理員以獲得協助。</value>
+  </data>
+  <data name="Connected" xml:space="preserve">
+    <value>已連接</value>
+  </data>
+  <data name="ErrorWhileScanningWiFiAdapterXXXWithErrorXXX" xml:space="preserve">
+    <value>掃描 WiFi 介面「{0}」時發生錯誤：「{1}」。</value>
+  </data>
+  <data name="ConnectDots" xml:space="preserve">
+    <value>連接…</value>
+  </data>
+  <data name="XXXDisconnected" xml:space="preserve">
+    <value>{0}已斷開連線！</value>
+  </data>
+  <data name="ConnectToXXX" xml:space="preserve">
+    <value>連接至{0}</value>
+  </data>
+  <data name="WPS" xml:space="preserve">
+    <value>WPS</value>
+  </data>
+  <data name="ConnectAutomatically" xml:space="preserve">
+    <value>自動連線</value>
+  </data>
+  <data name="PreSharedKey" xml:space="preserve">
+    <value>預共享金鑰</value>
+  </data>
+  <data name="ConnectingToXXX" xml:space="preserve">
+    <value>正在連接到 {0}…</value>
+  </data>
+  <data name="CouldNotConnectToXXXReasonXXX" xml:space="preserve">
+    <value>無法連接到 {0}（{1}）！</value>
+  </data>
+  <data name="SuccessfullyConnectedToXXX" xml:space="preserve">
+    <value>已成功連接到 {0}！</value>
+  </data>
+  <data name="WiFiConnectionStatus_AccessRevoked" xml:space="preserve">
+    <value>已撤銷對網路的存取權限</value>
+  </data>
+  <data name="WiFiConnectionStatus_InvalidCredential" xml:space="preserve">
+    <value>無效憑證</value>
+  </data>
+  <data name="WiFiConnectionStatus_NetworkNotAvailable" xml:space="preserve">
+    <value>網路不可用</value>
+  </data>
+  <data name="WiFiConnectionStatus_Success" xml:space="preserve">
+    <value>成功</value>
+  </data>
+  <data name="WiFiConnectionStatus_Timeout" xml:space="preserve">
+    <value>連線嘗試逾時</value>
+  </data>
+  <data name="WiFiConnectionStatus_UnspecifiedFailure" xml:space="preserve">
+    <value>-/-</value>
+  </data>
+  <data name="WiFiConnectionStatus_UnsupportedAuthenticationProtocol" xml:space="preserve">
+    <value>不支援此驗證協定！</value>
+  </data>
+  <data name="CheckingWPSDots" xml:space="preserve">
+    <value>正在檢查 WPS...</value>
+  </data>
+  <data name="OpenOIDProfilesDots" xml:space="preserve">
+    <value>開啟 OID 設定檔…</value>
+  </data>
+  <data name="MIB" xml:space="preserve">
+    <value>MIB</value>
+  </data>
+  <data name="OIDProfiles" xml:space="preserve">
+    <value>OID 設定檔</value>
+  </data>
+  <data name="SelectOIDProfile" xml:space="preserve">
+    <value>選擇 OID 設定檔</value>
+  </data>
+  <data name="AddOIDProfile" xml:space="preserve">
+    <value>新增 OID 設定檔</value>
+  </data>
+  <data name="DeleteOIDProfile" xml:space="preserve">
+    <value>刪除 OID 設定檔</value>
+  </data>
+  <data name="DeleteOIDProfileMessage" xml:space="preserve">
+    <value>所選的 OID 設定檔將被永久刪除。</value>
+  </data>
+  <data name="EditOIDProfile" xml:space="preserve">
+    <value>編輯 OID 設定檔</value>
+  </data>
+  <data name="EnterPasswordDots" xml:space="preserve">
+    <value>輸入密碼...</value>
+  </data>
+  <data name="AddTab" xml:space="preserve">
+    <value>新增標籤</value>
+  </data>
+  <data name="FromProfile" xml:space="preserve">
+    <value>（從設定檔）</value>
+  </data>
+  <data name="NewSubnetMask" xml:space="preserve">
+    <value>新子網遮罩</value>
+  </data>
+  <data name="AddServer" xml:space="preserve">
+    <value>新增伺服器</value>
+  </data>
+  <data name="SNTPServer" xml:space="preserve">
+    <value>SNTP 伺服器</value>
+  </data>
+  <data name="ErrorMessage_TabPageHasError" xml:space="preserve">
+    <value>此頁面的設定有錯誤。請先更正，以便能夠儲存。</value>
+  </data>
+  <data name="HelpMessage_PuTTYHostkey" xml:space="preserve">
+    <value>SSH 主機金鑰（如 71:b8:f2:6e...） 只能於「SSH」模式下使用。</value>
+  </data>
+  <data name="HelpMessage_PuTTYPrivateKeyFile" xml:space="preserve">
+    <value>私鑰檔案的完整路徑（如 C:\Users\BornToBeRoot\SSH\private_key.ppk） 僅於「SSH」模式下可使用。</value>
+  </data>
+  <data name="HelpMessage_PuTTYUsername" xml:space="preserve">
+    <value>PuTTY 會話所使用的帳號。僅於「SSH」、「Telnet」或「Rlogin」模式下可設定。</value>
+  </data>
+  <data name="ASN" xml:space="preserve">
+    <value>ASN</value>
+  </data>
+  <data name="ASName" xml:space="preserve">
+    <value>自治系統名稱</value>
+  </data>
+  <data name="City" xml:space="preserve">
+    <value>城市</value>
+  </data>
+  <data name="Continent" xml:space="preserve">
+    <value>大陸</value>
+  </data>
+  <data name="Country" xml:space="preserve">
+    <value>國家</value>
+  </data>
+  <data name="Currency" xml:space="preserve">
+    <value>貨幣</value>
+  </data>
+  <data name="District" xml:space="preserve">
+    <value>行政區</value>
+  </data>
+  <data name="DNSResolver" xml:space="preserve">
+    <value>DNS 解析器</value>
+  </data>
+  <data name="EDNS" xml:space="preserve">
+    <value>EDNS</value>
+  </data>
+  <data name="Geolocation" xml:space="preserve">
+    <value>地理位置定位</value>
+  </data>
+  <data name="Hosting" xml:space="preserve">
+    <value>託管</value>
+  </data>
+  <data name="IPGeolocation" xml:space="preserve">
+    <value>IP 地理位置定位</value>
+  </data>
+  <data name="ISP" xml:space="preserve">
+    <value>ISP</value>
+  </data>
+  <data name="Latitude" xml:space="preserve">
+    <value>緯度</value>
+  </data>
+  <data name="Longitude" xml:space="preserve">
+    <value>經度</value>
+  </data>
+  <data name="Mobile" xml:space="preserve">
+    <value>行動</value>
+  </data>
+  <data name="Organization" xml:space="preserve">
+    <value>機構</value>
+  </data>
+  <data name="PTRRecord" xml:space="preserve">
+    <value>PTR 記錄</value>
+  </data>
+  <data name="Timezone" xml:space="preserve">
+    <value>時區</value>
+  </data>
+  <data name="ZipCode" xml:space="preserve">
+    <value>郵遞區號</value>
+  </data>
+  <data name="ExternalService_ip_api_Description" xml:space="preserve">
+    <value>IP 地理位置定位 API — 快速、精確、可靠</value>
+  </data>
+  <data name="CheckDNSResolver" xml:space="preserve">
+    <value>檢查 DNS 解析器</value>
+  </data>
+  <data name="CheckIPGeolocation" xml:space="preserve">
+    <value>檢查 IP 地理位置定位</value>
+  </data>
+  <data name="HelpMessage_CheckDNSResolver" xml:space="preserve">
+    <value>DNS 解析器由 ip‑api.com 決定。
+
+網址：https://edns.ip-api.com/</value>
+  </data>
+  <data name="HelpMessage_CheckIPGeolocation" xml:space="preserve">
+    <value>IP 地理位置定位是透過 ip‑api.com 確定的。
+
+網址：http://ip-api.com/</value>
+  </data>
+  <data name="WelcomePrivacyMessage" xml:space="preserve">
+    <value>為提供額外功能，我會使用第三方服務，並非由我運營。您可以在下方取消選取它們。我永遠不會將任何資料傳送給我。</value>
+  </data>
+  <data name="CheckingDNSResolverDots" xml:space="preserve">
+    <value>正在檢查 DNS 解析器...</value>
+  </data>
+  <data name="CheckingIPGeolocationDots" xml:space="preserve">
+    <value>正在檢查 IP 地理位置定位…</value>
+  </data>
+  <data name="CheckNetworkConnectionTryAgainMessage" xml:space="preserve">
+    <value>請檢查您的網路連線，稍後再嘗試幾秒鐘。</value>
+  </data>
+  <data name="IPApiRateLimitMessage" xml:space="preserve">
+    <value>已超過 ip‑api.com 的速率上限（來自您所在網路的請求數量過多）。
+請等候數秒後再重試。</value>
+  </data>
+  <data name="HTTPStatusCode" xml:space="preserve">
+    <value>HTTP 狀態碼</value>
+  </data>
+  <data name="Accen_Steel" xml:space="preserve">
+    <value>鐵灰色</value>
+  </data>
+  <data name="RateLimitReachedTryAgainInXSeconds" xml:space="preserve">
+    <value>已達到速率限制！請在 {0} 秒後重試…</value>
+  </data>
+  <data name="ProfileGroup_General" xml:space="preserve">
+    <value>一般</value>
+  </data>
+  <data name="BSSID" xml:space="preserve">
+    <value>BSSID</value>
+  </data>
+  <data name="NoReachableHostsFound" xml:space="preserve">
+    <value>未發現可連線的主機！</value>
+  </data>
+  <data name="ProfileGroup_Application" xml:space="preserve">
+    <value>應用程式</value>
+  </data>
+  <data name="HelpMessage_ExperimentalFeatures" xml:space="preserve">
+    <value>啟用實驗功能以測試新功能。這些尚未完成，可能含錯誤、可能導致應用程式崩潰，並且在正式發佈前可能再次更改。</value>
+  </data>
+  <data name="ExperimentalFeatures" xml:space="preserve">
+    <value>實驗性功能</value>
+  </data>
+  <data name="Experimental" xml:space="preserve">
+    <value>實驗性</value>
+  </data>
+  <data name="RunCommandDots" xml:space="preserve">
+    <value>執行指令...</value>
+  </data>
+  <data name="ApplicationName_IPGeolocation" xml:space="preserve">
+    <value>IP 地理位置定位</value>
+  </data>
+  <data name="AddATabToQueryTheIPGeolocation" xml:space="preserve">
+    <value>新增一個分頁以查詢 IP 地理位置…</value>
+  </data>
+  <data name="EnterADomainToQueryWhoisDots" xml:space="preserve">
+    <value>輸入要查詢 WhoIs 的網域名稱...</value>
+  </data>
+  <data name="EnterHostToQueryIPGeolocationDots" xml:space="preserve">
+    <value>輸入要查詢 IP 地理位置的主機名稱...</value>
+  </data>
+  <data name="SNMPV3ErrorCode_UnknownUserName" xml:space="preserve">
+    <value>未知的使用者名稱。</value>
+  </data>
+  <data name="SNMPV3ErrorCode_AuthenticationFailed" xml:space="preserve">
+    <value>驗證失敗（密碼、社群或金鑰不正確）。</value>
+  </data>
+  <data name="SNMPErrorCode_NoError" xml:space="preserve">
+    <value>操作成功，未發生任何錯誤。</value>
+  </data>
+  <data name="SNMPErrorCode_TooBig" xml:space="preserve">
+    <value>您的請求回應內容過大，無法一次完整顯示！</value>
+  </data>
+  <data name="SNMPErrorCode_NoSuchName" xml:space="preserve">
+    <value>所請求的 OID 無法找到！</value>
+  </data>
+  <data name="SNMPErrorCode_BadValue" xml:space="preserve">
+    <value>一個可讀寫或僅可寫的物件被設定為不一致的值！</value>
+  </data>
+  <data name="SNMPErrorCode_ReadOnly" xml:space="preserve">
+    <value>所請求的 OID 不存在且不可寫入！</value>
+  </data>
+  <data name="SNMPErrorCode_GenError" xml:space="preserve">
+    <value>發生了無法提供具體訊息的錯誤！</value>
+  </data>
+  <data name="SNMPErrorCode_NoAccess" xml:space="preserve">
+    <value>所請求的對象不可被修改！</value>
+  </data>
+  <data name="SNMPErrorCode_WrongType" xml:space="preserve">
+    <value>該物件被設定為不相容的資料型別！</value>
+  </data>
+  <data name="SNMPErrorCode_WrongLength" xml:space="preserve">
+    <value>所設定的值超過物件允許的最大長度！</value>
+  </data>
+  <data name="SNMPErrorCode_WrongEncoding" xml:space="preserve">
+    <value>物件使用的編碼不正確！</value>
+  </data>
+  <data name="SNMPErrorCode_WrongValue" xml:space="preserve">
+    <value>所設定的值不是有效選項！</value>
+  </data>
+  <data name="SNMPErrorCode_NoCreation" xml:space="preserve">
+    <value>所請求的物件不存在且無法建立！</value>
+  </data>
+  <data name="SNMPErrorCode_InconsistentValue" xml:space="preserve">
+    <value>MIB 變數目前處於不一致狀態，無法進行修改！</value>
+  </data>
+  <data name="SNMPErrorCode_ResourceUnavailable" xml:space="preserve">
+    <value>目前尚無足夠系統資源以完成此項操作！</value>
+  </data>
+  <data name="SNMPErrorCode_CommitFailed" xml:space="preserve">
+    <value>目前尚無足夠系統資源以完成此項操作！</value>
+  </data>
+  <data name="SNMPErrorCode_UndoFailed" xml:space="preserve">
+    <value>設定操作失敗，且無法還原至之前的狀態！</value>
+  </data>
+  <data name="SNMPErrorCode_AuthorizationError" xml:space="preserve">
+    <value>驗證失敗，請確認社區字串是否正確！</value>
+  </data>
+  <data name="SNMPErrorCode_NotWritable" xml:space="preserve">
+    <value>所請求的對象不可寫入，無法進行修改！</value>
+  </data>
+  <data name="SNMPErrorCode_InconsistentName" xml:space="preserve">
+    <value>物件狀態不一致，導致設定操作失敗！</value>
+  </data>
+  <data name="CloseAll" xml:space="preserve">
+    <value>關閉全部</value>
+  </data>
+  <data name="ExpandHostView" xml:space="preserve">
+    <value>展開主機檢視</value>
+  </data>
+  <data name="CannotSetHostWhileRunningMessage" xml:space="preserve">
+    <value>在其他主機正在被加入時，無法設定此主機。請等候流程完成後再試一次。</value>
+  </data>
+  <data name="NoMatchingCommands" xml:space="preserve">
+    <value>未找到符合的命令！</value>
+  </data>
+  <data name="RemoteHostname" xml:space="preserve">
+    <value>遠端主機名稱</value>
+  </data>
+  <data name="ProcessID" xml:space="preserve">
+    <value>進程 ID</value>
+  </data>
+  <data name="ProcessPath" xml:space="preserve">
+    <value>進程路徑</value>
+  </data>
+  <data name="ProcessName" xml:space="preserve">
+    <value>進程名稱</value>
+  </data>
+  <data name="NetBIOS" xml:space="preserve">
+    <value>NetBIOS</value>
+  </data>
+  <data name="ComputerName" xml:space="preserve">
+    <value>電腦名稱</value>
+  </data>
+  <data name="ConnectionState_Error" xml:space="preserve">
+    <value>錯誤</value>
+  </data>
+  <data name="ConnectionState_OK" xml:space="preserve">
+    <value>確定</value>
+  </data>
+  <data name="ConnectionState_Warning" xml:space="preserve">
+    <value>警告</value>
+  </data>
+  <data name="GroupDomain" xml:space="preserve">
+    <value>群組 / 網域</value>
+  </data>
+  <data name="NetBIOSReachable" xml:space="preserve">
+    <value>可達的 NetBIOS</value>
+  </data>
+  <data name="ScanForNetBIOS" xml:space="preserve">
+    <value>掃描 NetBIOS</value>
+  </data>
+  <data name="NetBIOSIsDisabled" xml:space="preserve">
+    <value>NetBIOS 掃描已停用！</value>
+  </data>
+  <data name="ResolveHostnameIsDisabled" xml:space="preserve">
+    <value>解析主機名稱已停用！</value>
+  </data>
+  <data name="ResolveMACAddressIsDisabled" xml:space="preserve">
+    <value>解析 MAC 位址已停用！</value>
+  </data>
+  <data name="CloseGroup" xml:space="preserve">
+    <value>關閉群組</value>
+  </data>
+  <data name="RunCommandDotsWithHotKey" xml:space="preserve">
+    <value>執行指令... (Ctrl+Shift+P)</value>
+  </data>
+  <data name="ProfileFiles" xml:space="preserve">
+    <value>設定檔案</value>
+  </data>
+  <data name="OpenSettingsDots" xml:space="preserve">
+    <value>打開設定</value>
+  </data>
+  <data name="ExpandAndOpenSearchDots" xml:space="preserve">
+    <value>展開並打開搜尋功能...</value>
+  </data>
+  <data name="WiFiAccessNotAvailableMessage" xml:space="preserve">
+    <value>自 Windows 11 24H2 起，您需要允許對 Wi‑Fi 介面卡的存取。
+
+開啟 Windows 設定 &gt; 隱私與安全性 &gt; 位置，將桌面應用程式 / NETworkManager 的存取權限打勾，重新啟動本程式。</value>
+  </data>
+  <data name="DragDropApplicationsToReorderRightClickForMoreOptions" xml:space="preserve">
+    <value>將程式拖曳至重新排序。
+右鍵單擊即可查看其他選項。</value>
+  </data>
+  <data name="RestoreDefaults" xml:space="preserve">
+    <value>恢復預設值</value>
+  </data>
+  <data name="Library_GongSolutionsWpfDragDrop_Description" xml:space="preserve">
+    <value>一個易於使用的拖曳式框架，適用於 WPF。</value>
+  </data>
+  <data name="License_BDS3Clause" xml:space="preserve">
+    <value>BSD-3-條款</value>
+  </data>
+  <data name="SetDefault" xml:space="preserve">
+    <value>設定為預設</value>
+  </data>
+  <data name="ExampleProfileDescription" xml:space="preserve">
+    <value>在 Ubuntu Server 上執行 Docker，搭配 Nextcloud 與 Traefik…</value>
+  </data>
+  <data name="ExampleGroupDescription" xml:space="preserve">
+    <value>執行於 AWS 的 Linux 伺服器...</value>
+  </data>
+  <data name="GHz6" xml:space="preserve">
+    <value>6 GHz</value>
+  </data>
+  <data name="SupportThisProjectWithADonation" xml:space="preserve">
+    <value>透過捐贈來支援此專案。</value>
+  </data>
+  <data name="OpenDocumentation" xml:space="preserve">
+    <value>打開文件</value>
+  </data>
+  <data name="Donate" xml:space="preserve">
+    <value>捐贈</value>
+  </data>
+  <data name="ProfileFile" xml:space="preserve">
+    <value>設定檔案</value>
+  </data>
+  <data name="ApplicationName_HostsFileEditor" xml:space="preserve">
+    <value>主機檔編輯器</value>
+  </data>
+  <data name="HostsFileEditor" xml:space="preserve">
+    <value>主機檔編輯器</value>
+  </data>
+  <data name="HostsFileEditorAdminMessage" xml:space="preserve">
+    <value>只讀模式。修改 hosts 檔案需要提升權限！</value>
+  </data>
+  <data name="OpenHostsFile" xml:space="preserve">
+    <value>開啟 hosts 檔案</value>
+  </data>
+  <data name="Comment" xml:space="preserve">
+    <value>註解</value>
+  </data>
+  <data name="Disable" xml:space="preserve">
+    <value>停用</value>
+  </data>
+  <data name="EditEntry" xml:space="preserve">
+    <value>編輯項目</value>
+  </data>
+  <data name="EditEntryDots" xml:space="preserve">
+    <value>編輯項目...</value>
+  </data>
+  <data name="EnableEntry" xml:space="preserve">
+    <value>啟用項目</value>
+  </data>
+  <data name="DisableEntry" xml:space="preserve">
+    <value>停用項目</value>
+  </data>
+  <data name="RefreshingDots" xml:space="preserve">
+    <value>重新整理中...</value>
+  </data>
+  <data name="ReloadedAtX" xml:space="preserve">
+    <value>重新載入於{0}</value>
+  </data>
+  <data name="FailedToLoadHostsFileMessage" xml:space="preserve">
+    <value>無法載入 hosts 檔案：{0}</value>
+  </data>
+  <data name="RetryingInXSecondsDots" xml:space="preserve">
+    <value>將於 {0} 秒後重試...</value>
+  </data>
+  <data name="WhatsNew" xml:space="preserve">
+    <value>有什麼新功能？</value>
+  </data>
+  <data name="Changelog" xml:space="preserve">
+    <value>變更記錄</value>
+  </data>
+  <data name="UpgradedToXXX" xml:space="preserve">
+    <value>升級至 {0}</value>
+  </data>
+  <data name="WhatsNewMessage" xml:space="preserve">
+    <value>此版本包含新功能、改進及錯誤修正。請檢閱更新日誌以取得完整資訊！</value>
+  </data>
+  <data name="Entries" xml:space="preserve">
+    <value>項目</value>
+  </data>
+  <data name="DeleteHostsFileEntryMessage" xml:space="preserve">
+    <value>所選項目已永久刪除：
+
+{0}{1}{2}</value>
+  </data>
+  <data name="ExampleHostsFileEntryComment" xml:space="preserve">
+    <value>主要 DNS 伺服器</value>
+  </data>
+  <data name="EnterValidHostsFileEntryHostname" xml:space="preserve">
+    <value>輸入有效的主機名稱（如 server-01 或 example.com）！若有多個主機名稱，請以空格分隔。</value>
+  </data>
+  <data name="HostsFileReadErrorMessage" xml:space="preserve">
+    <value>無法閱讀「hosts」檔案！請參閱記錄檔以獲得更詳細資訊。</value>
+  </data>
+  <data name="HostsFileWriteErrorMessage" xml:space="preserve">
+    <value>無法將資料寫入「hosts」檔案！請參閱記錄檔以取得更詳細資訊。</value>
+  </data>
+  <data name="HostsFileEntryNotFoundMessage" xml:space="preserve">
+    <value>在「hosts」檔案中未找到此項目！可能是檔案已被更動。</value>
+  </data>
+  <data name="HostsFileBackupErrorMessage" xml:space="preserve">
+    <value>無法建立「hosts」檔案的備份！請參閱記錄檔以取得更詳細資訊。</value>
+  </data>
+  <data name="ShowStatusBar" xml:space="preserve">
+    <value>顯示狀態列</value>
+  </data>
+  <data name="HelpMessage_ShowStatusBar" xml:space="preserve">
+    <value>當滑鼠懸停在連結上時，在 WebView 的左下角顯示狀態列。</value>
+  </data>
+  <data name="SaveCredentials" xml:space="preserve">
+    <value>儲存憑證</value>
+  </data>
+  <data name="HelpMessage_SaveCredentials" xml:space="preserve">
+    <value>在成功登入後顯示對話框以儲存憑證。</value>
+  </data>
+  <data name="DeleteBrowsingData" xml:space="preserve">
+    <value>刪除瀏覽資料</value>
+  </data>
+  <data name="DeleteBrowsingDataMessage" xml:space="preserve">
+    <value>永久刪除當前 WebView2 配置檔中的瀏覽資料（歷史紀錄、Cookies、快取、憑證等）。</value>
+  </data>
+  <data name="BrowsingData" xml:space="preserve">
+    <value>瀏覽資料</value>
+  </data>
+  <data name="BrowsingDataSuccessfullyDeletedMessage" xml:space="preserve">
+    <value>瀏覽資料已成功刪除！</value>
+  </data>
+  <data name="BrowsingDataErrorMessage" xml:space="preserve">
+    <value>刪除瀏覽資料時發生錯誤。歡迎在 GitHub 上回報此問題。</value>
+  </data>
+  <data name="ExampleTag" xml:space="preserve">
+    <value>生產</value>
+  </data>
+  <data name="AddTag" xml:space="preserve">
+    <value>新增標籤</value>
+  </data>
+  <data name="ApplyFilter" xml:space="preserve">
+    <value>套用篩選</value>
+  </data>
+  <data name="FilterProfilesDots" xml:space="preserve">
+    <value>篩選設定檔...</value>
+  </data>
+  <data name="FilterByTags" xml:space="preserve">
+    <value>依標籤篩選</value>
+  </data>
+  <data name="NoTagsFound" xml:space="preserve">
+    <value>找不到標籤！</value>
+  </data>
+  <data name="Match" xml:space="preserve">
+    <value>匹配</value>
+  </data>
+  <data name="Any" xml:space="preserve">
+    <value>任何</value>
+  </data>
+  <data name="AddGroupDots" xml:space="preserve">
+    <value>新增群組...</value>
+  </data>
+  <data name="ExpandAll" xml:space="preserve">
+    <value>擴展全部</value>
+  </data>
+  <data name="CollapseAll" xml:space="preserve">
+    <value>全部摺疊</value>
+  </data>
+  <data name="HelpMessage_UseCustomThemes" xml:space="preserve">
+    <value>使用自定義主題來個性化應用程式的外觀。您可以在「程式資料夾 &gt; 主題」目錄中編輯或新增主題。更多詳情請參閱文件。</value>
+  </data>
+  <data name="AdminConsoleSession" xml:space="preserve">
+    <value>管理員 (控制台) 工作階段</value>
+  </data>
+  <data name="DeleteProfileFileXMessage" xml:space="preserve">
+    <value>「{0}」設定檔將被永久刪除。</value>
+  </data>
+  <data name="EnableEncryptionQuestion" xml:space="preserve">
+    <value>啟用加密?</value>
+  </data>
+  <data name="EnableEncryptionForProfileFileMessage" xml:space="preserve">
+    <value>您是否想要啟用設定檔加密，以保護主機、IP 位址、URL 以及儲存的憑證等敏感資料？
+
+您可以隨時透過右鍵點擊設定檔來管理加密設定，進而開啟或關閉加密。
+如果您點擊「取消」，該設定檔將維持未加密狀態。</value>
+  </data>
+  <data name="RestartRequiredMessage" xml:space="preserve">
+    <value>必須重新啟動才能套用語言設定等變更。</value>
+  </data>
+  <data name="CouldNotParseOrResolveDNSServers" xml:space="preserve">
+    <value>無法解析或連線至任何指定的 DNS 伺服器。</value>
+  </data>
+  <data name="CouldNotParseX" xml:space="preserve">
+    <value>無法解析「{0}」。</value>
+  </data>
+  <data name="MaximumNumberOfBackups" xml:space="preserve">
+    <value>最大備份數量</value>
+  </data>
+  <data name="CreateDailyBackup" xml:space="preserve">
+    <value>建立每日備份</value>
+  </data>
+  <data name="HelpMessage_MaximumNumberOfBackups" xml:space="preserve">
+    <value>在刪除最舊的備份前所保留的備份數量。</value>
+  </data>
+  <data name="SettingManagedByAdministrator" xml:space="preserve">
+    <value>此設定由您的管理員管理。</value>
+  </data>
+  <data name="RestoreDefaultLocation" xml:space="preserve">
+    <value>還原預設位置</value>
+  </data>
+  <data name="Restore" xml:space="preserve">
+    <value>還原</value>
+  </data>
+  <data name="RestoreDefaultLocationQuestion" xml:space="preserve">
+    <value>還原預設位置？</value>
+  </data>
+  <data name="RestoreDefaultSettingsLocationMessage" xml:space="preserve">
+    <value>預設設定位置已還原，且應用程式隨後會重新啟動。
+
+如有需要，您可以將「settings.json」檔案從「{0}」複製到「{1}」以遷移先前的設定。在此過程中必須關閉應用程式，以防止設定被覆寫。</value>
+  </data>
+  <data name="ChangeLocationQuestion" xml:space="preserve">
+    <value>更改位置？</value>
+  </data>
+  <data name="ChangeSettingsLocationMessage" xml:space="preserve">
+    <value>設定位置已更改，且應用程式隨後會重新啟動。
+
+如有需要，您可以將「settings.json」檔案從「{0}」複製到「{1}」以遷移先前的設定。在此過程中必須關閉應用程式，以防止設定被覆寫。</value>
+  </data>
+  <data name="EnterValidFolderPath" xml:space="preserve">
+    <value>請輸入有效的資料夾路徑！</value>
+  </data>
+  <data name="ChangeProfilesLocationMessage" xml:space="preserve">
+    <value>設定檔位置已更改，且應用程式隨後會重新啟動。
+
+如有需要，您可以將現有的設定檔從「{0}」複製到「{1}」以遷移您的設定檔。在此過程中必須關閉應用程式，以防止設定檔被覆寫。</value>
+  </data>
+  <data name="RestoreDefaultProfilesLocationMessage" xml:space="preserve">
+    <value>預設設定檔位置已還原，且應用程式隨後會重新啟動。
+
+如有需要，您可以將現有的設定檔從「{0}」複製到「{1}」以遷移您的設定檔。在此過程中必須關閉應用程式，以防止設定檔被覆寫。</value>
+  </data>
+  <data name="NetworkConnection" xml:space="preserve">
+    <value>網路連線</value>
+  </data>
+  <data name="NetworkStatus" xml:space="preserve">
+    <value>網路狀態</value>
+  </data>
+  <data name="ActiveDirectoryImportFailed" xml:space="preserve">
+    <value>Active Directory 匯入失敗。</value>
+  </data>
+  <data name="ActiveDirectoryImportOptions" xml:space="preserve">
+    <value>選項</value>
+  </data>
+
+  <data name="ActiveDirectoryImportUsesCurrentCredentials" xml:space="preserve">
+    <value>使用您目前的 Windows 憑證從 Active Directory 讀取資料。該帳戶必須獲准列舉搜尋基底（子樹）下的電腦物件。</value>
+  </data>
+  <data name="ActiveDirectorySearchBase" xml:space="preserve">
+    <value>搜尋基底（DN）</value>
+  </data>
+  <data name="ActiveDirectoryAdditionalLdapFilter" xml:space="preserve">
+    <value>額外 LDAP 篩選器</value>
+  </data>
+  <data name="ActiveDirectoryAdditionalLdapFilterInvalid" xml:space="preserve">
+    <value>篩選器必須是有效的 LDAP 表達式，且須以 '(' 開頭並以 ')' 結尾。</value>
+  </data>
+  <data name="ActiveDirectorySearchBaseInvalid" xml:space="preserve">
+    <value>搜尋基底必須是有效的 LDAP 辨別名稱（例如：DC=example,DC=com）。</value>
+  </data>
+  <data name="ActiveDirectory_ImportDescription" xml:space="preserve">
+    <value>已於{0} 從 Active Directory 匯入</value>
+  </data>
+  <data name="ActiveDirectoryNoComputersFound" xml:space="preserve">
+    <value>在指定的搜尋基底與篩選條件下，找不到電腦。</value>
+  </data>
+  <data name="SearchingActiveDirectoryDots" xml:space="preserve">
+    <value>正在搜尋 Active Directory...</value>
+  </data>
+  <data name="ActiveDirectoryNonDomainHint" xml:space="preserve">
+    <value>如果您的電腦未加入網域，請指定網域控制器（主機名稱或 IP），並使用自定義憑證。</value>
+  </data>
+  <data name="LdapServer" xml:space="preserve">
+    <value>伺服器（選填）</value>
+  </data>
+  <data name="LdapPort" xml:space="preserve">
+    <value>連接埠（選填）</value>
+  </data>
+  <data name="UseSsl" xml:space="preserve">
+    <value>使用 SSL (LDAPS)</value>
+  </data>
+  <data name="UseCurrentWindowsCredentials" xml:space="preserve">
+    <value>使用目前的 Windows 憑證</value>
+  </data>
+  <data name="UseTheseCredentials" xml:space="preserve">
+    <value>使用這些憑證</value>
+  </data>
+  <data name="Advanced" xml:space="preserve">
+    <value>進階設定</value>
+  </data>
+  <data name="SelectAll" xml:space="preserve">
+    <value>全選</value>
+  </data>
+  <data name="DeselectAll" xml:space="preserve">
+    <value>取消全選</value>
+  </data>
+  <data name="EnableFor" xml:space="preserve">
+    <value>啟用於</value>
+  </data>
+  <data name="SkipAlreadyImported" xml:space="preserve">
+    <value>跳過已匯入的項目</value>
+  </data>
+  <data name="ImportResultsHeader" xml:space="preserve">
+    <value>{0}· {1}結果(s)</value>
+  </data>
+  <data name="ProfileImportSummary" xml:space="preserve">
+    <value>{0}已匯入設定檔(s)。
+{1}跳過重複項目。
+{2}因缺少主機而跳過。</value>
+  </data>
+  <data name="ImportProfiles_Source_ActiveDirectory" xml:space="preserve">
+    <value>Active Directory</value>
+  </data>
+  <data name="ImportProfiles_Source_Csv" xml:space="preserve">
+    <value>CSV file</value>
+  </data>
+  <data name="ImportProfiles_Method_Csv" xml:space="preserve">
+    <value>CSV file</value>
+  </data>
+  <data name="ImportProfilesFromCsvFile" xml:space="preserve">
+    <value>Import profiles from CSV file</value>
+  </data>
+  <data name="Csv_ImportDescription" xml:space="preserve">
+    <value>Imported from CSV file on {0}</value>
+  </data>
+  <data name="CsvNoEntriesFound" xml:space="preserve">
+    <value>No entries were found in the CSV file.</value>
+  </data>
+  <data name="CsvImportFormatHint" xml:space="preserve">
+    <value>Expected CSV format — one profile per line:</value>
+  </data>
+  <data name="CsvImportFormatNote" xml:space="preserve">
+    <value>A header row and the delimiter (semicolon, comma or tab) are detected automatically. The description column is optional. Entries without a host cannot be imported.</value>
+  </data>
+  <data name="ImportResults" xml:space="preserve">
+    <value>匯入結果</value>
+  </data>
+  <data name="ImportProfiles_StatusNew" xml:space="preserve">
+    <value>新增</value>
+  </data>
+  <data name="ImportProfiles_StatusImported" xml:space="preserve">
+    <value>已匯入</value>
+  </data>
+  <data name="ImportProfiles_StatusNoHost" xml:space="preserve">
+    <value>無主機</value>
+  </data>
+  <data name="ExcludeDisabledAccounts" xml:space="preserve">
+    <value>排除已停用的帳戶</value>
+  </data>
+  <data name="ImportComputersFromActiveDirectory" xml:space="preserve">
+    <value>從 Active Directory 匯入電腦</value>
+  </data>
+  <data name="ImportComputersFromActiveDirectoryDots" xml:space="preserve">
+    <value>從 Active Directory 匯入電腦...</value>
+  </data>
+  <data name="ImportProfiles" xml:space="preserve">
+    <value>匯入設定檔</value>
+  </data>
+  <data name="Source" xml:space="preserve">
+    <value>來源</value>
+  </data>
+  <data name="ImportProfiles_Method_ActiveDirectory" xml:space="preserve">
+    <value>Active Directory</value>
+  </data>
+  <data name="ProfileGroup" xml:space="preserve">
+    <value>設定檔群組</value>
+  </data>
+  <data name="ExistingOrNewGroupDots" xml:space="preserve">
+    <value>現有或新的群組名稱</value>
+  </data>
+  <data name="Firewall" xml:space="preserve">
+    <value>防火牆</value>
+  </data>
+  <data name="FirewallRules" xml:space="preserve">
+    <value>防火牆規則</value>
+  </data>
+  <data name="WindowsFirewallSettings" xml:space="preserve">
+    <value>Windows 防火牆設定</value>
+  </data>
+  <data name="Direction" xml:space="preserve">
+    <value>方向</value>
+  </data>
+  <data name="Inbound" xml:space="preserve">
+    <value>輸入</value>
+  </data>
+  <data name="Outbound" xml:space="preserve">
+    <value>外流</value>
+  </data>
+  <data name="Action" xml:space="preserve">
+    <value>動作</value>
+  </data>
+  <data name="Allow" xml:space="preserve">
+    <value>允許</value>
+  </data>
+  <data name="Block" xml:space="preserve">
+    <value>封鎖</value>
+  </data>
+  <data name="NetworkProfile" xml:space="preserve">
+    <value>網路設定檔</value>
+  </data>
+  <data name="NetworkProfiles" xml:space="preserve">
+    <value>網路設定檔</value>
+  </data>
+  <data name="InterfaceType" xml:space="preserve">
+    <value>介面類型</value>
+  </data>
+  <data name="FailedToLoadFirewallRulesMessage" xml:space="preserve">
+    <value>無法載入防火牆規則。{0}</value>
+  </data>
+  <data name="DeleteFirewallRuleMessage" xml:space="preserve">
+    <value>所選的防火牆規則已被永久刪除：
+
+{0}</value>
+  </data>
+  <data name="FirewallProtocol_Any" xml:space="preserve">
+    <value>任何</value>
+  </data>
+  <data name="FirewallProtocol_TCP" xml:space="preserve">
+    <value>TCP</value>
+  </data>
+  <data name="FirewallProtocol_UDP" xml:space="preserve">
+    <value>UDP</value>
+  </data>
+  <data name="FirewallProtocol_ICMPv4" xml:space="preserve">
+    <value>ICMPv4</value>
+  </data>
+  <data name="FirewallProtocol_ICMPv6" xml:space="preserve">
+    <value>ICMPv6</value>
+  </data>
+  <data name="FirewallProtocol_HOPOPT" xml:space="preserve">
+    <value>HOPOPT</value>
+  </data>
+  <data name="FirewallProtocol_GRE" xml:space="preserve">
+    <value>GRE</value>
+  </data>
+  <data name="FirewallProtocol_IPv6" xml:space="preserve">
+    <value>IPv6</value>
+  </data>
+  <data name="FirewallProtocol_IPv6_Route" xml:space="preserve">
+    <value>IPv6 路由</value>
+  </data>
+  <data name="FirewallProtocol_IPv6_Frag" xml:space="preserve">
+    <value>IPv6 分段</value>
+  </data>
+  <data name="FirewallProtocol_IPv6_NoNxt" xml:space="preserve">
+    <value>IPv6 無下一跳</value>
+  </data>
+  <data name="FirewallProtocol_IPv6_Opts" xml:space="preserve">
+    <value>IPv6 選項</value>
+  </data>
+  <data name="FirewallProtocol_VRRP" xml:space="preserve">
+    <value>VRRP</value>
+  </data>
+  <data name="FirewallProtocol_PGM" xml:space="preserve">
+    <value>PGM</value>
+  </data>
+  <data name="FirewallProtocol_L2TP" xml:space="preserve">
+    <value>L2TP</value>
+  </data>
+  <data name="FirewallInterfaceType_Any" xml:space="preserve">
+    <value>任何</value>
+  </data>
+  <data name="FirewallInterfaceType_Wired" xml:space="preserve">
+    <value>有線網路</value>
+  </data>
+  <data name="FirewallInterfaceType_Wireless" xml:space="preserve">
+    <value>無線網路</value>
+  </data>
+  <data name="FirewallInterfaceType_RemoteAccess" xml:space="preserve">
+    <value>遠端存取</value>
+  </data>
+  <data name="FirewallAdminMessage" xml:space="preserve">
+    <value>唯讀模式。若要修改防火牆規則，需要提升權限！</value>
+  </data>
+  <data name="FirewallRuleDirection_Inbound" xml:space="preserve">
+    <value>輸入</value>
+  </data>
+  <data name="FirewallRuleDirection_Outbound" xml:space="preserve">
+    <value>外流</value>
+  </data>
+  <data name="FirewallRuleAction_Block" xml:space="preserve">
+    <value>封鎖</value>
+  </data>
+  <data name="FirewallRuleAction_Allow" xml:space="preserve">
+    <value>允許</value>
+  </data>
+  <data name="LocalPorts" xml:space="preserve">
+    <value>本機連接埠</value>
+  </data>
+  <data name="RemotePorts" xml:space="preserve">
+    <value>遠端連接埠</value>
+  </data>
+  <data name="LocalAddresses" xml:space="preserve">
+    <value>本機 IP 位址</value>
+  </data>
+  <data name="RemoteAddresses" xml:space="preserve">
+    <value>遠端 IP 位址</value>
+  </data>
+  <data name="EnterValidFirewallAddress" xml:space="preserve">
+    <value>請輸入有效的 IP 位址、子網路（例如 10.0.0.0/8）、範圍（例如 10.0.0.1-10.0.0.10）或關鍵字（Any, LocalSubnet, DNS, DHCP, WINS, DefaultGateway, Internet, Intranet, IntranetRemoteAccess, PlayToDevice, CaptivePortal）。</value>
+  </data>
+  <data name="AddRule" xml:space="preserve">
+    <value>新增規則</value>
+  </data>
+  <data name="AddRuleDots" xml:space="preserve">
+    <value>新增規則...</value>
+  </data>
+  <data name="EditRule" xml:space="preserve">
+    <value>編輯規則</value>
+  </data>
+  <data name="EditRuleDots" xml:space="preserve">
+    <value>編輯規則...</value>
+  </data>
+  <data name="DeleteRule" xml:space="preserve">
+    <value>刪除規則</value>
+  </data>
+  <data name="EnableRule" xml:space="preserve">
+    <value>啟用規則</value>
+  </data>
+  <data name="DisableRule" xml:space="preserve">
+    <value>停用規則</value>
+  </data>
+  <data name="ImportProfilesDots" xml:space="preserve">
+    <value>匯入設定檔...</value>
+  </data>
+  <data name="SpeedTest" xml:space="preserve">
+    <value>速度測試</value>
+  </data>
+  <data name="RunSpeedTest" xml:space="preserve">
+    <value>執行速度測試</value>
+  </data>
+  <data name="FetchingMetadataDots" xml:space="preserve">
+    <value>正在擷取中繼資料...</value>
+  </data>
+  <data name="MeasuringLatencyDots" xml:space="preserve">
+    <value>正在測量延遲...</value>
+  </data>
+  <data name="MeasuringDownloadSpeedDots" xml:space="preserve">
+    <value>正在測量下載速度...</value>
+  </data>
+  <data name="MeasuringUploadSpeedDots" xml:space="preserve">
+    <value>正在測量上傳速度...</value>
+  </data>
+  <data name="SpeedTestDisclaimerMessage" xml:space="preserve">
+    <value>使用 speed.cloudflare.com 測量下載、上傳速度、延遲與抖動。 
+Cloudflare 可能會記錄您的 IP 位址與網路資訊。詳情請參閱 Cloudflare 的隱私權政策。</value>
+  </data>
+  <data name="Latency" xml:space="preserve">
+    <value>延遲</value>
+  </data>
+  <data name="Jitter" xml:space="preserve">
+    <value>抖動</value>
+  </data>
+  <data name="ExternalService_speed_cloudflare_Description" xml:space="preserve">
+    <value>用於測量下載、上傳速度、延遲與抖動的速度測試服務。</value>
+  </data>
+  <data name="Stop" xml:space="preserve">
+    <value>停止</value>
+  </data>
+</root>

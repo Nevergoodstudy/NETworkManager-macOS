@@ -1,0 +1,48 @@
+using System;
+using System.Windows.Input;
+using NETworkManager.Utilities;
+
+namespace NETworkManager.ViewModels;
+
+/// <summary>
+/// View model for an IP address.
+/// </summary>
+public abstract class IPAddressViewModel : ViewModelBase
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="IPAddressViewModel"/> class.
+    /// </summary>
+    /// <param name="okCommand">The action to execute when OK is clicked.</param>
+    /// <param name="cancelHandler">The action to execute when Cancel is clicked.</param>
+    protected IPAddressViewModel(Action<IPAddressViewModel> okCommand, Action<IPAddressViewModel> cancelHandler)
+    {
+        OKCommand = new RelayCommand(_ => okCommand(this));
+        CancelCommand = new RelayCommand(_ => cancelHandler(this));
+    }
+
+    /// <summary>
+    /// Gets the command to confirm the operation.
+    /// </summary>
+    public ICommand OKCommand { get; }
+
+    /// <summary>
+    /// Gets the command to cancel the operation.
+    /// </summary>
+    public ICommand CancelCommand { get; }
+
+    /// <summary>
+    /// Gets or sets the IP address.
+    /// </summary>
+    public string IPAddress
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+}

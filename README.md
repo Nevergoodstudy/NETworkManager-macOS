@@ -1,0 +1,273 @@
+<div align="center">
+  <img alt="NETworkManager Logo" src="https://github.com/BornToBeRoot/NETworkManager/blob/main/Images/NETworkManager_128x128.png?raw=true" width="128" />
+  <h1>NETworkManager</h1>
+  <p>
+    <b>A powerful open-source tool for managing networks and troubleshooting network problems!</b>
+  </p>
+  <p>
+    Streamline and simplify your network administration and troubleshooting with <strong>NETworkManager</strong>. Connect, monitor, and troubleshoot your network and server infrastructure using built-in tools like Remote Desktop (RDP), PuTTY (SSH, Serial, etc.), PowerShell (WSL, K9s, etc.) and TigerVNC (VNC). Perform in-depth network diagnostics with features including WiFi Analyzer, IP Scanner, Port Scanner, Ping Monitor, Traceroute, DNS Lookup, LLDP/CDP Capture, and <a href="https://borntoberoot.net/NETworkManager/docs/introduction">many more</a> — all in a clean, unified interface.
+  </p>
+  <p>
+    Organize hosts and networks in profiles with seamless access across all features. Profile files can be encrypted to protect your sensitive data and used to separate different customers or environments. NETworkManager is enterprise-ready with an MSI installer, signed binaries, system-wide policies for centralized configuration, and support for package managers like Chocolatey, Evergreen, and WinGet. Available in over 16 languages with customizable light/dark themes and accent colors.
+  </p>
+  <p>
+    <a href="https://borntoberoot.net/NETworkManager/download" target="_blank">
+      <img alt="Download Now" src="https://img.shields.io/badge/🚀_Download_Now-00abbd?style=for-the-badge&labelColor=1c2526" height="48" />
+    </a>
+  </p>
+  <p>
+    <a href="https://github.com/BornToBeRoot/NETworkManager/stargazers" target="_blank">
+      <img alt="GitHub Stars" src="https://img.shields.io/github/stars/BornToBeroot/NETworkManager.svg?style=for-the-badge&logo=github&color=ffcc00&label=Stars" />
+    </a>
+    <a href="https://github.com/BornToBeRoot/NETworkManager/network" target="_blank">
+      <img alt="GitHub Forks" src="https://img.shields.io/github/forks/BornToBeroot/NETworkManager.svg?style=for-the-badge&logo=github&color=00abbd&label=Forks" />
+    </a>
+    <a href="https://github.com/BornToBeRoot/NETworkManager/releases" target="_blank">
+      <img alt="Total Downloads" src="https://img.shields.io/github/downloads/BornToBeroot/NETworkManager/total.svg?style=for-the-badge&logo=github&color=28a745&label=Downloads" />
+    </a>
+  </p>
+  <p>
+    <a href="https://github.com/BornToBeRoot/NETworkManager/releases/latest" target="_blank">
+      <img alt="Latest Release Downloads" src="https://img.shields.io/github/downloads/BornToBeroot/NETworkManager/latest/total.svg?style=for-the-badge&logo=github&label=Latest%20Release" />
+    </a>
+    <a href="https://github.com/BornToBeRoot/NETworkManager/releases" target="_blank">
+      <img alt="Pre-release Downloads" src="https://img.shields.io/github/downloads-pre/BornToBeroot/NETworkManager/latest/total.svg?label=Pre-release%20Downloads&style=for-the-badge&logo=github" />
+    </a>
+  </p>
+  <p>
+    <a href="https://ci.appveyor.com/project/BornToBeRoot/NETworkManager/branch/main" target="_blank">
+      <img alt="AppVeyor Build Status" src="https://img.shields.io/appveyor/ci/BornToBeRoot/NETworkManager/main.svg?style=for-the-badge&logo=appveyor&label=Main%20Build" />
+    </a>
+    <a href="https://github.com/BornToBeRoot/NETworkManager/blob/main/LICENSE" target="_blank">
+      <img alt="License" src="https://img.shields.io/github/license/BornToBeRoot/NETworkManager.svg?style=for-the-badge&logo=github&label=License" />
+    </a>
+  </p>
+  <p>
+    <a href="https://app.transifex.com/BornToBeRoot/NETworkManager/dashboard/" target="_blank">
+      <img alt="Transifex" src="https://img.shields.io/badge/🌍_Help_Translate-28a745?style=for-the-badge" />
+    </a>
+    <a href="https://github.com/BornToBeRoot/NETworkManager/issues/new?labels=Feature-Request&template=Feature_request.md" target="_blank">
+      <img alt="Feature Request" src="https://img.shields.io/badge/💡_Request_Feature-28a745?style=for-the-badge&logo=github" />
+    </a>
+    <a href="https://github.com/BornToBeRoot/NETworkManager/issues/new?labels=Issue&template=Bug_report.md" target="_blank">
+      <img alt="Bug Report" src="https://img.shields.io/badge/🐛_Report_Bug-red?style=for-the-badge&logo=github" />
+    </a>
+  </p>
+  <p>
+    <a href="#-download">Download</a> • <a href="#-donate">Donate</a> • <a href="#-screenshots">Screenshots</a> • <a href="#-changelog">Changelog</a> • <a href="#-documentation">Documentation</a> • <a href="#-contributing">Contributing</a> • <a href="#-build">Build</a> • <a href="#-thanks">Thanks</a> • <a href="#-license">License</a>
+  </p>
+</div>
+
+<div align="center">
+  <img alt="NETworkManager Features Preview" src="https://github.com/BornToBeRoot/NETworkManager/blob/main/Website/static/img/preview-features.gif?raw=true" />
+</div>
+
+## 🚀 Why NETworkManager?
+
+NETworkManager is your go-to tool for simplifying network administration and troubleshooting. Whether you're a sysadmin maintaining company network with multiple servers, a network engineer in a large enterprise, or an IT enthusiast running your home lab, NETworkManager provides a powerful suite of tools to manage and diagnose your network infrastructure efficiently.
+
+Here's why you'll love it:
+
+- 🧰 **Unified Experience** - All your essential network tools together in a clean, unified interface.
+- 🖥️ **Remote System Management** - Seamlessly connect via Remote Desktop (RDP), PuTTY (SSH, Serial, etc.), PowerShell (WSL, K9s, etc.) or TigerVNC (VNC).
+- 🔍 **Analyze & Troubleshoot** - Deep network diagnostics with WiFi Analyzer, IP Scanner, Port Scanners, Ping Monitor, Traceroute, DNS Lookup, LLDP/CDP Capture, and <a href="https://borntoberoot.net/NETworkManager/docs/introduction">many more</a>.
+- 🔐 **Secure Profiles** - Organize hosts and networks in profiles with seamless access across all features. Encrypt profile files and separate them by customer or environment.
+- 💎 **Open Source & Free** - No ads, no subscriptions, no selling your data, fully community-driven.
+- 🏢 **Enterprise-Ready** - MSI installer, signed binaries, [system-wide policies](https://borntoberoot.net/NETworkManager/docs/system-wide-policies) for centralized configuration, and package manager support (Chocolatey, Evergreen, and WinGet).
+- 🎨 **Personalized Experience** - Available in 16+ languages, with customizable light/dark themes and accent colors.
+
+📖 Explore all features in detail in our [documentation](https://borntoberoot.net/NETworkManager/docs/introduction).
+
+## 📦 Download
+
+Get started with NETworkManager today! Download pre-built, [signed](https://borntoberoot.net/NETworkManager/download#code-signing-policy) binaries (setup, portable, or archive) from our [download page](https://borntoberoot.net/NETworkManager/download) with detailed install instructions (e.g., silent install). Files are hosted on [GitHub Releases](https://github.com/BornToBeRoot/NETworkManager/releases/latest).
+
+<div align="center">
+  <a href="https://borntoberoot.net/NETworkManager/download" target="_blank">
+    <img alt="Download Now" src="https://img.shields.io/badge/🚀_Download_Now-00abbd?style=for-the-badge&labelColor=1c2526" height="48" />
+  </a>
+</div>
+
+> [!TIP]
+> Pre-release versions with the latest features and fixes are (sometimes) available for testing on [GitHub Releases](https://github.com/BornToBeRoot/NETworkManager/releases). Please note that pre-release versions may be unstable and are not recommended for production use. Please report any issues you encounter on [GitHub Issues](https://github.com/BornToBeRoot/NETworkManager/issues/new/choose).
+
+### macOS edition
+
+The repository also contains a native SwiftUI/AppKit macOS edition under
+the macos/ directory. It targets macOS 14 or later and provides the portable
+diagnostic tools, JSON/encrypted profiles, system Terminal handoffs, and
+native .app/.dmg packaging. See the macOS build guide in macos/README.md:
+
+    ./macos/Scripts/build-app.sh
+    CREATE_DMG=1 ./macos/Scripts/build-app.sh
+
+The existing Source/ solution remains the Windows/WPF edition. Windows-only
+integrations such as Windows Firewall rule editing, embedded RDP controls,
+PowerShell/WSL embedding, and WiFi adapter management are represented by
+macOS system integrations or documented platform limits.
+
+Install and update via package managers for a hassle-free setup:
+
+- **Chocolatey**:
+
+  ```powershell
+  choco install networkmanager
+  ```
+
+- **WinGet**:
+
+  ```powershell
+  winget install BornToBeRoot.NETworkManager
+  ```
+
+- **Evergreen**:
+
+  ```powershell
+  # Get latest release
+  Get-EvergreenApp -Name NETworkManager
+  # Save setup file
+  Get-EvergreenApp -Name NETworkManager | Save-EvergreenApp -Path C:\Users\$env:Username\Downloads\
+  ```
+
+  Evergreen PowerShell module (e.g. to automate image building or SCCM/Intune updates): <https://github.com/eucpilots/evergreen-module>
+
+## 💖 Donate
+
+NETworkManager is open source, free and without ads — developed in my spare time for you.
+
+If you find it useful, here are ways to support the project:
+
+- 🌟 **Star the Repo** – Show your appreciation and stay updated with new features.
+- 📢 **Share It** – Spread the word with friends, colleagues, or on social media.
+- 🎥 **Create Content** – Write blog posts, make tutorials, or produce videos about NETworkManager.
+- ☕🍺 **Donate** – Support the project with a coffe or beer!
+
+  | Crypto          | Address                                        |
+  | --------------- | ---------------------------------------------- |
+  | Bitcoin (BTC)   | `bc1qwv0pqgrylt38djhemxdtm0ek94uuup6srl3x9n`   |
+  | Ethereum (ETH)  | `0xB25926F4D4Cf4b1A84645EB71f2747808492c63D`   |
+  | XRP (XRP)       | `rw95DGpqwM4MC74rYiixtHugn8XpHtpxGK`           |
+  | Solana (SOL)    | `HXkCwZtoVcFEPkwurQPfeVfK3PckKkqo1E5xjDAtQYr2` |
+  | Dogecoin (DOGE) | `DURnrWRpoE4ypCjD9fVaVnDrXJ1hfZrPjj`           |
+
+Thank you for helping keep NETworkManager thriving!
+
+## 📷 Screenshots
+
+<div align="center">
+
+<img alt="NETworkManager tabs and drag & drop preview" src="https://github.com/BornToBeRoot/NETworkManager/blob/main/Website/static/img/preview-profiles.gif?raw=true" />
+
+Encrypted profile files, group & profile management.
+
+---
+
+<img alt="NETworkManager tabs and drag & drop preview" src="https://github.com/BornToBeRoot/NETworkManager/blob/main/Website/static/img/preview-tabs-drag-drop.gif?raw=true" />
+
+Tabs and drag & drop functionality.
+
+---
+
+<img alt="NETworkManager dark/light theme preview" src="https://github.com/BornToBeRoot/NETworkManager/blob/main/Website/static/img/preview-light-theme.png?raw=true" />
+
+Customizable light/dark themes and accent colors.
+
+</div>
+
+## 📃 Changelog
+
+Stay updated with the latest improvements and features. Check the full changelog [here](https://borntoberoot.net/NETworkManager/docs/category/changelog).
+
+## 📖 Documentation
+
+Explore everything you need to get the most out of **NETworkManager**: comprehensive guides, tutorials, blog posts, and FAQs — all on our website: [borntoberoot.net/NETworkManager](https://borntoberoot.net/NETworkManager).
+
+## ✨ Contributing
+
+Join our community to make NETworkManager even better! Here’s how you can contribute:
+
+- **🐞 Report Bugs / Request Features** – Share ideas or issues [here](CONTRIBUTING.md#contributing).
+- **💻 Code Contributions** – Add features or fix bugs. See [guidelines](CONTRIBUTING.md#code).
+- **🌍 Translations** – Help localize NETworkManager [here](CONTRIBUTING.md#translation).
+- **📚 Documentation** – Improve docs and tutorials [here](CONTRIBUTING.md#documentation).
+- **🔒 Security Reports** – Report vulnerabilities responsibly [here](https://github.com/BornToBeRoot/NETworkManager/blob/main/SECURITY.md).
+
+See all contributors [here](https://github.com/BornToBeRoot/NETworkManager/blob/main/CONTRIBUTORS.md). We follow the [Contributor Covenant Code of Conduct](https://github.com/BornToBeRoot/NETworkManager/blob/main/CODE_OF_CONDUCT.md).
+
+## 🔧 Build
+
+Build NETworkManager yourself with these steps:
+
+1. **Prerequisites**:
+
+   - [.NET 10.x SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+   - [Visual Studio 2026](https://visualstudio.microsoft.com/) with `.NET desktop development` and `Universal Windows Platform development` (or [JetBrains Rider](https://www.jetbrains.com/rider/) - you still need to install the UWP workload via Visual Studio Installer)
+
+2. **Clone the Repository**:
+
+   - Clone with submodules:
+     ```powershell
+     git clone https://github.com/BornToBeRoot/NETworkManager.git
+     cd NETworkManager
+     git submodule update --init --recursive
+     ```
+
+3. **Build**:
+   - Open `.\Source\NETworkManager.sln` in Visual Studio or JetBrains Rider.
+   - Alternatively, build via command line:
+     ```powershell
+     dotnet restore .\Source\NETworkManager.sln
+     dotnet build .\Source\NETworkManager.sln --configuration Release --no-restore
+     ```
+
+## 🙏 Thanks
+
+A huge thank you to our supporters and contributors who make NETworkManager possible:
+
+- **Services**:
+
+  - [AppVeyor](https://www.appveyor.com/) - CI/CD for Windows, Linux, and macOS.
+  - [GitHub Pages](https://pages.github.com/) - Hosting our documentation.
+  - [ipwho.is](https://ipwho.is/) - IP geolocation API used after an explicit lookup.
+  - [JetBrains](https://www.jetbrains.com/) - Licenses for [Rider](https://www.jetbrains.com/rider/) and other tools.
+  - [SignPath.io](https://signpath.io/) & [SignPath Foundation](https://signpath.org/) - Free code signing service and certificate for open source projects.
+  - [Transifex](https://www.transifex.com/) - Localization platform.
+
+- **Libraries**:
+  - [#SNMP Library](https://github.com/lextudio/sharpsnmplib) - SNMP library for .NET.
+  - [AirspaceFixer](https://github.com/chris84948/AirspaceFixer) - AirspacePanel fixes all Airspace issues with WPF-hosted Winforms.
+  - [ControlzEx](https://github.com/ControlzEx/ControlzEx) - Shared Controlz for WPF and more.
+  - [DnsClient.NET](https://github.com/MichaCo/DnsClient.NET) - Powerful, high-performance open-source library for DNS lookups.
+  - [Docusaurus](https://docusaurus.io/) - Easy to maintain open source documentation websites.
+  - [Dragablz](https://dragablz.net/) - Tearable TabControl for WPF.
+  - [GongSolutions.Wpf.DragDrop](https://github.com/punker76/gong-wpf-dragdrop) - An easy to use drag'n'drop framework for WPF.
+  - [IPNetwork](https://github.com/lduchosal/ipnetwork) - .NET library for complex network, IP, and subnet calculations.
+  - [LiveCharts2](https://github.com/Live-Charts/LiveCharts2) - Beautiful, interactive charts, maps, and gauges.
+  - [LoadingIndicators.WPF](https://github.com/zeluisping/LoadingIndicators.WPF) - A collection of loading indicators for WPF.
+  - [MahApps.Metro](https://mahapps.com/) - UI toolkit for WPF applications.
+  - [MahApps.Metro.IconPacks](https://github.com/MahApps/MahApps.Metro.IconPacks) - Awesome icon packs for WPF and UWP in one library.
+  - [NetBeauty2](https://github.com/nulastudio/NetBeauty2) - Move .NET app runtime components and dependencies into a sub-directory.
+  - [PSDiscoveryProtocol](https://github.com/lahell/PSDiscoveryProtocol) - PowerShell module for LLDP/CDP discovery.
+
+Star these projects to show your support!
+
+## 🔒 Code Signing Policy
+
+NETworkManager uses free code signing services from [SignPath.io](https://signpath.io/) and a free code signing certificate provided by the [SignPath Foundation](https://signpath.org/) to sign all official binaries and installers, ensuring the authenticity and integrity.
+
+The binaries and installers are built on [AppVeyor](https://ci.appveyor.com/project/BornToBeRoot/networkmanager) directly from the [GitHub repository](https://github.com/BornToBeRoot/NETworkManager/blob/main/appveyor.yml). After each build, the artifacts are automatically sent to [SignPath.io](https://signpath.io/) via webhook, where they are signed following manual approval by the maintainer. Once signed, the binaries are uploaded to the [GitHub releases page](https://github.com/BornToBeRoot/NETworkManager/releases).
+
+## 🔐 Privacy Policy
+
+Your privacy matters. NETworkManager will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it.
+
+NETworManager has integrated some **optional** third-party services to enhance functionality. You can choose to enable or disable these services at the first startup or later in the settings:
+
+- [api.github.com](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement) - Check for application updates.
+- [ipify.org](https://www.ipify.org/) - Retrieve the public IP address used by the client.
+- [ip-api.com](https://ip-api.com/docs/legal) - Retrieve network information (e.g., geolocation, ISP, DNS resolver) used by the client.
+- [speed.cloudflare.com](https://www.cloudflare.com/privacypolicy/) - Measure download/upload speed, latency and jitter.
+
+## 📝 License
+
+NETworkManager is licensed under the [GNU General Public License v3](https://github.com/BornToBeRoot/NETworkManager/blob/main/LICENSE). Library licenses are [here](https://github.com/BornToBeRoot/NETworkManager/tree/main/Source/NETworkManager.Documentation/Licenses).

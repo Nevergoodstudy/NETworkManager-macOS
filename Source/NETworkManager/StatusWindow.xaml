@@ -1,0 +1,65 @@
+﻿<mah:MetroWindow x:Class="NETworkManager.StatusWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+                 xmlns:localization="clr-namespace:NETworkManager.Localization.Resources;assembly=NETworkManager.Localization"
+                 xmlns:networkManager="clr-namespace:NETworkManager"
+                 xmlns:converters="clr-namespace:NETworkManager.Converters;assembly=NETworkManager.Converters"
+                 xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+                 mc:Ignorable="d" d:DataContext="{d:DesignInstance networkManager:StatusWindow}"
+                 TitleAlignment="Left"
+                 Style="{DynamicResource DefaultWindow}"
+                 Deactivated="MetroWindow_Deactivated"                 
+                 Topmost="True"
+                 ShowInTaskbar="False"
+                 Width="950"
+                 SizeToContent="Height"
+                 ResizeMode="NoResize"
+                 IsWindowDraggable="False"
+                 ShowMinButton="False"
+                 ShowMaxRestoreButton="False"
+                 ShowCloseButton="True"
+                 Closing="MetroWindow_Closing">
+    <mah:MetroWindow.Resources>
+        <converters:BooleanToVisibilityCollapsedConverter x:Key="BooleanToVisibilityCollapsedConverter" />
+    </mah:MetroWindow.Resources>
+    <mah:MetroWindow.RightWindowCommands>
+        <mah:WindowCommands ShowSeparators="False">
+            <Button Command="{Binding Path=ShowMainWindowCommand}"                    
+                    ToolTip="{x:Static Member=localization:Strings.Show}"
+                    Cursor="Hand"
+                    Focusable="False"
+                    Margin="0,0,5,0">
+                <StackPanel Orientation="Horizontal">
+                    <Rectangle Width="16" Height="16"
+                               Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}">
+                        <Rectangle.OpacityMask>
+                            <VisualBrush Stretch="Uniform" Visual="{iconPacks:Material Kind=OpenInNew}" />
+                        </Rectangle.OpacityMask>
+                    </Rectangle>
+                </StackPanel>
+            </Button>            
+        </mah:WindowCommands>
+    </mah:MetroWindow.RightWindowCommands>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <ContentControl Grid.Column="0" Grid.Row="0" 
+                        x:Name="ContentControlNetworkConnection"
+                        Margin="10" />
+        <ProgressBar Grid.Column="0" Grid.Row="1"
+                     Height="3"
+                     MinHeight="3"
+                     Margin="0"
+                     Minimum="0"
+                     Maximum="{Binding TimeMax, Mode=OneWay}"
+                     Value="{Binding Time, Mode=OneWay}"
+                     Visibility="{Binding ShowTime, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}"
+                     BorderThickness="0"
+                     Padding="0" />
+    </Grid>
+</mah:MetroWindow>

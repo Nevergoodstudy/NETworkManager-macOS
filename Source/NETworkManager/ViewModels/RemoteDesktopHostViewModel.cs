@@ -1,0 +1,828 @@
+﻿using Dragablz;
+using MahApps.Metro.SimpleChildWindow;
+using NETworkManager.Controls;
+using NETworkManager.Localization.Resources;
+using NETworkManager.Models;
+using NETworkManager.Models.RemoteDesktop;
+using NETworkManager.Profiles;
+using NETworkManager.Settings;
+using NETworkManager.Utilities;
+using NETworkManager.Views;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Data;
+using System.Windows.Input;
+using System.Windows.Threading;
+using RemoteDesktop = NETworkManager.Profiles.Application.RemoteDesktop;
+
+namespace NETworkManager.ViewModels;
+
+public class RemoteDesktopHostViewModel : ViewModelBase, IProfileManager
+{
+    #region Variables
+
+    private readonly DispatcherTimer _searchDispatcherTimer = new();
+    private bool _searchDisabled;
+
+    public IInterTabClient InterTabClient { get; }
+
+    public string InterTabPartition
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public ObservableCollection<DragablzTabItem> TabItems { get; }
+
+    private readonly bool _isLoading;
+    private bool _isViewActive = true;
+
+    public int SelectedTabIndex
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    #region Profiles
+
+    public ICollectionView Profiles
+    {
+        get;
+        private set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public ProfileInfo SelectedProfile
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    } = new();
+
+    public string Search
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+
+            // Start searching...
+            if (!_searchDisabled)
+            {
+                IsSearching = true;
+                _searchDispatcherTimer.Start();
+            }
+
+            OnPropertyChanged();
+        }
+    }
+
+    public bool IsSearching
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool ProfileFilterIsOpen
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public ICollectionView ProfileFilterTagsView { get; }
+
+    private ObservableCollection<ProfileFilterTagsInfo> ProfileFilterTags { get; } = [];
+
+    public bool ProfileFilterTagsMatchAny
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    } = GlobalStaticConfiguration.Profile_TagsMatchAny;
+
+    public bool ProfileFilterTagsMatchAll
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool IsProfileFilterSet
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public GroupExpanderStateStore GroupExpanderStateStore { get; } = new();
+
+    private bool _canProfileWidthChange = true;
+    private double _tempProfileWidth;
+
+    public bool ExpandProfileView
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            if (!_isLoading)
+                SettingsManager.Current.RemoteDesktop_ExpandProfileView = value;
+
+            field = value;
+
+            if (_canProfileWidthChange)
+                ResizeProfile(false);
+
+            OnPropertyChanged();
+        }
+    }
+
+    public GridLength ProfileWidth
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            if (!_isLoading && Math.Abs(value.Value - GlobalStaticConfiguration.Profile_WidthCollapsed) >
+                GlobalStaticConfiguration.Profile_FloatPointFix) // Do not save the size when collapsed
+                SettingsManager.Current.RemoteDesktop_ProfileWidth = value.Value;
+
+            field = value;
+
+            if (_canProfileWidthChange)
+                ResizeProfile(true);
+
+            OnPropertyChanged();
+        }
+    }
+
+    #endregion
+
+    #endregion
+
+    #region Constructor, load settings
+
+    public RemoteDesktopHostViewModel()
+    {
+        _isLoading = true;
+
+        InterTabClient = new DragablzInterTabClient(ApplicationName.RemoteDesktop);
+        InterTabPartition = nameof(ApplicationName.RemoteDesktop);
+
+        TabItems = [];
+
+        // Profiles
+        CreateTags();
+
+        ProfileFilterTagsView = CollectionViewSource.GetDefaultView(ProfileFilterTags);
+        ProfileFilterTagsView.SortDescriptions.Add(new SortDescription(nameof(ProfileFilterTagsInfo.Name),
+            ListSortDirection.Ascending));
+
+        SetProfilesView(new ProfileFilterInfo());
+
+        ProfileManager.OnProfilesUpdated += ProfileManager_OnProfilesUpdated;
+
+        _searchDispatcherTimer.Interval = GlobalStaticConfiguration.SearchDispatcherTimerTimeSpan;
+        _searchDispatcherTimer.Tick += SearchDispatcherTimer_Tick;
+
+        LoadSettings();
+
+        _isLoading = false;
+    }
+
+    private void LoadSettings()
+    {
+        ExpandProfileView = SettingsManager.Current.RemoteDesktop_ExpandProfileView;
+
+        ProfileWidth = ExpandProfileView
+            ? new GridLength(SettingsManager.Current.RemoteDesktop_ProfileWidth)
+            : new GridLength(GlobalStaticConfiguration.Profile_WidthCollapsed);
+
+        _tempProfileWidth = SettingsManager.Current.RemoteDesktop_ProfileWidth;
+    }
+
+    #endregion
+
+    #region ICommand & Actions
+
+    public ICommand ConnectCommand => new RelayCommand(_ => ConnectAction());
+
+    private void ConnectAction()
+    {
+        _ = Connect();
+    }
+
+    private bool IsConnected_CanExecute(object view)
+    {
+        if (view is RemoteDesktopControl control)
+            return control.IsConnected;
+
+        return false;
+    }
+
+    private bool IsDisconnected_CanExecute(object view)
+    {
+        if (view is RemoteDesktopControl control)
+            return !control.IsConnected && !control.IsConnecting;
+
+        return false;
+    }
+
+    // Used to block actions that would bypass view-only mode (e.g. fullscreen, Ctrl+Alt+Del).
+    private bool IsConnectedAndNotViewOnly_CanExecute(object view)
+    {
+        if (view is RemoteDesktopControl control)
+            return control.IsConnected && !control.IsViewOnly;
+
+        return false;
+    }
+
+    public ICommand ReconnectCommand => new RelayCommand(ReconnectAction, IsDisconnected_CanExecute);
+
+    private void ReconnectAction(object view)
+    {
+        if (view is RemoteDesktopControl control)
+            if (control.ReconnectCommand.CanExecute(null))
+                control.ReconnectCommand.Execute(null);
+    }
+
+    public ICommand DisconnectCommand => new RelayCommand(DisconnectAction, IsConnected_CanExecute);
+
+    private void DisconnectAction(object view)
+    {
+        if (view is RemoteDesktopControl control)
+            if (control.DisconnectCommand.CanExecute(null))
+                control.DisconnectCommand.Execute(null);
+    }
+
+    public ICommand FullscreenCommand => new RelayCommand(FullscreenAction, IsConnectedAndNotViewOnly_CanExecute);
+
+    private void FullscreenAction(object view)
+    {
+        if (view is RemoteDesktopControl control)
+            control.FullScreen();
+    }
+
+    public ICommand ViewOnlyCommand => new RelayCommand(ViewOnlyAction, IsConnected_CanExecute);
+
+    private void ViewOnlyAction(object view)
+    {
+        if (view is RemoteDesktopControl control)
+            control.ToggleViewOnly();
+    }
+
+    public ICommand AdjustScreenCommand => new RelayCommand(AdjustScreenAction, IsConnected_CanExecute);
+
+    private void AdjustScreenAction(object view)
+    {
+        if (view is RemoteDesktopControl control)
+            control.AdjustScreen(force: true);
+    }
+
+    public ICommand SendCtrlAltDelCommand =>
+        new RelayCommand(view => SendKeyAction(view, Keystroke.CtrlAltDel), IsConnectedAndNotViewOnly_CanExecute);
+
+    public ICommand SendTaskManagerCommand =>
+        new RelayCommand(view => SendKeyAction(view, Keystroke.TaskManager), IsConnectedAndNotViewOnly_CanExecute);
+
+    public ICommand SendLockCommand =>
+        new RelayCommand(view => SendKeyAction(view, Keystroke.Lock), IsConnectedAndNotViewOnly_CanExecute);
+
+    public ICommand SendShowDesktopCommand =>
+        new RelayCommand(view => SendKeyAction(view, Keystroke.ShowDesktop), IsConnectedAndNotViewOnly_CanExecute);
+
+    public ICommand SendExplorerCommand =>
+        new RelayCommand(view => SendKeyAction(view, Keystroke.Explorer), IsConnectedAndNotViewOnly_CanExecute);
+
+    public ICommand SendRunDialogCommand =>
+        new RelayCommand(view => SendKeyAction(view, Keystroke.RunDialog), IsConnectedAndNotViewOnly_CanExecute);
+
+    private async void SendKeyAction(object view, Keystroke keystroke)
+    {
+        if (view is not RemoteDesktopControl control)
+            return;
+
+        try
+        {
+            control.SendKey(keystroke);
+        }
+        catch (Exception ex)
+        {
+            ConfigurationManager.OnDialogOpen();
+
+            await DialogHelper.ShowMessageAsync(Application.Current.MainWindow, Strings.Error,
+                 $"{Strings.CouldNotSendKeystroke}\n\nMessage:\n{ex.Message}", ChildWindowIcon.Error);
+
+            ConfigurationManager.OnDialogClose();
+        }
+    }
+
+    public ICommand ConnectProfileCommand => new RelayCommand(_ => ConnectProfileAction(), ConnectProfile_CanExecute);
+
+    private bool ConnectProfile_CanExecute(object obj)
+    {
+        return !IsSearching && SelectedProfile != null;
+    }
+
+    private void ConnectProfileAction()
+    {
+        ConnectProfile();
+    }
+
+    public ICommand ConnectProfileAsCommand => new RelayCommand(_ => ConnectProfileAsAction());
+
+    private void ConnectProfileAsAction()
+    {
+        _ = ConnectProfileAs();
+    }
+
+    public ICommand ConnectProfileExternalCommand => new RelayCommand(_ => ConnectProfileExternalAction());
+
+    private void ConnectProfileExternalAction()
+    {
+        var args = new List<string>();
+
+        if (SelectedProfile.RemoteDesktop_AdminSession)
+            args.Add("/admin");
+
+        args.Add($"/V:{SelectedProfile.RemoteDesktop_Host}");
+
+        Process.Start("mstsc.exe", args);
+    }
+
+    public ICommand AddProfileCommand => new RelayCommand(_ => AddProfileAction());
+
+    private void AddProfileAction()
+    {
+        _ = ProfileDialogManager
+            .ShowAddProfileDialog(Application.Current.MainWindow, this, null, null, ApplicationName.RemoteDesktop);
+    }
+
+    private bool ModifyProfile_CanExecute(object obj)
+    {
+        return SelectedProfile is { IsDynamic: false };
+    }
+
+    public ICommand EditProfileCommand => new RelayCommand(_ => EditProfileAction(), ModifyProfile_CanExecute);
+
+    private void EditProfileAction()
+    {
+        _ = ProfileDialogManager.ShowEditProfileDialog(Application.Current.MainWindow, this, SelectedProfile);
+    }
+
+    public ICommand CopyAsProfileCommand => new RelayCommand(_ => CopyAsProfileAction(), ModifyProfile_CanExecute);
+
+    private void CopyAsProfileAction()
+    {
+        _ = ProfileDialogManager.ShowCopyAsProfileDialog(Application.Current.MainWindow, this, SelectedProfile);
+    }
+
+    public ICommand DeleteProfileCommand => new RelayCommand(_ => DeleteProfileAction(), ModifyProfile_CanExecute);
+
+    private void DeleteProfileAction()
+    {
+        _ = ProfileDialogManager
+            .ShowDeleteProfileDialog(Application.Current.MainWindow, this, new List<ProfileInfo> { SelectedProfile });
+    }
+
+    public ICommand EditGroupCommand => new RelayCommand(EditGroupAction);
+
+    private void EditGroupAction(object group)
+    {
+        _ = ProfileDialogManager
+            .ShowEditGroupDialog(Application.Current.MainWindow, this, ProfileManager.GetGroupByName($"{group}"));
+    }
+
+    public ICommand OpenProfileFilterCommand => new RelayCommand(_ => OpenProfileFilterAction());
+
+    private void OpenProfileFilterAction()
+    {
+        ProfileFilterIsOpen = true;
+    }
+
+    public ICommand ApplyProfileFilterCommand => new RelayCommand(_ => ApplyProfileFilterAction());
+
+    private void ApplyProfileFilterAction()
+    {
+        RefreshProfiles();
+
+        ProfileFilterIsOpen = false;
+    }
+
+    public ICommand ClearProfileFilterCommand => new RelayCommand(_ => ClearProfileFilterAction());
+
+    private void ClearProfileFilterAction()
+    {
+        _searchDisabled = true;
+        Search = string.Empty;
+        _searchDisabled = false;
+
+        foreach (var tag in ProfileFilterTags)
+            tag.IsSelected = false;
+
+        RefreshProfiles();
+
+        IsProfileFilterSet = false;
+        ProfileFilterIsOpen = false;
+    }
+
+    public ICommand ExpandAllProfileGroupsCommand => new RelayCommand(_ => ExpandAllProfileGroupsAction());
+
+    private void ExpandAllProfileGroupsAction()
+    {
+        SetIsExpandedForAllProfileGroups(true);
+    }
+
+    public ICommand CollapseAllProfileGroupsCommand => new RelayCommand(_ => CollapseAllProfileGroupsAction());
+
+    private void CollapseAllProfileGroupsAction()
+    {
+        SetIsExpandedForAllProfileGroups(false);
+    }
+
+    public ItemActionCallback CloseItemCommand => CloseItemAction;
+
+    private static void CloseItemAction(ItemActionCallbackArgs<TabablzControl> args)
+    {
+        ((args.DragablzItem.Content as DragablzTabItem)?.View as IDragablzTabItem)?.CloseTab();
+    }
+
+    #endregion
+
+    #region Methods
+
+    // Connect via Dialog
+    private Task Connect(string host = null)
+    {
+        var childWindow = new RemoteDesktopConnectChildWindow();
+
+        var childWindowViewModel = new RemoteDesktopConnectViewModel(instance =>
+        {
+            childWindow.IsOpen = false;
+            ConfigurationManager.Current.IsChildWindowOpen = false;
+
+            ConfigurationManager.OnDialogClose();
+
+            // Create new session info with default settings
+            var sessionInfo = RemoteDesktop.CreateSessionInfo();
+
+            if (instance.Host.Contains(':'))
+            {
+                // Validate input via UI
+                sessionInfo.Hostname = instance.Host.Split(':')[0];
+                sessionInfo.Port = int.Parse(instance.Host.Split(':')[1]);
+            }
+            else
+            {
+                sessionInfo.Hostname = instance.Host;
+            }
+
+            if (instance.UseCredentials)
+            {
+                sessionInfo.UseCredentials = true;
+
+                sessionInfo.Username = instance.Username;
+                sessionInfo.Domain = instance.Domain;
+                sessionInfo.Password = instance.Password;
+            }
+
+            sessionInfo.AdminSession = instance.AdminSession;
+            sessionInfo.ViewOnly = instance.ViewOnly;
+
+            // Add to history
+            // Note: The history can only be updated after the values have been read.
+            //       Otherwise, in some cases, incorrect values are taken over.
+            AddHostToHistory(instance.Host);
+
+            Connect(sessionInfo);
+        }, _ =>
+        {
+            childWindow.IsOpen = false;
+            ConfigurationManager.Current.IsChildWindowOpen = false;
+
+            ConfigurationManager.OnDialogClose();
+        })
+        {
+            Host = host
+        };
+
+        childWindow.Title = Strings.Connect;
+
+        childWindow.DataContext = childWindowViewModel;
+
+        ConfigurationManager.Current.IsChildWindowOpen = true;
+
+        ConfigurationManager.OnDialogOpen();
+
+        return Application.Current.MainWindow.ShowChildWindowAsync(childWindow);
+    }
+
+    // Connect via Profile
+    private void ConnectProfile()
+    {
+        var profileInfo = SelectedProfile;
+
+        var sessionInfo = RemoteDesktop.CreateSessionInfo(profileInfo);
+
+        Connect(sessionInfo, profileInfo.Name);
+    }
+
+    // Connect via Profile with Credentials
+    private Task ConnectProfileAs()
+    {
+        var profileInfo = SelectedProfile;
+
+        var sessionInfo = RemoteDesktop.CreateSessionInfo(profileInfo);
+
+        var childWindow = new RemoteDesktopConnectChildWindow();
+
+        var childWindowViewModel = new RemoteDesktopConnectViewModel(instance =>
+        {
+            childWindow.IsOpen = false;
+            ConfigurationManager.Current.IsChildWindowOpen = false;
+
+            ConfigurationManager.OnDialogClose();
+
+            if (instance.UseCredentials)
+            {
+                sessionInfo.UseCredentials = true;
+
+                sessionInfo.Username = instance.Username;
+                sessionInfo.Domain = instance.Domain;
+                sessionInfo.Password = instance.Password;
+            }
+
+            sessionInfo.AdminSession = instance.AdminSession;
+            sessionInfo.ViewOnly = instance.ViewOnly;
+
+            Connect(sessionInfo, instance.Name);
+        }, _ =>
+        {
+            childWindow.IsOpen = false;
+            ConfigurationManager.Current.IsChildWindowOpen = false;
+
+            ConfigurationManager.OnDialogClose();
+        },
+        (
+            profileInfo.Name,
+            profileInfo.RemoteDesktop_Host,
+            profileInfo.RemoteDesktop_AdminSession,
+            sessionInfo.ViewOnly
+        ));
+
+        childWindow.Title = Strings.ConnectAs;
+
+        childWindow.DataContext = childWindowViewModel;
+
+        ConfigurationManager.Current.IsChildWindowOpen = true;
+
+        ConfigurationManager.OnDialogOpen();
+
+        return Application.Current.MainWindow.ShowChildWindowAsync(childWindow);
+    }
+
+    private void Connect(RemoteDesktopSessionInfo sessionInfo, string header = null)
+    {
+        var tabId = Guid.NewGuid();
+
+        TabItems.Add(new DragablzTabItem(header ?? sessionInfo.Hostname, new RemoteDesktopControl(tabId, sessionInfo),
+            tabId));
+
+        SelectedTabIndex = TabItems.Count - 1;
+    }
+
+    public void AddTab(string host)
+    {
+        _ = Connect(host);
+    }
+
+    // Modify history list
+    private static void AddHostToHistory(string host)
+    {
+        if (string.IsNullOrEmpty(host))
+            return;
+
+        SettingsManager.Current.RemoteDesktop_HostHistory = new ObservableCollection<string>(
+            ListHelper.Modify(SettingsManager.Current.RemoteDesktop_HostHistory.ToList(), host,
+                SettingsManager.Current.General_HistoryListEntries));
+    }
+
+    private void SetIsExpandedForAllProfileGroups(bool isExpanded)
+    {
+        foreach (var group in Profiles.Groups.Cast<CollectionViewGroup>())
+            GroupExpanderStateStore[group.Name.ToString()] = isExpanded;
+    }
+
+    private void ResizeProfile(bool dueToChangedSize)
+    {
+        _canProfileWidthChange = false;
+
+        if (dueToChangedSize)
+        {
+            ExpandProfileView = Math.Abs(ProfileWidth.Value - GlobalStaticConfiguration.Profile_WidthCollapsed) >
+                                GlobalStaticConfiguration.Profile_FloatPointFix;
+        }
+        else
+        {
+            if (ExpandProfileView)
+            {
+                ProfileWidth =
+                    Math.Abs(_tempProfileWidth - GlobalStaticConfiguration.Profile_WidthCollapsed) <
+                    GlobalStaticConfiguration.Profile_FloatPointFix
+                        ? new GridLength(GlobalStaticConfiguration.Profile_DefaultWidthExpanded)
+                        : new GridLength(_tempProfileWidth);
+            }
+            else
+            {
+                _tempProfileWidth = ProfileWidth.Value;
+                ProfileWidth = new GridLength(GlobalStaticConfiguration.Profile_WidthCollapsed);
+            }
+        }
+
+        _canProfileWidthChange = true;
+    }
+
+    public void OnViewVisible()
+    {
+        _isViewActive = true;
+
+        RefreshProfiles();
+    }
+
+    public void OnViewHide()
+    {
+        _isViewActive = false;
+    }
+
+    private void CreateTags()
+    {
+        var tags = ProfileManager.LoadedProfileFileData.Groups.SelectMany(x => x.Profiles).Where(x => x.RemoteDesktop_Enabled)
+            .SelectMany(x => x.TagsCollection).Distinct().ToList();
+
+        var tagSet = new HashSet<string>(tags);
+
+        for (var i = ProfileFilterTags.Count - 1; i >= 0; i--)
+        {
+            if (!tagSet.Contains(ProfileFilterTags[i].Name))
+                ProfileFilterTags.RemoveAt(i);
+        }
+
+        var existingTagNames = new HashSet<string>(ProfileFilterTags.Select(ft => ft.Name));
+
+        foreach (var tag in tags.Where(tag => !existingTagNames.Contains(tag)))
+        {
+            ProfileFilterTags.Add(new ProfileFilterTagsInfo(false, tag));
+        }
+    }
+
+    private void SetProfilesView(ProfileFilterInfo filter, ProfileInfo profile = null)
+    {
+        Profiles = new CollectionViewSource
+        {
+            Source = ProfileManager.LoadedProfileFileData.Groups.SelectMany(x => x.Profiles).Where(x => x.RemoteDesktop_Enabled && (
+                    string.IsNullOrEmpty(filter.Search) ||
+                    x.Name.IndexOf(filter.Search, StringComparison.OrdinalIgnoreCase) > -1 ||
+                    x.RemoteDesktop_Host.IndexOf(filter.Search, StringComparison.OrdinalIgnoreCase) > -1) && (
+                    // If no tags are selected, show all profiles
+                    (!filter.Tags.Any()) ||
+                    // Any tag can match
+                    (filter.TagsFilterMatch == ProfileFilterTagsMatch.Any &&
+                     filter.Tags.Any(tag => x.TagsCollection.Contains(tag))) ||
+                    // All tags must match
+                    (filter.TagsFilterMatch == ProfileFilterTagsMatch.All &&
+                     filter.Tags.All(tag => x.TagsCollection.Contains(tag))))
+            ).OrderBy(x => x.Group).ThenBy(x => x.Name)
+        }.View;
+
+        Profiles.GroupDescriptions.Add(new PropertyGroupDescription(nameof(ProfileInfo.Group)));
+
+        // Set specific profile or first if null
+        SelectedProfile = null;
+
+        if (profile != null)
+            SelectedProfile = Profiles.Cast<ProfileInfo>().FirstOrDefault(x => x.Equals(profile)) ??
+                              Profiles.Cast<ProfileInfo>().FirstOrDefault();
+        else
+            SelectedProfile = Profiles.Cast<ProfileInfo>().FirstOrDefault();
+    }
+
+    private void RefreshProfiles()
+    {
+        if (!_isViewActive)
+            return;
+
+        var filter = new ProfileFilterInfo
+        {
+            Search = Search,
+            Tags = [.. ProfileFilterTags.Where(x => x.IsSelected).Select(x => x.Name)],
+            TagsFilterMatch = ProfileFilterTagsMatchAny ? ProfileFilterTagsMatch.Any : ProfileFilterTagsMatch.All
+        };
+
+        SetProfilesView(filter, SelectedProfile);
+
+        IsProfileFilterSet = !string.IsNullOrEmpty(filter.Search) || filter.Tags.Any();
+    }
+
+    public void OnProfileManagerDialogOpen()
+    {
+        ConfigurationManager.OnDialogOpen();
+    }
+
+    public void OnProfileManagerDialogClose()
+    {
+        ConfigurationManager.OnDialogClose();
+    }
+
+    #endregion
+
+    #region Event
+
+    private void ProfileManager_OnProfilesUpdated(object sender, EventArgs e)
+    {
+        CreateTags();
+
+        RefreshProfiles();
+    }
+
+    private void SearchDispatcherTimer_Tick(object sender, EventArgs e)
+    {
+        _searchDispatcherTimer.Stop();
+
+        RefreshProfiles();
+
+        IsSearching = false;
+    }
+
+    #endregion
+}

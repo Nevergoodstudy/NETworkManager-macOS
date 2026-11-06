@@ -1,0 +1,167 @@
+---
+title: Download
+description: "Download NETworkManager for free — available as MSI installer, portable ZIP, or via winget and Chocolatey. Open-source network tool for Windows."
+keywords: [NETworkManager download, network manager download, free network tool, Windows network manager, MSI installer, portable, winget, chocolatey]
+---
+
+import Link from "@docusaurus/Link";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import styles from "./styles.module.css";
+import DownloadSection from "@site/src/components/DownloadSection";
+import VersionComparison from "@site/src/components/VersionComparison";
+import LatestPrerelease from "@site/src/components/LatestPrerelease";
+
+# Download
+
+<DownloadSection />
+
+<div className={`${styles.shieldsContainer}`}>
+  <a
+    className={`${styles.shields}`}
+    href="https://github.com/BornToBeRoot/NETworkManager/releases"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <img
+      alt="All releases"
+      src="https://img.shields.io/github/downloads/BornToBeRoot/NETworkManager/total?style=for-the-badge&logo=github&logoColor=white&label=Downloads&labelColor=2b3137&color=00d4aa"
+    />
+  </a>
+  <a
+    className={`${styles.shields}`}
+    href="https://github.com/BornToBeRoot/NETworkManager/releases/latest"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <img
+      alt="Latest release"
+      src="https://img.shields.io/github/downloads/BornToBeRoot/NETworkManager/latest/total?style=for-the-badge&logo=github&logoColor=white&label=Latest%20release&labelColor=2b3137&color=00d4aa"
+    />
+  </a>
+</div>
+
+<div className={styles.thankYouCard}>
+  <h3>🙏 Thank you for using NETworkManager!</h3>
+  <p>
+    NETworkManager is open source, free and without ads — developed in my spare time for you.<br />
+    If you enjoy it, please consider supporting its development — whether by 
+    <strong>leaving a star on <a href="https://github.com/BornToBeRoot/NETworkManager" target="_blank" rel="noopener noreferrer">GitHub</a></strong>, 
+    making a <strong>donation</strong>, or simply <strong>sharing it with others</strong>.
+    Your support helps keep the project going and growing.<br />
+    <strong>Thank you for being part of the journey!</strong>
+  </p>
+
+  <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+    <Link
+      className={`button button--info button--outline ${styles.additionalButton}`}
+      style={{ margin: "0", textDecoration: "none" }}
+      to="https://github.com/BornToBeRoot/NETworkManager#-donate"
+      target="_blank"
+    >
+      💖 Donate
+    </Link>
+  </div>
+</div>
+
+## Which version should I download?
+
+Each version is suited to a different scenario — here's a closer look to help you choose:
+
+<VersionComparison />
+
+## System requirements
+
+- 🪟 **Windows 10 / Server x64** (22H2 or later)
+- ⚙️ [**.NET Desktop Runtime 10.0 (LTS) - x64**](https://dotnet.microsoft.com/en-us/download/dotnet/10.0/runtime)
+
+## Package Manager
+
+NETworkManager is available through the following package managers:
+
+<Tabs>
+  <TabItem value="winget" label="WinGet" default>
+
+```powershell
+winget install BornToBeRoot.NETworkManager
+```
+
+Source: [github.com/microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs/tree/master/manifests/b/BornToBeRoot/NETworkManager/)
+
+  </TabItem>
+  <TabItem value="chocolatey" label="Chocolatey">
+
+```powershell
+choco install networkmanager
+```
+
+Source: [chocolatey.org/packages/NETworkManager](https://chocolatey.org/packages/NETworkManager)
+
+  </TabItem>
+  <TabItem value="evergreen" label="Evergreen">
+
+```powershell
+Get-EvergreenApp -Name NETworkManager | Save-EvergreenApp -Path $env:USERPROFILE\Downloads\
+```
+
+Source: [github.com/aaronparker/evergreen](https://github.com/aaronparker/evergreen)
+
+  </TabItem>
+</Tabs>
+
+## Verify your download
+
+Each download is published with a SHA-256 checksum. Use the **📋 Copy SHA-256** button on a download card to copy its expected hash, then compute the hash of the downloaded file and compare the two:
+
+```powershell
+Get-FileHash -Path .\NETworkManager_{VERSION}_Setup.msi -Algorithm SHA256
+```
+
+The computed hash must match the copied checksum. The full list of checksums is also published on the [GitHub releases page](https://github.com/BornToBeRoot/NETworkManager/releases).
+
+## Silent install
+
+Install the Setup (MSI) silently using the following command:
+
+```
+.\NETworkManager_{VERSION}_Setup.msi /quiet /norestart
+```
+
+## Enterprise Deployment / Policies
+
+NETworkManager supports system-wide policies that allow administrators to enforce specific settings for all users on a machine — for example, disabling the automatic update check at startup. Policies are defined in a `config.json` file placed in the application installation directory and can be deployed via Group Policy, Intune, SCCM, or any other configuration management tool.
+
+See the [System-Wide Policies](/docs/system-wide-policies) documentation for details on available policy options and how to configure them.
+
+## Pre-release
+
+Help improve NETworkManager by testing pre-release versions with the latest features and bug fixes, and reporting any issues via [GitHub Issues](https://github.com/BornToBeRoot/NETworkManager/issues/new/choose).
+
+<LatestPrerelease />
+
+:::warning
+
+Please note that pre-release versions are not as stable as regular versions and may contain more bugs.
+
+:::
+
+## Code Signing Policy
+
+NETworkManager uses free code signing services from [SignPath.io](https://signpath.io/) and a free code signing certificate provided by the [SignPath Foundation](https://signpath.org/) to sign all official binaries and installers, ensuring the authenticity and integrity of your downloads.
+
+The binaries and installers are built on [AppVeyor](https://ci.appveyor.com/project/BornToBeRoot/networkmanager) directly from the [GitHub repository](https://github.com/BornToBeRoot/NETworkManager/blob/main/appveyor.yml). After each build, the artifacts are automatically sent to [SignPath.io](https://signpath.io/) via webhook, where they are signed following manual approval by the maintainer. Once signed, the binaries are uploaded to the [GitHub releases page](https://github.com/BornToBeRoot/NETworkManager/releases).
+
+## Privacy Policy
+
+Your privacy matters. NETworkManager will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it.
+
+NETworManager has integrated some optional third-party services to enhance functionality. You can choose to enable or disable these services at the first startup or later in the settings:
+
+- [api.github.com](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement) - Check for application updates.
+- [ipify.org](https://www.ipify.org/) - Retrieve the public IP address used by the client.
+- [ip-api.com](https://ip-api.com/docs/legal) - Retrieve network information (e.g., geolocation, ISP, DNS resolver) used by the client.
+- [speed.cloudflare.com](https://www.cloudflare.com/privacypolicy/) - Measure download/upload speed, latency and jitter.
+
+## License
+
+NETworkManager is licensed under the [GNU General Public License v3](https://github.com/BornToBeRoot/NETworkManager/blob/main/LICENSE). Library licenses are [here](https://github.com/BornToBeRoot/NETworkManager/tree/main/Source/NETworkManager.Documentation/Licenses).

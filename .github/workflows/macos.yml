@@ -1,0 +1,202 @@
+name: macOS
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "**"
+    tags:
+      - "v*"
+    paths:
+      - "macos/**"
+      - "script/**"
+      - "Images/**"
+      - ".github/workflows/macos.yml"
+  pull_request:
+    paths:
+      - "macos/**"
+      - "script/**"
+      - "Images/**"
+      - ".github/workflows/macos.yml"
+
+jobs:
+  build:
+    name: Test and build macOS app (${{ matrix.macos }})
+    strategy:
+      fail-fast: false
+      matrix:
+        macos: [macos-15, macos-26]
+    runs-on: ${{ matrix.macos }}
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Swift package
+        run: swift build --package-path macos --product NETworkManagerMac -c release
+
+      - name: Run core checks
+        run: swift run --package-path macos NMTest
+
+      - name: Run protocol self-checks
+        run: swift run --package-path macos NMCheck
+
+      - name: Package app and launch GUI smoke test
+        env:
+          CREATE_DMG: "1"
+        run: ./script/build_and_run.sh --verify
+
+      - name: Verify app bundle and DMG
+        run: |
+          set -euo pipefail
+          app="dist/macos/NETworkManager.app"
+          dmg="$(find dist/macos -maxdepth 1 -type f -name '*.dmg' -print -quit)"
+          test -d "$app"
+          test -n "$dmg"
+          codesign --verify --deep --strict "$app"
+          plutil -lint "$app/Contents/Info.plist"
+          hdiutil verify "$dmg"
+
+      - name: Test DMG install, upgrade, and uninstall
+        run: ./macos/Scripts/verify-dmg-lifecycle.sh "$(find dist/macos -maxdepth 1 -type f -name '*.dmg' -print -quit)"
+
+      - name: Upload ad-hoc app and DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: NETworkManager-macOS-ad-hoc-${{ matrix.macos }}
+          path: |
+            dist/macos/NETworkManager.app
+            dist/macos/*.dmg
+
+  notarized-release:
+    name: Sign, notarize, and validate Universal DMG
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: macos-26
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      MACOS_CERTIFICATE_P12_BASE64: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}
+      MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+      MACOS_CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
+      MACOS_NOTARY_API_KEY_BASE64: ${{ secrets.MACOS_NOTARY_API_KEY_BASE64 }}
+      MACOS_NOTARY_KEY_ID: ${{ secrets.MACOS_NOTARY_KEY_ID }}
+      MACOS_NOTARY_ISSUER_ID: ${{ secrets.MACOS_NOTARY_ISSUER_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Import Developer ID certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            MACOS_CERTIFICATE_P12_BASE64
+            MACOS_CERTIFICATE_PASSWORD
+            MACOS_CODESIGN_IDENTITY
+            MACOS_NOTARY_API_KEY_BASE64
+            MACOS_NOTARY_KEY_ID
+            MACOS_NOTARY_ISSUER_ID
+          )
+          for name in "${required[@]}"; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "::error::Missing required repository secret: $name"
+              exit 1
+            fi
+          done
+
+          keychain_path="$RUNNER_TEMP/networkmanager-release.keychain-db"
+          keychain_password="$(openssl rand -hex 24)"
+          certificate_path="$RUNNER_TEMP/developer-id.p12"
+          api_key_path="$RUNNER_TEMP/AuthKey_${MACOS_NOTARY_KEY_ID}.p8"
+          notary_profile="NETworkManagerRelease"
+
+          printf '%s' "$MACOS_CERTIFICATE_P12_BASE64" | base64 --decode > "$certificate_path"
+          printf '%s' "$MACOS_NOTARY_API_KEY_BASE64" | base64 --decode > "$api_key_path"
+          chmod 600 "$certificate_path" "$api_key_path"
+
+          security create-keychain -p "$keychain_password" "$keychain_path"
+          security set-keychain-settings -lut 21600 "$keychain_path"
+          security unlock-keychain -p "$keychain_password" "$keychain_path"
+          security list-keychains -d user -s "$keychain_path"
+          security default-keychain -d user -s "$keychain_path"
+          security import "$certificate_path" -k "$keychain_path" \
+            -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$keychain_password" "$keychain_path"
+
+          identities="$(security find-identity -v -p codesigning "$keychain_path")"
+          printf '%s\n' "$identities"
+          if ! printf '%s\n' "$identities" | grep -Fq -- "\"$MACOS_CODESIGN_IDENTITY\""; then
+            echo "::error::MACOS_CODESIGN_IDENTITY does not match an identity in the imported certificate."
+            exit 1
+          fi
+
+          xcrun notarytool store-credentials "$notary_profile" \
+            --key "$api_key_path" \
+            --key-id "$MACOS_NOTARY_KEY_ID" \
+            --issuer "$MACOS_NOTARY_ISSUER_ID" \
+            --keychain "$keychain_path"
+
+          printf 'NOTARY_PROFILE=%s\n' "$notary_profile" >> "$GITHUB_ENV"
+          printf 'NOTARY_KEYCHAIN=%s\n' "$keychain_path" >> "$GITHUB_ENV"
+          printf 'VERSION=%s\n' "${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          printf 'DIST_DIR=%s/dist/macos\n' "$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
+          printf 'CODESIGN_IDENTITY=%s\n' "$MACOS_CODESIGN_IDENTITY" >> "$GITHUB_ENV"
+
+      - name: Build, notarize, and validate
+        run: ./macos/Scripts/release-dmg.sh
+
+      - name: Create or update draft GitHub Release
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          dmg="dist/macos/NETworkManager-macOS-${VERSION}-universal.dmg"
+          test -f "$dmg"
+
+          if gh release view "$tag" >/dev/null 2>&1; then
+            is_draft="$(gh release view "$tag" --json isDraft --jq '.isDraft')"
+            if [[ "$is_draft" != "true" ]]; then
+              echo "::error::Release $tag already exists and is public; refusing to replace its assets."
+              exit 1
+            fi
+            gh release upload "$tag" "$dmg" --clobber
+          else
+            gh release create "$tag" "$dmg" \
+              --draft \
+              --verify-tag \
+              --title "NETworkManager $VERSION for macOS" \
+              --generate-notes
+          fi
+
+      - name: Upload notarized DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: NETworkManager-macOS-${{ github.ref_name }}-notarized
+          path: dist/macos/NETworkManager-macOS-*.dmg
+          if-no-files-found: error
+
+      - name: Upload notarization diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NETworkManager-macOS-${{ github.ref_name }}-notarization-diagnostics
+          path: |
+            dist/macos/notarization-submission.json
+            dist/macos/notarization-log.json
+          if-no-files-found: ignore
+
+      - name: Remove temporary credentials
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          security delete-keychain "$RUNNER_TEMP/networkmanager-release.keychain-db"
+          rm -f "$RUNNER_TEMP/developer-id.p12"
+          rm -f "$RUNNER_TEMP"/AuthKey_*.p8

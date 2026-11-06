@@ -1,0 +1,628 @@
+﻿using DnsClient;
+using log4net;
+using MahApps.Metro.Controls;
+using MahApps.Metro.SimpleChildWindow;
+using NETworkManager.Controls;
+using NETworkManager.Localization.Resources;
+using NETworkManager.Models.Export;
+using NETworkManager.Models.Network;
+using NETworkManager.Settings;
+using NETworkManager.Utilities;
+using NETworkManager.Views;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Data;
+using System.Windows.Input;
+using System.Windows.Threading;
+
+namespace NETworkManager.ViewModels;
+
+/// <summary>
+/// View model for the DNS lookup view.
+/// </summary>
+public class DNSLookupViewModel : ViewModelBase
+{
+    #region Variables
+    private static readonly ILog Log = LogManager.GetLogger(typeof(DNSLookupViewModel));
+
+    private readonly Guid _tabId;
+    private bool _firstLoad = true;
+    private bool _closed;
+
+    /// <summary>
+    /// Indicates whether the view model is loading.
+    /// </summary>
+    private readonly bool _isLoading;
+
+    /// <summary>
+    /// Gets or sets the host to lookup.
+    /// </summary>
+    public string Host
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets the collection view of host history.
+    /// </summary>
+    public ICollectionView HostHistoryView { get; }
+
+    /// <summary>
+    /// Gets the collection view of DNS servers.
+    /// </summary>
+    public ICollectionView DNSServers { get; }
+
+    /// <summary>
+    /// Gets or sets the selected DNS server.
+    /// This can either be an ip/host:port or a profile name.
+    /// </summary>
+    public string DNSServer
+    {
+        get;
+        set
+        {
+            if (field == value)
+                return;
+
+            // Try finding matching dns server profile by name, otherwise set to null (de-select)
+            SelectedDNSServer = SettingsManager.Current.DNSLookup_DNSServers
+                .FirstOrDefault(x => x.Name == value);
+
+            if (!_isLoading)
+                SettingsManager.Current.DNSLookup_SelectedDNSServer_v2 = value;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public DNSServerConnectionInfoProfile SelectedDNSServer
+    {
+        get;
+        set
+        {
+            if (field == value)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets the list of available query types.
+    /// </summary>
+    public List<QueryType> QueryTypes
+    {
+        get;
+        private set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    } = [];
+
+    /// <summary>
+    /// Gets or sets the selected query type.
+    /// </summary>
+    public QueryType QueryType
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            if (!_isLoading)
+                SettingsManager.Current.DNSLookup_QueryType = value;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the lookup is running.
+    /// </summary>
+    public bool IsRunning
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the collection of lookup results.
+    /// </summary>
+    public ObservableCollection<DNSLookupRecordInfo> Results
+    {
+        get;
+        set
+        {
+            if (Equals(value, field))
+                return;
+
+            field = value;
+        }
+    } = [];
+
+    /// <summary>
+    /// Gets the collection view for lookup results.
+    /// </summary>
+    public ICollectionView ResultsView { get; }
+
+    /// <summary>
+    /// Gets or sets the selected lookup result.
+    /// </summary>
+    public DNSLookupRecordInfo SelectedResult
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the list of selected lookup results.
+    /// </summary>
+    public IList SelectedResults
+    {
+        get;
+        set
+        {
+            if (Equals(value, field))
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    } = new ArrayList();
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the status message is displayed.
+    /// </summary>
+    public bool IsStatusMessageDisplayed
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets the status message.
+    /// </summary>
+    public string StatusMessage
+    {
+        get;
+        private set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    #endregion
+
+    #region Contructor, load settings
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DNSLookupViewModel"/> class.
+    /// </summary>
+    /// <param name="tabId">The ID of the tab.</param>
+    /// <param name="host">The host to lookup.</param>
+    public DNSLookupViewModel(Guid tabId, string host)
+    {
+        _isLoading = true;
+
+        ConfigurationManager.Current.DNSLookupTabCount++;
+
+        _tabId = tabId;
+        Host = host;
+
+        HostHistoryView = CollectionViewSource.GetDefaultView(SettingsManager.Current.DNSLookup_HostHistory);
+
+        DNSServers = new CollectionViewSource { Source = SettingsManager.Current.DNSLookup_DNSServers }.View;
+        DNSServers.SortDescriptions.Add(new SortDescription(nameof(DNSServerConnectionInfoProfile.UseWindowsDNSServer),
+            ListSortDirection.Descending));
+        DNSServers.SortDescriptions.Add(new SortDescription(nameof(DNSServerConnectionInfoProfile.Name),
+            ListSortDirection.Ascending));
+
+        DNSServer = string.IsNullOrEmpty(SettingsManager.Current.DNSLookup_SelectedDNSServer_v2)
+            ? SettingsManager.Current.DNSLookup_DNSServers.FirstOrDefault()?.Name
+            : SettingsManager.Current.DNSLookup_SelectedDNSServer_v2;
+
+        ResultsView = CollectionViewSource.GetDefaultView(Results);
+        ResultsView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(DNSLookupRecordInfo.NameServerAsString)));
+        ResultsView.SortDescriptions.Add(new SortDescription(nameof(DNSLookupRecordInfo.NameServerIPAddress),
+            ListSortDirection.Descending));
+
+        LoadSettings();
+
+        _isLoading = false;
+    }
+
+    /// <summary>
+    /// Called when the view is loaded.
+    /// </summary>
+    public void OnLoaded()
+    {
+        if (!_firstLoad)
+            return;
+
+        if (!string.IsNullOrEmpty(Host))
+            _ = QueryAsync();
+
+        _firstLoad = false;
+    }
+
+    /// <summary>
+    /// Loads the settings.
+    /// </summary>
+    private void LoadSettings()
+    {
+        LoadTypes();
+    }
+
+    /// <summary>
+    /// Loads the query types.
+    /// </summary>
+    private void LoadTypes()
+    {
+        var queryTypes = (QueryType[])Enum.GetValues(typeof(QueryType));
+
+        QueryTypes = [.. queryTypes.Where(DNSLookup.QueryTypes.Contains).OrderBy(x => x.ToString())];
+        QueryType = QueryTypes.FirstOrDefault(x => x == SettingsManager.Current.DNSLookup_QueryType);
+
+        // Fallback
+        if (QueryType == 0)
+            QueryType = GlobalStaticConfiguration.DNSLookup_QueryType;
+    }
+
+    #endregion
+
+    #region ICommands & Actions
+
+    /// <summary>
+    /// Gets the command to start the query.
+    /// </summary>
+    public ICommand QueryCommand => new RelayCommand(_ => QueryAction(), Query_CanExecute);
+
+    /// <summary>
+    /// Checks if the query command can be executed.
+    /// </summary>
+    /// <param name="parameter">The command parameter.</param>
+    /// <returns><c>true</c> if the command can be executed; otherwise, <c>false</c>.</returns>
+    private bool Query_CanExecute(object parameter)
+    {
+        return Application.Current.MainWindow != null &&
+               !((MetroWindow)Application.Current.MainWindow).IsAnyDialogOpen &&
+               !ConfigurationManager.Current.IsChildWindowOpen;
+    }
+
+    /// <summary>
+    /// Action to start the query.
+    /// </summary>
+    private void QueryAction()
+    {
+        if (!IsRunning)
+            _ = QueryAsync();
+    }
+
+    /// <summary>
+    /// Gets the command to export the results.
+    /// </summary>
+    public ICommand ExportCommand => new RelayCommand(_ => ExportAction());
+
+    /// <summary>
+    /// Action to export the results.
+    /// </summary>
+    private void ExportAction()
+    {
+        _ = Export();
+    }
+
+    #endregion
+
+    #region Methods
+    /// <summary>
+    /// Performs the DNS query.
+    /// </summary>
+    private async Task QueryAsync()
+    {
+        IsStatusMessageDisplayed = false;
+        StatusMessage = string.Empty;
+
+        IsRunning = true;
+
+        Results.Clear();
+
+        DragablzTabItem.SetTabHeader(_tabId, Host);
+
+        AddHostToHistory(Host);
+
+        DNSLookupSettings dnsSettings = new()
+        {
+            AddDNSSuffix = SettingsManager.Current.DNSLookup_AddDNSSuffix,
+            QueryClass = SettingsManager.Current.DNSLookup_QueryClass,
+            QueryType = QueryType,
+            Recursion = SettingsManager.Current.DNSLookup_Recursion,
+            UseCache = SettingsManager.Current.DNSLookup_UseCache,
+            UseTCPOnly = SettingsManager.Current.DNSLookup_UseTCPOnly,
+            Retries = SettingsManager.Current.DNSLookup_Retries,
+            Timeout = TimeSpan.FromSeconds(SettingsManager.Current.DNSLookup_Timeout)
+        };
+
+        if (SettingsManager.Current.DNSLookup_UseCustomDNSSuffix)
+        {
+            dnsSettings.UseCustomDNSSuffix = true;
+            dnsSettings.CustomDNSSuffix = SettingsManager.Current.DNSLookup_CustomDNSSuffix?.TrimStart('.');
+        }
+
+        // Try to find DNS server profile
+        var dnsServerProfile = SettingsManager.Current.DNSLookup_DNSServers
+            .FirstOrDefault(x => x.Name == DNSServer);
+
+        DNSLookup dnsLookup = null;
+        List<ServerConnectionInfo> dnsServersToResolve = [];
+
+        // Use DNS server profile if found
+        if (dnsServerProfile != null)
+        {
+            if (dnsServerProfile.UseWindowsDNSServer)
+                dnsLookup = new DNSLookup(dnsSettings);
+            else
+                dnsServersToResolve = dnsServerProfile.Servers;
+        }
+        // Parse DNS server input
+        else
+        {
+            foreach (var dnsServerInput in DNSServer.Split(';'))
+            {
+                if (ServerConnectionInfo.TryParse(dnsServerInput, out var serverInfo, 53, TransportProtocol.Udp))
+                    dnsServersToResolve.Add(serverInfo);
+                else
+                    AppendStatusMessage(Strings.DNSServer + ": " + string.Format(Strings.CouldNotParseX, dnsServerInput));
+            }
+        }
+
+        // Resolve DNS server hostnames (if any) - not required when using Windows DNS servers
+        if (dnsLookup == null)
+        {
+            List<ServerConnectionInfo> resolvedDNSServers = [];
+
+            foreach (var dnsServerToResolve in dnsServersToResolve)
+            {
+                // Check if already an IP address
+                if (IPAddress.TryParse(dnsServerToResolve.Server, out _))
+                {
+                    resolvedDNSServers.Add(dnsServerToResolve);
+
+                    continue;
+                }
+
+                // Resolve hostname to IP address
+                var dnsResult = await DNSClientHelper.ResolveAorAaaaAsync(dnsServerToResolve.Server,
+                    SettingsManager.Current.Network_ResolveHostnamePreferIPv4);
+
+                if (dnsResult.HasError)
+                {
+                    var dnsErrorMessage = DNSClientHelper.FormatDNSClientResultError(dnsServerToResolve.Server, dnsResult);
+
+                    AppendStatusMessage($"{Strings.DNSServer}: {dnsErrorMessage}");
+
+                    continue;
+                }
+
+                resolvedDNSServers.Add(new ServerConnectionInfo(
+                    dnsResult.Value.ToString(),
+                    dnsServerToResolve.Port,
+                    dnsServerToResolve.TransportProtocol)
+                );
+            }
+
+            // Create DNS lookup instance
+            if (resolvedDNSServers.Count > 0)
+            {
+                dnsLookup = new DNSLookup(dnsSettings, resolvedDNSServers);
+            }
+            else
+            {
+                AppendStatusMessage(Strings.CouldNotParseOrResolveDNSServers);
+
+                IsRunning = false;
+
+                return;
+            }
+        }
+
+        dnsLookup.RecordReceived += DNSLookup_RecordReceived;
+        dnsLookup.LookupError += DNSLookup_LookupError;
+        dnsLookup.LookupComplete += DNSLookup_LookupComplete;
+
+        dnsLookup.ResolveAsync([.. Host.Split(';').Select(x => x.Trim())]);
+    }
+
+    /// <summary>
+    /// Called when the view is closed.
+    /// </summary>
+    public void OnClose()
+    {
+        // Prevent multiple calls
+        if (_closed)
+            return;
+
+        _closed = true;
+
+        ConfigurationManager.Current.DNSLookupTabCount--;
+    }
+
+    /// <summary>
+    /// Appends the specified message to the current status message, adding a new line if a message already exists.
+    /// </summary>
+    /// <param name="message">The status message text to append. Cannot be null.</param>
+    private void AppendStatusMessage(string message)
+    {
+        if (!string.IsNullOrEmpty(StatusMessage))
+            StatusMessage += Environment.NewLine;
+
+        StatusMessage += message;
+        IsStatusMessageDisplayed = true;
+    }
+
+    // Modify history list
+    /// <summary>
+    /// Adds the host to the history.
+    /// </summary>
+    /// <param name="host">The host to add.</param>
+    private void AddHostToHistory(string host)
+    {
+        // Create the new list
+        var list = ListHelper.Modify([.. SettingsManager.Current.DNSLookup_HostHistory], host,
+            SettingsManager.Current.General_HistoryListEntries);
+
+        // Clear the old items
+        SettingsManager.Current.DNSLookup_HostHistory.Clear();
+        OnPropertyChanged(nameof(Host)); // Raise property changed again, after the collection has been cleared
+
+        // Fill with the new items
+        list.ForEach(x => SettingsManager.Current.DNSLookup_HostHistory.Add(x));
+    }
+
+
+    /// <summary>
+    /// Exports the results.
+    /// </summary>
+    private Task Export()
+    {
+        var window = Application.Current.Windows.OfType<Window>().FirstOrDefault(x => x.IsActive);
+
+        var childWindow = new ExportChildWindow();
+
+        var childWindowViewModel = new ExportViewModel(async instance =>
+        {
+            childWindow.IsOpen = false;
+            ConfigurationManager.Current.IsChildWindowOpen = false;
+
+            try
+            {
+                ExportManager.Export(instance.FilePath, instance.FileType,
+                    instance.ExportAll
+                        ? Results
+                        : new ObservableCollection<DNSLookupRecordInfo>(SelectedResults
+                            .Cast<DNSLookupRecordInfo>().ToArray()));
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Error while exporting data as " + instance.FileType, ex);
+
+                await DialogHelper.ShowMessageAsync(window, Strings.Error,
+                   Strings.AnErrorOccurredWhileExportingTheData + Environment.NewLine +
+                   Environment.NewLine + ex.Message, ChildWindowIcon.Error);
+            }
+
+            SettingsManager.Current.DNSLookup_ExportFileType = instance.FileType;
+            SettingsManager.Current.DNSLookup_ExportFilePath = instance.FilePath;
+        }, _ =>
+        {
+            childWindow.IsOpen = false;
+            ConfigurationManager.Current.IsChildWindowOpen = false;
+        },
+            [
+                ExportFileType.Csv, ExportFileType.Xml, ExportFileType.Json
+            ], true,
+            SettingsManager.Current.DNSLookup_ExportFileType, SettingsManager.Current.DNSLookup_ExportFilePath);
+
+        childWindow.Title = Strings.Export;
+
+        childWindow.DataContext = childWindowViewModel;
+
+        ConfigurationManager.Current.IsChildWindowOpen = true;
+
+        return window.ShowChildWindowAsync(childWindow);
+    }
+
+    #endregion
+
+    #region Events
+
+    /// <summary>
+    /// Handles the RecordReceived event of the DNS lookup.
+    /// </summary>
+    private void DNSLookup_RecordReceived(object sender, DNSLookupRecordReceivedArgs e)
+    {
+        Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal,
+            new Action(delegate { Results.Add(e.Args); }));
+    }
+
+    /// <summary>
+    /// Handles the LookupError event of the DNS lookup.
+    /// </summary>
+    private void DNSLookup_LookupError(object sender, DNSLookupErrorArgs e)
+    {
+        Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(delegate
+        {
+            // Build the message based on the information in the DNSLookupErrorArgs
+            var statusMessage = $"{e.Query} @ {e.IPEndPoint} ==> {e.ErrorMessage}";
+
+            // Show the message
+            if (!IsStatusMessageDisplayed)
+            {
+                StatusMessage = statusMessage;
+                IsStatusMessageDisplayed = true;
+
+                return;
+            }
+
+            // Append the message
+            StatusMessage += Environment.NewLine + statusMessage;
+        }));
+    }
+
+    /// <summary>
+    /// Handles the LookupComplete event of the DNS lookup.
+    /// </summary>
+    private void DNSLookup_LookupComplete(object sender, EventArgs e)
+    {
+        IsRunning = false;
+    }
+
+    #endregion
+}

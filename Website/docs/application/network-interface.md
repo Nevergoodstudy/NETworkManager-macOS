@@ -1,0 +1,248 @@
+---
+sidebar_position: 1
+description: "View detailed information about all network adapters, monitor bandwidth usage, and configure IP addresses and DNS servers with NETworkManager."
+keywords:
+  [
+    NETworkManager,
+    network interface,
+    network adapter,
+    bandwidth monitor,
+    IP configuration,
+    DNS configuration,
+    network settings,
+  ]
+---
+
+# Network Interface
+
+The **Network Interface** shows all network adapters on the computer with their most important information, such as IP addresses and DNS servers. It also lets you monitor bandwidth usage for connected adapters and configure settings such as IP addresses and DNS servers using profiles.
+
+## Information
+
+On the **Information** tab, you can see all the important details of the selected network adapter such as the configured IP addresses, DNS servers, MAC address, and more. If information such as IPv6 configuration is not available, it is hidden in the view.
+
+![Network Interface - Information](../img/network-interface--information.png)
+
+### Toolbar
+
+The following buttons are available at the bottom left:
+
+| Button                 | Description                                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Network connections...** | Opens the `Control Panel > Network and Internet > Network Connections` window                            |
+| **IP Scanner**         | Opens the [IP Scanner](./ip-scanner) with the IPv4 address and subnet mask of the selected adapter           |
+| **Export...**          | Exports the information to a CSV, XML, or JSON file                                                          |
+
+### Context menu
+
+| Action   | Description                                      |
+| -------- | ------------------------------------------------ |
+| **Copy** | Copies the selected information to the clipboard |
+
+## Bandwidth
+
+On the **Bandwidth** tab, you can monitor the currently used bandwidth of the selected network adapter.
+
+The chart plots the download and upload speed over time. By default it displays the last 60 seconds (see [Chart time (seconds)](#chart-time-seconds)) and scrolls automatically as new data arrives (**live mode**).
+
+Speeds are shown in bit/s and automatically scale to KBit/s, MBit/s, or GBit/s depending on the bandwidth in use. Hover over a value to see the equivalent in byte/s.
+
+Below the chart, additional statistics are displayed: the current download and upload speed, the total amount received and sent by the adapter, when the measurement started and how long it has been running, and the amount downloaded and uploaded since the measurement started. Hover over a byte value to see the exact number of bytes.
+
+![Network Interface - Bandwidth](../img/network-interface--bandwidth.png)
+
+### Chart
+
+You can interact with the chart to inspect past data:
+
+| Action | Description |
+|--------|-------------|
+| **Mouse wheel** | Zoom in and out on the time axis |
+| **Left mouse button + drag** | Pan the chart left and right |
+| **Right mouse button + drag** | Zoom into the selected section |
+
+When you zoom or pan, the chart leaves live mode and stops scrolling. A **Live** button then appears in the top-right corner of the chart — click it to return to live mode and resume auto-scrolling.
+
+:::note
+
+If you switch to another tool, monitoring stops and the statistics are reset when you switch back.
+
+:::
+
+## Configure
+
+On the **Configure** tab, you can change the configuration of the selected network adapter. In order to change the settings, the network adapter must be connected.
+
+The options you can set correspond to the network adapter properties `Internetprotokoll, Version 4 (TCP/IPv4) Properties` in the `Control Panel > Network and Internet > Network Connections`. These are explained in the [profiles section](#profile).
+
+![Network Interface - Configure](../img/network-interface--configure.png)
+
+:::note
+
+All actions on this tab require the application to be running with **administrator privileges**. If the app is not elevated, a banner is shown at the bottom with a **Restart as Administrator** button.
+
+:::
+
+### Toolbar
+
+| Button                                            | Description                                                                                                                              |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Flush DNS cache**                               | Flushes the local DNS resolver cache (`ipconfig /flushdns`)                                                                              |
+| **Release & Renew > IPv4 > Release & Renew**      | Releases and renews the IPv4 addresses obtained via DHCP for the selected adapter (`ipconfig /release && ipconfig /renew <ADAPTER>`)     |
+| **Release & Renew > IPv4 > Release**              | Releases the IPv4 addresses obtained via DHCP for the selected adapter (`ipconfig /release <ADAPTER>`)                                   |
+| **Release & Renew > IPv4 > Renew**                | Renews the IPv4 address via DHCP for the selected adapter (`ipconfig /renew <ADAPTER>`)                                                  |
+| **Release & Renew > IPv6 > Release & Renew**      | Releases and renews the IPv6 addresses obtained via DHCPv6 for the selected adapter (`ipconfig /release6 && ipconfig /renew6 <ADAPTER>`) |
+| **Release & Renew > IPv6 > Release**              | Releases the IPv6 addresses obtained via DHCPv6 for the selected adapter (`ipconfig /release6 <ADAPTER>`)                                |
+| **Release & Renew > IPv6 > Renew**                | Renews the IPv6 address via DHCPv6 for the selected adapter (`ipconfig /renew6 <ADAPTER>`)                                               |
+| **Additional config... > Add IPv4 address...**    | Opens a dialog to add an IPv4 address with a subnet mask or CIDR to the selected adapter                                                 |
+| **Additional config... > Remove IPv4 address...** | Opens a dialog to remove an IPv4 address from the selected adapter                                                                       |
+| **Apply**                                         | Applies the IP and DNS configuration to the selected adapter                                                                             |
+
+:::note
+
+**Add IPv4 address:** If a static IP address is added to a network adapter that is configured for DHCP, the `netsh` option `dhcpstaticipcoexistence` is also activated:
+
+```powershell
+netsh interface ipv4 set interface interface="Ethernet" dhcpstaticipcoexistence=enabled
+```
+
+:::
+
+:::info
+
+The `netsh` option `dhcpstaticipcoexistence` allows the network adapter to use a static IP address and still receive DHCP options (e.g. DNS server) from the DHCP server. This is useful if you want to use a static IP address but still want to receive DNS server addresses from the DHCP server. This feature is available since Windows 10 version 1703 (Creators Update).
+
+:::
+
+:::note
+
+**Remove IPv4 address:** Only IPv4 addresses that are not assigned via DHCP can be removed.
+
+If you have previously added an additional IPv4 address to a network adapter that is configured for DHCP, the `netsh` option `dhcpstaticipcoexistence` remains active. To disable it, run the following command in an elevated PowerShell:
+
+```powershell
+netsh interface ipv4 set interface interface="Ethernet" dhcpstaticipcoexistence=disabled
+```
+
+:::
+
+## Profile
+
+### Obtain an IP address automatically
+
+Obtain an IP address automatically from a DHCP server for the selected network adapter.
+
+**Type:** `Boolean`
+
+**Default:** `Enabled`
+
+:::note
+
+If you select this option, the [Use the following IP address](#use-the-following-ip-address) option will be disabled.
+
+:::
+
+### Use the following IP address:
+
+Configure a static IP address for the selected network adapter. See [IPv4 address](#ipv4-address), [Subnetmask or CIDR](#subnetmask-or-cidr) and [Default-Gateway](#default-gateway) options below for more information.
+
+**Type:** `Boolean`
+
+**Default:** `Disabled`
+
+:::note
+
+If you select this option, the [Obtain an IP address automatically](#obtain-an-ip-address-automatically) option will be disabled.
+
+:::
+
+### IPv4 address
+
+Static IPv4 address for the selected network adapter.
+
+**Type:** `String`
+
+**Default:** `Empty`
+
+**Example:** `192.168.178.20`
+
+### Subnetmask or CIDR
+
+Subnet mask or CIDR for the selected network adapter.
+
+**Type:** `String`
+
+**Default:** `Empty`
+
+**Example:**
+
+- `/24`
+- `255.255.255.0`
+
+### Default-Gateway
+
+Default gateway for the selected network adapter.
+
+**Type:** `String`
+
+**Default:** `Empty`
+
+**Example:** `192.168.178.1`
+
+### Obtain DNS server address automatically
+
+Obtain DNS server address automatically from a DHCP server for the selected network adapter.
+
+**Type:** `Boolean`
+
+**Default:** `Enabled`
+
+:::note
+
+If you select this option, the [Use the following DNS server addresses](#use-the-following-dns-server-addresses) option will be disabled.
+
+:::
+
+### Use the following DNS server addresses:
+
+Configure static DNS server addresses for the selected network adapter. See [Primary DNS server](#primary-dns-server) and [Secondary DNS server](#secondary-dns-server) options below for more information.
+
+**Type:** `Boolean`
+
+**Default:** `Disabled`
+
+:::note
+
+If you select this option, the [Obtain DNS server address automatically](#obtain-dns-server-address-automatically) option will be disabled.
+
+:::
+
+### Primary DNS server
+
+Primary DNS server for the selected network adapter.
+
+**Type:** `String`
+
+**Default:** `Empty`
+
+**Example:** `1.1.1.1`
+
+### Secondary DNS server
+
+Secondary DNS server for the selected network adapter.
+
+**Type:** `String`
+
+**Default:** `Empty`
+
+**Example:** `1.0.0.1`
+
+## Settings
+
+### Chart time (seconds)
+
+Time range in seconds displayed in the bandwidth chart.
+
+**Type:** `Integer` [Min `30`, Max `3600`]
+
+**Default:** `60`

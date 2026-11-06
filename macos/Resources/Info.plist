@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDisplayName</key>
+    <string>NETworkManager</string>
+    <key>CFBundleExecutable</key>
+    <string>NETworkManagerMac</string>
+    <key>CFBundleIdentifier</key>
+    <string>net.borntoberoot.networkmanager.macos</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>NETworkManager</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>2026.7.7</string>
+    <key>CFBundleVersion</key>
+    <string>2026.7.7.0</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>NETworkManager uses Apple Events only when you ask it to open a remote session in Terminal.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>NETworkManager uses the local network when you start IP discovery, probe a gateway, or inspect local neighbors and services.</string>
+</dict>
+</plist>

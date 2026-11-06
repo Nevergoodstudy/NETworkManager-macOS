@@ -1,0 +1,89 @@
+image: Visual Studio 2022
+configuration: Release
+platform: x64
+install:
+  - git submodule update --init
+  - ps: |
+      Invoke-WebRequest -Uri 'https://dot.net/v1/dotnet-install.ps1' -UseBasicParsing -OutFile "$env:temp\dotnet-install.ps1"
+      & $env:temp\dotnet-install.ps1 -Architecture x64 -Version '10.0.100' -InstallDir "$env:ProgramFiles\dotnet"
+before_build:
+  - dotnet restore %APPVEYOR_BUILD_FOLDER%\Source\NETworkManager.sln
+  - ps: |
+      # Set the version based on the current date (e.g. 2024.4.27.0)
+      $Date = Get-Date
+      $VersionString = $Date.ToString("yyyy.M.d.0")
+      
+      Write-Host "Set NETworkManager version set to $VersionString"
+      
+      # Update assembly version
+      $AssemblyVersionPattern = '\[assembly: AssemblyVersion\("(.*)"\)\]'
+      $AssemblyFileVersionPattern = '\[assembly: AssemblyFileVersion\("(.*)"\)\]'
+
+      $AssemblyFile = "$($env:APPVEYOR_BUILD_FOLDER)\Source\GlobalAssemblyInfo.cs"
+
+      $AssemlbyContent = Get-Content -Path $AssemblyFile -Encoding utf8
+      $AssemlbyContent = $AssemlbyContent -replace $AssemblyVersionPattern, "[assembly: AssemblyVersion(""$($VersionString)"")]"
+      $AssemlbyContent = $AssemlbyContent -replace $AssemblyFileVersionPattern, "[assembly: AssemblyFileVersion(""$($VersionString)"")]"
+      $AssemlbyContent | Set-Content -Path $AssemblyFile -Encoding utf8
+
+      # Set setup version information
+      $SetupVersionString = $Date.ToString("yy.M.d") # MSI only supports major.minor.build and 255 as highest value
+      
+      Write-Host "Set NETworkManager setup version set to $SetupVersionString"
+
+      $SetupVersionPattern = '<\?define ProductVersion="(.*)" \?>'
+
+      $SetupFile = ".\Source\NETworkManager.Setup\Package.wxs"
+
+      $SetupContent = Get-Content -Path "$SetupFile" -Encoding utf8
+      $SetupContent = $SetupContent -replace $SetupVersionPattern, "<?define ProductVersion=""$SetupVersionString"" ?>"
+      $SetupContent | Set-Content -Path "$SetupFile" -Encoding utf8
+
+build_script:
+  - dotnet build %APPVEYOR_BUILD_FOLDER%\Source\NETworkManager.sln --configuration Release --no-restore
+
+after_build:
+  - ps: |
+      if($env:APPVEYOR_REPO_TAG -eq $false) {
+        Write-Host "Release build is skipped because no tag was found!"
+        return
+      }
+
+      # Build path
+      $BuildPath = "$($env:APPVEYOR_BUILD_FOLDER)\Source\NETworkManager\bin\Release\net10.0-windows10.0.22621.0\win-x64"
+      $SetupPath = "$($env:APPVEYOR_BUILD_FOLDER)\Source\NETworkManager.Setup\bin\x64\Release\en-US\NETworkManager.Setup.msi"
+      $ArtifactsPath = "$($env:APPVEYOR_BUILD_FOLDER)\Artifacts"
+
+      # Get version
+      $Version = [System.Diagnostics.FileVersionInfo]::GetVersionInfo("$($BuildPath)\NETworkManager.exe").FileVersion
+
+      # Cleanup build
+      Get-ChildItem -Path "$BuildPath" -Recurse | Where-Object { $_.Name.EndsWith(".pdb") } | Remove-Item
+      Remove-Item -Path "$($BuildPath)\WebView2Loader.dll"
+
+      # Create release folder
+      New-Item -Path "$ArtifactsPath" -ItemType Directory -Force | Out-Null
+
+      # Create archive
+      Compress-Archive -Path "$($BuildPath)\*" -DestinationPath "$($ArtifactsPath)\NETworkManager_$($Version)_Archive.zip"
+
+      # Create portable
+      New-Item -Path "$BuildPath" -Name "IsPortable.settings" -ItemType File | Out-Null
+      Compress-Archive -Path "$($BuildPath)\*" -DestinationPath "$($ArtifactsPath)\NETworkManager_$($Version)_Portable.zip"
+      Remove-Item -Path "$($BuildPath)\IsPortable.settings"
+
+      # Copy setup
+      Move-Item -Path "$SetupPath" -Destination "$($ArtifactsPath)\NETworkManager_$($Version)_Setup.msi"
+      
+      # Create artifacts archive for signing
+      Compress-Archive -Path "$ArtifactsPath\*" -DestinationPath "$($ArtifactsPath).zip"
+
+artifacts:
+  - path: 'Artifacts.zip'
+deploy:
+  - provider: Webhook
+    url: https://app.signpath.io/API/v1/0a191750-608c-457a-a11d-8a5433ad6491/Integrations/AppVeyor?ProjectSlug=NETworkManager&SigningPolicySlug=release-signing&ArtifactConfigurationSlug=artifacts
+    authorization:
+      secure: PF6YBkp3Gg4c9TUX4HOzgjG5FeCzq9hYMCG5Zbs6xEL3jVuWe605D+Q/x1PKtK/q2nxUGzQIvOdiWbXMnUXWQg==
+    on:
+      APPVEYOR_REPO_TAG: true

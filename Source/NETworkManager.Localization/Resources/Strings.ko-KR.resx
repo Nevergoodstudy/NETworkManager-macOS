@@ -1,0 +1,4472 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0"/>
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string"/>
+              <xsd:attribute name="type" type="xsd:string"/>
+              <xsd:attribute name="mimetype" type="xsd:string"/>
+              <xsd:attribute ref="xml:space"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string"/>
+              <xsd:attribute name="name" type="xsd:string"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2"/>
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1"/>
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3"/>
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4"/>
+              <xsd:attribute ref="xml:space"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required"/>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="About" xml:space="preserve">
+    <value>정보</value>
+  </data>
+  <data name="Accent" xml:space="preserve">
+    <value>강조</value>
+  </data>
+  <data name="AddCredentials" xml:space="preserve">
+    <value>자격 증명 추가</value>
+  </data>
+  <data name="AddEntry" xml:space="preserve">
+    <value>항목 추가</value>
+  </data>
+  <data name="AddProfile" xml:space="preserve">
+    <value>프로필 추가</value>
+  </data>
+  <data name="AreYouSure" xml:space="preserve">
+    <value>확실합니까?</value>
+  </data>
+  <data name="ARP" xml:space="preserve">
+    <value>ARP</value>
+  </data>
+  <data name="NeighborTable" xml:space="preserve">
+    <value>인접 테이블</value>
+  </data>
+  <data name="NeighborTableAdminMessage" xml:space="preserve">
+    <value>읽기 전용 모드입니다. 인접 테이블을 수정하려면 권한 상승이 필요합니다!</value>
+  </data>
+  <data name="NeighborState_Unreachable" xml:space="preserve">
+    <value>접근 불가</value>
+  </data>
+  <data name="NeighborState_Incomplete" xml:space="preserve">
+    <value>미완성</value>
+  </data>
+  <data name="NeighborState_Probe" xml:space="preserve">
+    <value>조사</value>
+  </data>
+  <data name="NeighborState_Delay" xml:space="preserve">
+    <value>지연</value>
+  </data>
+  <data name="NeighborState_Stale" xml:space="preserve">
+    <value>오래된</value>
+  </data>
+  <data name="NeighborState_Reachable" xml:space="preserve">
+    <value>접근 가능</value>
+  </data>
+  <data name="NeighborState_Permanent" xml:space="preserve">
+    <value>상시</value>
+  </data>
+  <data name="Authentication" xml:space="preserve">
+    <value>인증</value>
+  </data>
+  <data name="Autostart" xml:space="preserve">
+    <value>자동시작</value>
+  </data>
+  <data name="Calculator" xml:space="preserve">
+    <value>계산기</value>
+  </data>
+  <data name="CommandLineArguments" xml:space="preserve">
+    <value>명령줄 인수</value>
+  </data>
+  <data name="Configure" xml:space="preserve">
+    <value>구성</value>
+  </data>
+  <data name="Confirm" xml:space="preserve">
+    <value>확인</value>
+  </data>
+  <data name="Connect" xml:space="preserve">
+    <value>연결</value>
+  </data>
+  <data name="ConnectAs" xml:space="preserve">
+    <value>연락처</value>
+  </data>
+  <data name="CopyProfile" xml:space="preserve">
+    <value>프로필 복사</value>
+  </data>
+  <data name="Credentials" xml:space="preserve">
+    <value>자격 증명</value>
+  </data>
+  <data name="Data" xml:space="preserve">
+    <value>데이터</value>
+  </data>
+  <data name="DefaultApplication" xml:space="preserve">
+    <value>기본 응용 프로그램</value>
+  </data>
+  <data name="DeleteCredentials" xml:space="preserve">
+    <value>자격 증명 삭제</value>
+  </data>
+  <data name="DeleteProfile" xml:space="preserve">
+    <value>프로필 삭제</value>
+  </data>
+  <data name="Destination" xml:space="preserve">
+    <value>대상</value>
+  </data>
+  <data name="Details" xml:space="preserve">
+    <value>세부사항</value>
+  </data>
+  <data name="Disconnected" xml:space="preserve">
+    <value>연결 끊김</value>
+  </data>
+  <data name="Display" xml:space="preserve">
+    <value>표시</value>
+  </data>
+  <data name="DNS" xml:space="preserve">
+    <value>DNS</value>
+  </data>
+  <data name="DNSLookup" xml:space="preserve">
+    <value>DNS 조회</value>
+  </data>
+  <data name="DontFragment" xml:space="preserve">
+    <value>조각내지 않음</value>
+  </data>
+  <data name="EditCredentials" xml:space="preserve">
+    <value>자격 증명 편집</value>
+  </data>
+  <data name="EditGroup" xml:space="preserve">
+    <value>그룹 편집</value>
+  </data>
+  <data name="EditProfile" xml:space="preserve">
+    <value>프로필 편집</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>오류</value>
+  </data>
+  <data name="Export" xml:space="preserve">
+    <value>내보내기</value>
+  </data>
+  <data name="Filter" xml:space="preserve">
+    <value>필터</value>
+  </data>
+  <data name="General" xml:space="preserve">
+    <value>일반</value>
+  </data>
+  <data name="Headers" xml:space="preserve">
+    <value>머리말</value>
+  </data>
+  <data name="History" xml:space="preserve">
+    <value>사용 기록</value>
+  </data>
+  <data name="HotKeys" xml:space="preserve">
+    <value>단축키</value>
+  </data>
+  <data name="HTTPHeaders" xml:space="preserve">
+    <value>HTTP 헤더</value>
+  </data>
+  <data name="Import" xml:space="preserve">
+    <value>가져오기</value>
+  </data>
+  <data name="Information" xml:space="preserve">
+    <value>정보</value>
+  </data>
+  <data name="Interface" xml:space="preserve">
+    <value>인터페이스</value>
+  </data>
+  <data name="IPScanner" xml:space="preserve">
+    <value>IP 스캐너</value>
+  </data>
+  <data name="Keyboard" xml:space="preserve">
+    <value>키보드</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>언어</value>
+  </data>
+  <data name="Libraries" xml:space="preserve">
+    <value>라이브러리</value>
+  </data>
+  <data name="License" xml:space="preserve">
+    <value>라이선스</value>
+  </data>
+  <data name="LocalDevicesAndResources" xml:space="preserve">
+    <value>로컬 장치 및 리소스</value>
+  </data>
+  <data name="Location" xml:space="preserve">
+    <value>위치</value>
+  </data>
+  <data name="Lookup" xml:space="preserve">
+    <value>조회</value>
+  </data>
+  <data name="MACAddress" xml:space="preserve">
+    <value>MAC 주소</value>
+  </data>
+  <data name="MasterPassword" xml:space="preserve">
+    <value>마스터 암호</value>
+  </data>
+  <data name="Multithreading" xml:space="preserve">
+    <value>멀티스레딩</value>
+  </data>
+  <data name="Network" xml:space="preserve">
+    <value>네트워크</value>
+  </data>
+  <data name="NetworkInterface" xml:space="preserve">
+    <value>네트워크 인터페이스</value>
+  </data>
+  <data name="NetworkInterfaceConfigurationAppliedSuccessfully" xml:space="preserve">
+    <value>Configuration applied</value>
+  </data>
+  <data name="NetworkInterfaceConfigureAdminMessage" xml:space="preserve">
+    <value>Configuring the network interface requires elevated rights!</value>
+  </data>
+  <data name="NewTab" xml:space="preserve">
+    <value>새 탭</value>
+  </data>
+  <data name="Next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="OUI" xml:space="preserve">
+    <value>OUI</value>
+  </data>
+  <data name="Options" xml:space="preserve">
+    <value>Options</value>
+  </data>
+  <data name="OverwriteQuestion" xml:space="preserve">
+    <value>덮어쓰시겠습니까?</value>
+  </data>
+  <data name="Ping" xml:space="preserve">
+    <value>핑</value>
+  </data>
+  <data name="Port" xml:space="preserve">
+    <value>포트</value>
+  </data>
+  <data name="Portable" xml:space="preserve">
+    <value>휴대용</value>
+  </data>
+  <data name="PortScanner" xml:space="preserve">
+    <value>포트 스캐너</value>
+  </data>
+  <data name="Profiles" xml:space="preserve">
+    <value>프로필</value>
+  </data>
+  <data name="PuTTY" xml:space="preserve">
+    <value>PuTTY</value>
+  </data>
+  <data name="Query" xml:space="preserve">
+    <value>질의</value>
+  </data>
+  <data name="RemoteDesktop" xml:space="preserve">
+    <value>원격 데스크탑</value>
+  </data>
+  <data name="Reset" xml:space="preserve">
+    <value>재설정</value>
+  </data>
+  <data name="ResolvePTR" xml:space="preserve">
+    <value>PTR 해결</value>
+  </data>
+  <data name="Resources" xml:space="preserve">
+    <value>자원</value>
+  </data>
+  <data name="Result" xml:space="preserve">
+    <value>결과</value>
+  </data>
+  <data name="Route" xml:space="preserve">
+    <value>라우트</value>
+  </data>
+  <data name="Scan" xml:space="preserve">
+    <value>탐색</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>검색</value>
+  </data>
+  <data name="SelectAProfileDots" xml:space="preserve">
+    <value>프로필 선택...</value>
+  </data>
+  <data name="SetMasterPassword" xml:space="preserve">
+    <value>마스터 암호 설정</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>설정</value>
+  </data>
+  <data name="SNMP" xml:space="preserve">
+    <value>SNMP</value>
+  </data>
+  <data name="Socket" xml:space="preserve">
+    <value>소켓</value>
+  </data>
+  <data name="Statistics" xml:space="preserve">
+    <value>통계</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>상태</value>
+  </data>
+  <data name="Subnet" xml:space="preserve">
+    <value>서브넷</value>
+  </data>
+  <data name="Subnetting" xml:space="preserve">
+    <value>서브넷팅</value>
+  </data>
+  <data name="Success" xml:space="preserve">
+    <value>성공!</value>
+  </data>
+  <data name="Theme" xml:space="preserve">
+    <value>테마</value>
+  </data>
+  <data name="Traceroute" xml:space="preserve">
+    <value>경로 추적</value>
+  </data>
+  <data name="Tray" xml:space="preserve">
+    <value>트레이</value>
+  </data>
+  <data name="Update" xml:space="preserve">
+    <value>업데이트</value>
+  </data>
+  <data name="v1v2c" xml:space="preserve">
+    <value>v1/v2c</value>
+  </data>
+  <data name="v3" xml:space="preserve">
+    <value>v3</value>
+  </data>
+  <data name="ValidationFailed" xml:space="preserve">
+    <value>검증에 실패했습니다!</value>
+  </data>
+  <data name="WakeOnLAN" xml:space="preserve">
+    <value>Wake on LAN</value>
+  </data>
+  <data name="Website" xml:space="preserve">
+    <value>웹사이트</value>
+  </data>
+  <data name="Window" xml:space="preserve">
+    <value>창</value>
+  </data>
+  <data name="WrongPassword" xml:space="preserve">
+    <value>잘못된 암호!</value>
+  </data>
+  <data name="Client" xml:space="preserve">
+    <value>클라이언트</value>
+  </data>
+  <data name="Administrator" xml:space="preserve">
+    <value>관리자</value>
+  </data>
+  <data name="AlwaysShowIconInTray" xml:space="preserve">
+    <value>트레이에 항상 아이콘 표시</value>
+  </data>
+  <data name="Attempts" xml:space="preserve">
+    <value>시도</value>
+  </data>
+  <data name="AverageTime" xml:space="preserve">
+    <value>평균 시간</value>
+  </data>
+  <data name="Broadcast" xml:space="preserve">
+    <value>방송</value>
+  </data>
+  <data name="Buffer" xml:space="preserve">
+    <value>버퍼</value>
+  </data>
+  <data name="Bytes" xml:space="preserve">
+    <value>바이트</value>
+  </data>
+  <data name="CIDR" xml:space="preserve">
+    <value>CIDR</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>닫기</value>
+  </data>
+  <data name="DefaultGateway" xml:space="preserve">
+    <value>기본 게이트웨이</value>
+  </data>
+  <data name="DeleteDots" xml:space="preserve">
+    <value>삭제...</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>설명</value>
+  </data>
+  <data name="Placeholder" xml:space="preserve">
+    <value>Placeholder</value>
+  </data>
+  <data name="HelpMessage_CustomCommandFilePath" xml:space="preserve">
+    <value>Path to the file or executable to run. The following placeholders can be used:</value>
+  </data>
+  <data name="HelpMessage_CustomCommandArguments" xml:space="preserve">
+    <value>Arguments passed to the file or executable. The following placeholders can be used:</value>
+  </data>
+  <data name="HelpMessage_ProfileHostPlaceholder" xml:space="preserve">
+    <value>The following placeholder can be used:</value>
+  </data>
+  <data name="DHCPEnabled" xml:space="preserve">
+    <value>DHCP 사용</value>
+  </data>
+  <data name="DHCPLeaseExpires" xml:space="preserve">
+    <value>DHCP 임대 만료</value>
+  </data>
+  <data name="DHCPLeaseObtained" xml:space="preserve">
+    <value>DHCP 임대 획득</value>
+  </data>
+  <data name="DHCPServer" xml:space="preserve">
+    <value>DHCP 서버</value>
+  </data>
+  <data name="DNSServers" xml:space="preserve">
+    <value>DNS 서버</value>
+  </data>
+  <data name="DNSSuffix" xml:space="preserve">
+    <value>DNS 접미사</value>
+  </data>
+  <data name="DynamicIPv4Address" xml:space="preserve">
+    <value>동적 IPv4 주소</value>
+  </data>
+  <data name="DynamicIPv4DNSServer" xml:space="preserve">
+    <value>동적 IPv4 DNS 서버</value>
+  </data>
+  <data name="Hop" xml:space="preserve">
+    <value>Hop</value>
+  </data>
+  <data name="Hops" xml:space="preserve">
+    <value>Hops</value>
+  </data>
+  <data name="Hostname" xml:space="preserve">
+    <value>호스트 이름</value>
+  </data>
+  <data name="IPAddress" xml:space="preserve">
+    <value>IP 주소</value>
+  </data>
+  <data name="IPAddresses" xml:space="preserve">
+    <value>IP 주소</value>
+  </data>
+  <data name="IPv4" xml:space="preserve">
+    <value>IPv4</value>
+  </data>
+  <data name="IPv4Address" xml:space="preserve">
+    <value>IPv4 주소</value>
+  </data>
+  <data name="IPv4AddressAddedSuccessfully" xml:space="preserve">
+    <value>IPv4 address added</value>
+  </data>
+  <data name="IPv4AddressRemovedSuccessfully" xml:space="preserve">
+    <value>IPv4 address removed</value>
+  </data>
+  <data name="IPv4AddressReleasedAndRenewedSuccessfully" xml:space="preserve">
+    <value>IPv4 address released and renewed</value>
+  </data>
+  <data name="IPv4AddressReleasedSuccessfully" xml:space="preserve">
+    <value>IPv4 address released</value>
+  </data>
+  <data name="IPv4AddressRenewedSuccessfully" xml:space="preserve">
+    <value>IPv4 address renewed</value>
+  </data>
+  <data name="IPv6AddressReleasedAndRenewedSuccessfully" xml:space="preserve">
+    <value>IPv6 address released and renewed</value>
+  </data>
+  <data name="IPv6AddressReleasedSuccessfully" xml:space="preserve">
+    <value>IPv6 address released</value>
+  </data>
+  <data name="IPv6AddressRenewedSuccessfully" xml:space="preserve">
+    <value>IPv6 address renewed</value>
+  </data>
+  <data name="IPv4DefaultGateway" xml:space="preserve">
+    <value>IPv4 기본 게이트웨이</value>
+  </data>
+  <data name="IPv6" xml:space="preserve">
+    <value>IPv6</value>
+  </data>
+  <data name="IPv6Address" xml:space="preserve">
+    <value>IPv6 주소</value>
+  </data>
+  <data name="IPv6AddressLinkLocal" xml:space="preserve">
+    <value>링크 로컬 IPv6 주소</value>
+  </data>
+  <data name="IPv6DefaultGateway" xml:space="preserve">
+    <value>IPv6 기본 게이트웨이</value>
+  </data>
+  <data name="Maximum" xml:space="preserve">
+    <value>최대화</value>
+  </data>
+  <data name="MaximumHops" xml:space="preserve">
+    <value>최대 홉</value>
+  </data>
+  <data name="MinimizeInsteadOfTerminating" xml:space="preserve">
+    <value>응용 프로그램을 종료하는 대신 기본 창 최소화</value>
+  </data>
+  <data name="MinimizeToTrayInsteadOfTaskbar" xml:space="preserve">
+    <value>작업 표시줄 대신 트레이로 최소화</value>
+  </data>
+  <data name="Minimum" xml:space="preserve">
+    <value>최소화</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>이름</value>
+  </data>
+  <data name="NetworkAddress" xml:space="preserve">
+    <value>네트워크 주소</value>
+  </data>
+  <data name="NewSubnetmaskOrCIDR" xml:space="preserve">
+    <value>새 서브넷 마스크 또는 CIDR</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>아니요</value>
+  </data>
+  <data name="ObtainAnIPAddressAutomatically" xml:space="preserve">
+    <value>자동으로 IP 주소 가져오기</value>
+  </data>
+  <data name="ObtainDNSServerAddressAutomatically" xml:space="preserve">
+    <value>자동으로 DNS 서버 주소 가져오기</value>
+  </data>
+  <data name="PacketLoss" xml:space="preserve">
+    <value>패킷 손실</value>
+  </data>
+  <data name="PacketsTransmitted" xml:space="preserve">
+    <value>전송된 패킷</value>
+  </data>
+  <data name="PhysicalAddress" xml:space="preserve">
+    <value>물리적 주소</value>
+  </data>
+  <data name="PreferredProtocolWhenResolvingHostname" xml:space="preserve">
+    <value>호스트 이름을 확인할 때 선호하는 프로토콜:</value>
+  </data>
+  <data name="PrimaryDNSServer" xml:space="preserve">
+    <value>기본 DNS 서버</value>
+  </data>
+  <data name="ReceivedLost" xml:space="preserve">
+    <value>수신 / 분실</value>
+  </data>
+  <data name="ResolveHostname" xml:space="preserve">
+    <value>호스트 이름 확인</value>
+  </data>
+  <data name="RestartRequired" xml:space="preserve">
+    <value>재시작 필요</value>
+  </data>
+  <data name="SaveSettingsInApplicationFolder" xml:space="preserve">
+    <value>응용 프로그램 폴더에 설정 저장</value>
+  </data>
+  <data name="SecondaryDNSServer" xml:space="preserve">
+    <value>보조 DNS 서버</value>
+  </data>
+  <data name="Show" xml:space="preserve">
+    <value>표시</value>
+  </data>
+  <data name="ShowTheFollowingApplicationOnStartup" xml:space="preserve">
+    <value>시작할 때 다음 응용 프로그램을 표시:</value>
+  </data>
+  <data name="Slogan" xml:space="preserve">
+    <value>네트워크 관리와 네트워크 문제 해결을 위한 강력한 오픈 소스 도구!</value>
+  </data>
+  <data name="Speed" xml:space="preserve">
+    <value>속도</value>
+  </data>
+  <data name="StartMinimizedInTray" xml:space="preserve">
+    <value>트레이에서 최소화로 시작</value>
+  </data>
+  <data name="StartWithWindows" xml:space="preserve">
+    <value>Windows와 시작 (현재 사용자)</value>
+  </data>
+  <data name="StaticIPv4Address" xml:space="preserve">
+    <value>정적 IPv4 주소</value>
+  </data>
+  <data name="StaticIPv4DNSServer" xml:space="preserve">
+    <value>정적 IPv4 DNS 서버</value>
+  </data>
+  <data name="SubnetMask" xml:space="preserve">
+    <value>서브넷 마스크</value>
+  </data>
+  <data name="Threads" xml:space="preserve">
+    <value>스레드</value>
+  </data>
+  <data name="Time" xml:space="preserve">
+    <value>시간</value>
+  </data>
+  <data name="Time1" xml:space="preserve">
+    <value>시간 1</value>
+  </data>
+  <data name="Time2" xml:space="preserve">
+    <value>시간 2</value>
+  </data>
+  <data name="Time3" xml:space="preserve">
+    <value>시간 3</value>
+  </data>
+  <data name="Timeout" xml:space="preserve">
+    <value>시간 초과</value>
+  </data>
+  <data name="TimeoutMS" xml:space="preserve">
+    <value>시간 초과 (ms)</value>
+  </data>
+  <data name="TimeMSToWaitBetweenEachPing" xml:space="preserve">
+    <value>각 핑 사이의 대기 시간 (ms)</value>
+  </data>
+  <data name="TTL" xml:space="preserve">
+    <value>TTL</value>
+  </data>
+  <data name="Type" xml:space="preserve">
+    <value>유형</value>
+  </data>
+  <data name="UseTheFollowingDNSServerAddresses" xml:space="preserve">
+    <value>다음 DNS 서버 주소 사용:</value>
+  </data>
+  <data name="UseTheFollowingIPAddress" xml:space="preserve">
+    <value>다음 IP 주소 사용:</value>
+  </data>
+  <data name="WakeUp" xml:space="preserve">
+    <value>깨우기</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>예</value>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>추가</value>
+  </data>
+  <data name="AddATabToPerformADNSLookup" xml:space="preserve">
+    <value>DNS 조회를 수행할 탭 추가...</value>
+  </data>
+  <data name="AddATabToPerformANetworkScan" xml:space="preserve">
+    <value>네트워크 검색을 수행할 탭 추가...</value>
+  </data>
+  <data name="AddATabToPerformAnSNMPAction" xml:space="preserve">
+    <value>SNMP 작업을 수행할 탭 추가...</value>
+  </data>
+  <data name="AddATabToPerformAPing" xml:space="preserve">
+    <value>핑을 수행할 탭 추가...</value>
+  </data>
+  <data name="AddATabToPerformAPortScan" xml:space="preserve">
+    <value>포트 검색을 수행할 탭 추가...</value>
+  </data>
+  <data name="AddATabToPerformATrace" xml:space="preserve">
+    <value>추적을 수행할 탭 추가...</value>
+  </data>
+  <data name="AddDNSSuffixToHostname" xml:space="preserve">
+    <value>호스트 이름에 DNS 접미사 (기본) 추가</value>
+  </data>
+  <data name="AdditionalCommandLine" xml:space="preserve">
+    <value>추가 명령행</value>
+  </data>
+  <data name="Additionals" xml:space="preserve">
+    <value>추가</value>
+  </data>
+  <data name="AddProfileDots" xml:space="preserve">
+    <value>프로필 추가...</value>
+  </data>
+  <data name="AdjustScreenAutomatically" xml:space="preserve">
+    <value>화면 자동 조정</value>
+  </data>
+  <data name="Answers" xml:space="preserve">
+    <value>응답</value>
+  </data>
+  <data name="ApplicationWillBeRestartedAfterwards" xml:space="preserve">
+    <value>응용 프로그램은 이후에 다시 시작됩니다!</value>
+  </data>
+  <data name="Apply" xml:space="preserve">
+    <value>적용</value>
+  </data>
+  <data name="ApplyWindowsKeyCombinationsLikeAltTab" xml:space="preserve">
+    <value>Windows 키 조합 (예: ALT+TAB) 적용:</value>
+  </data>
+  <data name="Auth" xml:space="preserve">
+    <value>인증</value>
+  </data>
+  <data name="AuthenticationLevel" xml:space="preserve">
+    <value>인증 수준</value>
+  </data>
+  <data name="Authorities" xml:space="preserve">
+    <value>권한</value>
+  </data>
+  <data name="AutomaticallyUpdateEvery" xml:space="preserve">
+    <value>자동 업데이트 간격</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>뒤로</value>
+  </data>
+  <data name="Backup" xml:space="preserve">
+    <value>백업</value>
+  </data>
+  <data name="Baud" xml:space="preserve">
+    <value>보오드</value>
+  </data>
+  <data name="CanceledByUserMessage" xml:space="preserve">
+    <value>사용자가 작업을 취소했습니다!</value>
+  </data>
+  <data name="CapsLockIsEnabled" xml:space="preserve">
+    <value>Caps Lock이 활성화되었습니다!</value>
+  </data>
+  <data name="ChartTimeInSeconds" xml:space="preserve">
+    <value>Chart time (seconds)</value>
+  </data>
+  <data name="CheckForUpdatesAtStartup" xml:space="preserve">
+    <value>시작할 때 업데이트 확인</value>
+  </data>
+  <data name="Class" xml:space="preserve">
+    <value>클래스</value>
+  </data>
+  <data name="ClearFilter" xml:space="preserve">
+    <value>필터 지우기</value>
+  </data>
+  <data name="ColorDepthBit" xml:space="preserve">
+    <value>색 깊이 (bit)</value>
+  </data>
+  <data name="Community" xml:space="preserve">
+    <value>커뮤니티</value>
+  </data>
+  <data name="ConfigureThePathToPuTTYInTheSettingsDots" xml:space="preserve">
+    <value>설정에서 PuTTY 경로 구성...</value>
+  </data>
+  <data name="ConfirmClose" xml:space="preserve">
+    <value>닫기 확인</value>
+  </data>
+  <data name="ConfirmCloseMessage" xml:space="preserve">
+    <value>응용 프로그램을 닫으시겠습니까?</value>
+  </data>
+  <data name="ConnectAsDots" xml:space="preserve">
+    <value>다음으로 연결...</value>
+  </data>
+  <data name="ConnectExternal" xml:space="preserve">
+    <value>외부 연결</value>
+  </data>
+  <data name="ConnectTheNetworkCardToConfigureIt" xml:space="preserve">
+    <value>네트워크 카드를 네트워크에 연결하여 구성합니다!</value>
+  </data>
+  <data name="Copy" xml:space="preserve">
+    <value>복사</value>
+  </data>
+  <data name="CopyAsDots" xml:space="preserve">
+    <value>다음으로 복사...</value>
+  </data>
+  <data name="CopyDots" xml:space="preserve">
+    <value>복사...</value>
+  </data>
+  <data name="CouldNotResolveHostnameFor" xml:space="preserve">
+    <value>다음에 대한 호스트 이름을 확인할 수 없습니다: "{0}"</value>
+  </data>
+  <data name="Credential" xml:space="preserve">
+    <value>자격 증명</value>
+  </data>
+  <data name="ProfileEncryptionDisclaimer" xml:space="preserve">
+    <value>프로필 파일은 CBC 모드에서 키 크기 256비트, 블록 크기 128비트의 AES를 사용하여 디스크에서 암호화됩니다. 암호화 키는 1,000,000회 반복하는 Rfc2898DeriveBytes (PBKDF2)를 사용하는 마스터 암호에서 파생됩니다. 런타임에 프로필 파일이 로드되면 암호가 SecureString으로 저장됩니다. 일부 함수의 경우 암호를 일반 문자열로 변환해야 하며 가비지 수집기가 암호를 정리할 때까지 메모리에 암호화되지 않은 상태로 남아 있습니다.
+
+암호화를 활성화하기 전에 먼저 프로필 파일의 백업 복사본을 만드십시오!</value>
+  </data>
+  <data name="Custom" xml:space="preserve">
+    <value>사용자 지정</value>
+  </data>
+  <data name="CustomScreenSize" xml:space="preserve">
+    <value>사용자 지정 화면 크기:</value>
+  </data>
+  <data name="DataHasBeenUpdated" xml:space="preserve">
+    <value>데이터가 업데이트되었습니다!</value>
+  </data>
+  <data name="DecryptAndLoadCredentialsMessage" xml:space="preserve">
+    <value>자격 증명을 관리하려면 암호를 해독하고 불러와야 합니다.</value>
+  </data>
+  <data name="Default" xml:space="preserve">
+    <value>기본값</value>
+  </data>
+  <data name="BaudRate" xml:space="preserve">
+    <value>전송 속도</value>
+  </data>
+  <data name="DefaultPort" xml:space="preserve">
+    <value>기본 포트:</value>
+  </data>
+  <data name="RloginPort" xml:space="preserve">
+    <value>Rlogin 포트</value>
+  </data>
+  <data name="SSHPort" xml:space="preserve">
+    <value>SSH 포트</value>
+  </data>
+  <data name="TelnetPort" xml:space="preserve">
+    <value>텔넷 포트</value>
+  </data>
+  <data name="DeleteCredentialMessage" xml:space="preserve">
+    <value>선택한 자격 증명이 영구적으로 삭제됩니다.</value>
+  </data>
+  <data name="DeleteEntry" xml:space="preserve">
+    <value>항목 삭제</value>
+  </data>
+  <data name="DeleteProfileMessage" xml:space="preserve">
+    <value>선택한 프로파일이 영구적으로 삭제됩니다.</value>
+  </data>
+  <data name="DNSAutoconfiguration" xml:space="preserve">
+    <value>DNS 자동 구성</value>
+  </data>
+  <data name="DNSLookupDots" xml:space="preserve">
+    <value>DNS 조회...</value>
+  </data>
+  <data name="DNSServer" xml:space="preserve">
+    <value>DNS 서버</value>
+  </data>
+  <data name="Domain" xml:space="preserve">
+    <value>도메인</value>
+  </data>
+  <data name="Duration" xml:space="preserve">
+    <value>기간</value>
+  </data>
+  <data name="EditDots" xml:space="preserve">
+    <value>편집...</value>
+  </data>
+  <data name="Enable" xml:space="preserve">
+    <value>사용함</value>
+  </data>
+  <data name="EnableCredentialSecuritySupportProvider" xml:space="preserve">
+    <value>자격 증명 보안 지원 공급자 사용</value>
+  </data>
+  <data name="EndTime" xml:space="preserve">
+    <value>종료시간</value>
+  </data>
+  <data name="EnterASubnetToCalculateItDots" xml:space="preserve">
+    <value>계산할 서브넷을 입력하세요...</value>
+  </data>
+  <data name="EnterSubnetAndANewSubnetmaskToCreateSubnets" xml:space="preserve">
+    <value>서브넷과 새 서브넷 마스크를 입력하여 서브넷을 만듭니다...</value>
+  </data>
+  <data name="ErrorCheckingApiGithubComVerifyYourNetworkConnection" xml:space="preserve">
+    <value>'api.github.com'에 연결할 수 없습니다. 네트워크 연결을 확인하십시오!</value>
+  </data>
+  <data name="ErrorInResponse" xml:space="preserve">
+    <value>응답 오류!</value>
+  </data>
+  <data name="ErrorInResponseCheckIfYouHaveWritePermissions" xml:space="preserve">
+    <value>응답 오류! 쓰기 권한이 있는지 확인합니다.</value>
+  </data>
+  <data name="Expand" xml:space="preserve">
+    <value>확장</value>
+  </data>
+  <data name="FirstUsableIPAddress" xml:space="preserve">
+    <value>사용 가능한 첫 번째 IP 주소</value>
+  </data>
+  <data name="FixedScreenSize" xml:space="preserve">
+    <value>고정 화면 크기:</value>
+  </data>
+  <data name="Found" xml:space="preserve">
+    <value>찾음</value>
+  </data>
+  <data name="Group" xml:space="preserve">
+    <value>그룹</value>
+  </data>
+  <data name="Height" xml:space="preserve">
+    <value>높이</value>
+  </data>
+  <data name="Host" xml:space="preserve">
+    <value>호스트</value>
+  </data>
+  <data name="HostnameOrIPAddress" xml:space="preserve">
+    <value>호스트 이름 또는 IP 주소</value>
+  </data>
+  <data name="Hosts" xml:space="preserve">
+    <value>호스트</value>
+  </data>
+  <data name="ID" xml:space="preserve">
+    <value>ID</value>
+  </data>
+  <data name="InheritHostFromGeneral" xml:space="preserve">
+    <value>일반에서 호스트 상속</value>
+  </data>
+  <data name="IPRange" xml:space="preserve">
+    <value>IP 범위</value>
+  </data>
+  <data name="LastUsableIPAddress" xml:space="preserve">
+    <value>사용 가능한 마지막 IP 주소</value>
+  </data>
+  <data name="LocalIPAddress" xml:space="preserve">
+    <value>로컬 IP 주소</value>
+  </data>
+  <data name="LocalPort" xml:space="preserve">
+    <value>로컬 포트</value>
+  </data>
+  <data name="MACAddressOrVendor" xml:space="preserve">
+    <value>MAC 주소 또는 공급업체</value>
+  </data>
+  <data name="MagicPacketSentMessage" xml:space="preserve">
+    <value>매직 패킷이 성공적으로 전송되었습니다!</value>
+  </data>
+  <data name="MaximumNumberOfHopsReached" xml:space="preserve">
+    <value>홉/라우터의 최대 수 ({0}) 에 도달했습니다!</value>
+  </data>
+  <data name="MessageSize" xml:space="preserve">
+    <value>메시지 크기</value>
+  </data>
+  <data name="Mode" xml:space="preserve">
+    <value>모드</value>
+  </data>
+  <data name="Multicast" xml:space="preserve">
+    <value>멀티캐스트</value>
+  </data>
+  <data name="MultipleInstances" xml:space="preserve">
+    <value>다중 인스턴스</value>
+  </data>
+  <data name="NetworkLocationCannotBeReachedMessage" xml:space="preserve">
+    <value>네트워크 주소에 연결할 수 없습니다. 컴퓨터가 네트워크에 연결되어 있는지 확인합니다. 네트워크 문제 해결에 대한 자세한 내용은 Windows 도움말을 참조하십시오.</value>
+  </data>
+  <data name="NewConnectionDots" xml:space="preserve">
+    <value>새 연결...</value>
+  </data>
+  <data name="NoDNSRecordFoundCheckYourInputAndSettings" xml:space="preserve">
+    <value>"{0}"에 대한 DNS 레코드를 찾을 수 없습니다! 입력 및 설정을 확인하십시오.</value>
+  </data>
+  <data name="NoEnabledNetworkAdaptersFound" xml:space="preserve">
+    <value>사용하도록 설정된 네트워크 어댑터를 찾을 수 없습니다!</value>
+  </data>
+  <data name="NoPortsFoundCheckYourInput" xml:space="preserve">
+    <value>포트를 찾을 수 없습니다. 입력 내용을 확인하십시오!</value>
+  </data>
+  <data name="NoProfilesFoundCreateOne" xml:space="preserve">
+    <value>프로필을 찾을 수 없습니다!
+하나 만들기...</value>
+  </data>
+  <data name="NothingFound" xml:space="preserve">
+    <value>아무것도 찾을 수 없음!</value>
+  </data>
+  <data name="NothingToDoCheckYourInput" xml:space="preserve">
+    <value>할 것이 없습니다. 입력 내용을 확인하십시오!</value>
+  </data>
+  <data name="NoUpdateAvailable" xml:space="preserve">
+    <value>사용할 수 있는 업데이트가 없습니다!</value>
+  </data>
+  <data name="NoValidFileFoundToImport" xml:space="preserve">
+    <value>가져올 올바른 파일을 찾을 수 없습니다.</value>
+  </data>
+  <data name="NoVendorFoundCheckYourInput" xml:space="preserve">
+    <value>공급업체를 찾을 수 없습니다. 입력 내용을 확인하십시오!</value>
+  </data>
+  <data name="NumberOfErrorsAfterWhichIsCanceled" xml:space="preserve">
+    <value>취소 후 오류 수:</value>
+  </data>
+  <data name="NumberOfStoredEntries" xml:space="preserve">
+    <value>저장된 항목 수</value>
+  </data>
+  <data name="OID" xml:space="preserve">
+    <value>OID</value>
+  </data>
+  <data name="OnlyCsvFilesAllowed" xml:space="preserve">
+    <value>Only CSV files are allowed!</value>
+  </data>
+  <data name="OnlyWhenUsingTheFullScreen" xml:space="preserve">
+    <value>전체 화면을 사용할 때만</value>
+  </data>
+  <data name="RemoteDesktopKeyboardHookMode_OnTheRemoteComputer" xml:space="preserve">
+    <value>원격 컴퓨터에서</value>
+  </data>
+  <data name="RemoteDesktopKeyboardHookMode_OnThisComputer" xml:space="preserve">
+    <value>이 컴퓨터에서</value>
+  </data>
+  <data name="Open" xml:space="preserve">
+    <value>열기</value>
+  </data>
+  <data name="OpenLicense" xml:space="preserve">
+    <value>오픈 라이선스</value>
+  </data>
+  <data name="OpenProject" xml:space="preserve">
+    <value>프로젝트 열기</value>
+  </data>
+  <data name="OpenWebsite" xml:space="preserve">
+    <value>웹 사이트 열기</value>
+  </data>
+  <data name="Override" xml:space="preserve">
+    <value>무효</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>암호</value>
+  </data>
+  <data name="PasswordsDoNotMatch" xml:space="preserve">
+    <value>암호가 일치하지 않습니다!</value>
+  </data>
+  <data name="Path" xml:space="preserve">
+    <value>경로</value>
+  </data>
+  <data name="PortOrService" xml:space="preserve">
+    <value>포트 또는 서비스</value>
+  </data>
+  <data name="Ports" xml:space="preserve">
+    <value>포트</value>
+  </data>
+  <data name="Priv" xml:space="preserve">
+    <value>Priv</value>
+  </data>
+  <data name="Profile" xml:space="preserve">
+    <value>프로필</value>
+  </data>
+  <data name="ProfilesReloaded" xml:space="preserve">
+    <value>프로필이 다시 로드됨</value>
+  </data>
+  <data name="Protocol" xml:space="preserve">
+    <value>프로토콜</value>
+  </data>
+  <data name="PuTTYProcessHasEnded" xml:space="preserve">
+    <value>PuTTY 프로세스가 종료되었습니다!</value>
+  </data>
+  <data name="Questions" xml:space="preserve">
+    <value>질문</value>
+  </data>
+  <data name="RAW" xml:space="preserve">
+    <value>RAW</value>
+  </data>
+  <data name="Recursion" xml:space="preserve">
+    <value>재귀</value>
+  </data>
+  <data name="RedirectClipboard" xml:space="preserve">
+    <value>클립보드 리디렉션</value>
+  </data>
+  <data name="RedirectDevices" xml:space="preserve">
+    <value>장치 리디렉션</value>
+  </data>
+  <data name="RedirectDrives" xml:space="preserve">
+    <value>드라이브 리디렉션</value>
+  </data>
+  <data name="RedirectPorts" xml:space="preserve">
+    <value>포트 리디렉션</value>
+  </data>
+  <data name="RedirectPrinters" xml:space="preserve">
+    <value>프린터 리디렉션</value>
+  </data>
+  <data name="RedirectSmartcards" xml:space="preserve">
+    <value>스마트 카드 리디렉션</value>
+  </data>
+  <data name="RemainingTime" xml:space="preserve">
+    <value>잔여 시간</value>
+  </data>
+  <data name="RemoteIPAddress" xml:space="preserve">
+    <value>원격 IP 주소</value>
+  </data>
+  <data name="RemotePort" xml:space="preserve">
+    <value>원격 포트</value>
+  </data>
+  <data name="Repeat" xml:space="preserve">
+    <value>반복</value>
+  </data>
+  <data name="ResolveCNAMEOnANYRequests" xml:space="preserve">
+    <value>모든 요청에 대해 CNAME 해결</value>
+  </data>
+  <data name="Responses" xml:space="preserve">
+    <value>응답</value>
+  </data>
+  <data name="Rlogin" xml:space="preserve">
+    <value>Rlogin</value>
+  </data>
+  <data name="Scanned" xml:space="preserve">
+    <value>스캔됨</value>
+  </data>
+  <data name="SearchedApplicationNotFound" xml:space="preserve">
+    <value>검색된 응용 프로그램을 찾을 수 없습니다!</value>
+  </data>
+  <data name="SearchedLanguageNotFound" xml:space="preserve">
+    <value>검색된 언어를 찾을 수 없습니다!</value>
+  </data>
+  <data name="SearchedSettingNotFound" xml:space="preserve">
+    <value>검색된 설정을 찾을 수 없습니다!</value>
+  </data>
+  <data name="Security" xml:space="preserve">
+    <value>보안</value>
+  </data>
+  <data name="SelectAScreenResolution" xml:space="preserve">
+    <value>화면 해상도 선택</value>
+  </data>
+  <data name="ThisWillResetAllSettings" xml:space="preserve">
+    <value>이렇게 하면 모든 설정이 재설정됩니다!</value>
+  </data>
+  <data name="Serial" xml:space="preserve">
+    <value>직렬</value>
+  </data>
+  <data name="SerialLine" xml:space="preserve">
+    <value>직렬 라인</value>
+  </data>
+  <data name="Service" xml:space="preserve">
+    <value>서비스</value>
+  </data>
+  <data name="SettingsFileFoundWasCorruptOrNotCompatibleMessage" xml:space="preserve">
+    <value>발견된 설정 파일이 손상되었거나 이 버전과 호환되지 않습니다. 모든 설정이 재설정되었습니다!
+(프로필에는 영향을 주지 않습니다!)</value>
+  </data>
+  <data name="ShowClosedPorts" xml:space="preserve">
+    <value>닫힌 포트 표시</value>
+  </data>
+  <data name="ShowCurrentApplicationTitle" xml:space="preserve">
+    <value>현재 응용 프로그램 제목 표시</value>
+  </data>
+  <data name="ShowOnlyMostCommonQueryTypes" xml:space="preserve">
+    <value>가장 일반적인 쿼리 유형만 표시</value>
+  </data>
+  <data name="ShowUnreachableIPAddressesAndPorts" xml:space="preserve">
+    <value>도달할 수 없는 IP 주소 및 포트 표시</value>
+  </data>
+  <data name="ShowStatistics" xml:space="preserve">
+    <value>통계 표시</value>
+  </data>
+  <data name="SSH" xml:space="preserve">
+    <value>SSH</value>
+  </data>
+  <data name="StartTime" xml:space="preserve">
+    <value>시작 시간</value>
+  </data>
+  <data name="State" xml:space="preserve">
+    <value>상태</value>
+  </data>
+  <data name="Subnet1" xml:space="preserve">
+    <value>서브넷 1</value>
+  </data>
+  <data name="Subnet2" xml:space="preserve">
+    <value>서브넷 2</value>
+  </data>
+  <data name="Tags" xml:space="preserve">
+    <value>태그</value>
+  </data>
+  <data name="Telnet" xml:space="preserve">
+    <value>텔넷</value>
+  </data>
+  <data name="TheApplicationCanBeStartedWithoutParameters" xml:space="preserve">
+    <value>매개 변수 없이 응용 프로그램을 시작할 수 있습니다!</value>
+  </data>
+  <data name="TheFollowingHostnamesCouldNotBeResolved" xml:space="preserve">
+    <value>다음 호스트 이름을 확인할 수 없습니다:</value>
+  </data>
+  <data name="TheFollowingParametersAreAvailable" xml:space="preserve">
+    <value>다음 매개변수를 사용할 수 있습니다:</value>
+  </data>
+  <data name="TheFollowingParametersCanNotBeProcesses" xml:space="preserve">
+    <value>다음 매개변수를 처리할 수 없습니다:</value>
+  </data>
+  <data name="TheProcessCanTakeUpSomeTimeAndResources" xml:space="preserve">
+    <value>프로세스에는 시간과 리소스 (CPU / RAM)가 다소 소요될 수 있습니다.</value>
+  </data>
+  <data name="TheSettingsLocationIsNotAffected" xml:space="preserve">
+    <value>설정 위치는 영향을 받지 않습니다</value>
+  </data>
+  <data name="TimeoutOnSNMPQuery" xml:space="preserve">
+    <value>SNMP 쿼리에서 시간 초과. 호스트에 연결할 수 없거나 커뮤니티/비밀번호가 잘못되었을 수 있습니다.</value>
+  </data>
+  <data name="TimeoutWhenQueryingDNSServerMessage" xml:space="preserve">
+    <value>IP 주소 "{0}"으로 DNS 서버를 쿼리할 때 시간이 초과되었습니다!</value>
+  </data>
+  <data name="Timestamp" xml:space="preserve">
+    <value>타임스탬프</value>
+  </data>
+  <data name="Trace" xml:space="preserve">
+    <value>추적</value>
+  </data>
+  <data name="UnkownError" xml:space="preserve">
+    <value>알 수 없는 오류!</value>
+  </data>
+  <data name="UntrayBringWindowToForeground" xml:space="preserve">
+    <value>트레이 제거 / 창을 전경으로 가져오기</value>
+  </data>
+  <data name="URL" xml:space="preserve">
+    <value>URL</value>
+  </data>
+  <data name="UseCredentials" xml:space="preserve">
+    <value>자격 증명 사용</value>
+  </data>
+  <data name="UseCurrentViewSize" xml:space="preserve">
+    <value>현재 보기 크기를 화면 크기로 사용</value>
+  </data>
+  <data name="UseCustomDNSServer" xml:space="preserve">
+    <value>사용자 지정 DNS 서버 사용</value>
+  </data>
+  <data name="UseCustomDNSSuffix" xml:space="preserve">
+    <value>사용자 지정 DNS 접미사 사용</value>
+  </data>
+  <data name="UseResolverCache" xml:space="preserve">
+    <value>해결사 캐시 사용</value>
+  </data>
+  <data name="UserInterfaceLocked" xml:space="preserve">
+    <value>사용자 인터페이스가 잠겼습니다!</value>
+  </data>
+  <data name="Username" xml:space="preserve">
+    <value>사용자 이름</value>
+  </data>
+  <data name="Vendor" xml:space="preserve">
+    <value>공급업체</value>
+  </data>
+  <data name="Version" xml:space="preserve">
+    <value>버전</value>
+  </data>
+  <data name="VersionxxIsAvailable" xml:space="preserve">
+    <value>{0}버전을 사용할 수 있습니다!</value>
+  </data>
+  <data name="WalkMode" xml:space="preserve">
+    <value>걷기 모드</value>
+  </data>
+  <data name="Width" xml:space="preserve">
+    <value>너비</value>
+  </data>
+  <data name="WrongPasswordDecryptionFailedMessage" xml:space="preserve">
+    <value>지정된 암호로 프로필 파일의 암호를 해독할 수 없습니다.</value>
+  </data>
+  <data name="WrongPasswordMessage" xml:space="preserve">
+    <value>입력한 암호가 잘못되었습니다.</value>
+  </data>
+  <data name="AddDots" xml:space="preserve">
+    <value>추가...</value>
+  </data>
+  <data name="AddEntryDots" xml:space="preserve">
+    <value>항목 추가...</value>
+  </data>
+  <data name="Calculate" xml:space="preserve">
+    <value>계산</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>취소</value>
+  </data>
+  <data name="Change" xml:space="preserve">
+    <value>변경</value>
+  </data>
+  <data name="ChangeMasterPasswordDots" xml:space="preserve">
+    <value>마스터 암호 변경...</value>
+  </data>
+  <data name="Check" xml:space="preserve">
+    <value>확인</value>
+  </data>
+  <data name="CheckForUpdates" xml:space="preserve">
+    <value>업데이트 확인</value>
+  </data>
+  <data name="Closed" xml:space="preserve">
+    <value>닫힘</value>
+  </data>
+  <data name="Continue" xml:space="preserve">
+    <value>계속</value>
+  </data>
+  <data name="CustomColon" xml:space="preserve">
+    <value>사용자 지정:</value>
+  </data>
+  <data name="Cut" xml:space="preserve">
+    <value>잘라내기</value>
+  </data>
+  <data name="DecryptAndLoadDots" xml:space="preserve">
+    <value>암호 해독 및 불러오기...</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>삭제</value>
+  </data>
+  <data name="DeleteTable" xml:space="preserve">
+    <value>테이블 삭제</value>
+  </data>
+  <data name="EnterLocationDots" xml:space="preserve">
+    <value>위치 입력...</value>
+  </data>
+  <data name="Everything" xml:space="preserve">
+    <value>모든 것</value>
+  </data>
+  <data name="FilterDots" xml:space="preserve">
+    <value>필터...</value>
+  </data>
+  <data name="FlushDNSCache" xml:space="preserve">
+    <value>DNS 캐시 플러시</value>
+  </data>
+  <data name="FlushDNSCacheSuccessfully" xml:space="preserve">
+    <value>DNS cache flushed</value>
+  </data>
+  <data name="HelpMessage_Credentials" xml:space="preserve">
+    <value>자격 증명을 해독하고 불러와서 선택합니다.</value>
+  </data>
+  <data name="HelpMessage_ParameterHelp" xml:space="preserve">
+    <value>이 대화 상자를 표시합니다.</value>
+  </data>
+  <data name="HelpMessage_ParameterResetSettings" xml:space="preserve">
+    <value>모든 응용 프로그램 설정을 재설정합니다.</value>
+  </data>
+  <data name="HelpMessage_PasswordNotDisplayedCanBeOverwritten" xml:space="preserve">
+    <value>편집할 때 암호는 표시되지 않지만 덮어쓸 수 있습니다.</value>
+  </data>
+  <data name="HelpMessage_RDPAuthenticationLevel" xml:space="preserve">
+    <value>[0] 서버 인증이 실패하면 경고 없이 컴퓨터에 연결합니다.
+[1] 서버 인증에 실패하면 연결을 설정하지 마십시오.
+[2] 서버 인증에 실패하면 경고를 표시하고 연결 또는 연결을 거부하도록 허용합니다.
+[3] 인증 요구사항이 지정되지 않았습니다.</value>
+  </data>
+  <data name="HelpMessage_Tags" xml:space="preserve">
+    <value>태그는 프로필/ 항목별 프로필/프로젝트를 구성하는데 도움이 됩니다. 다중 태크는";"로 구분해서 사용할 수 있습니다. "tag=xxx"를 사용하여 태그로 검색합니다.</value>
+  </data>
+  <data name="TimeUnit_Hour" xml:space="preserve">
+    <value>시</value>
+  </data>
+  <data name="LocationOfTheImport" xml:space="preserve">
+    <value>가져오기 파일의 위치...</value>
+  </data>
+  <data name="TimeUnit_Minute" xml:space="preserve">
+    <value>분</value>
+  </data>
+  <data name="MoveAndRestart" xml:space="preserve">
+    <value>이동 및 재시작</value>
+  </data>
+  <data name="NetworkConnectionsDots" xml:space="preserve">
+    <value>네트워크 연결....</value>
+  </data>
+  <data name="NotChanged" xml:space="preserve">
+    <value>(변경되지 않음)</value>
+  </data>
+  <data name="Off" xml:space="preserve">
+    <value>꺼짐</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>확인</value>
+  </data>
+  <data name="On" xml:space="preserve">
+    <value>켜짐</value>
+  </data>
+  <data name="OpenLocation" xml:space="preserve">
+    <value>위치 열기</value>
+  </data>
+  <data name="OpenSettings" xml:space="preserve">
+    <value>설정 열기</value>
+  </data>
+  <data name="Overwrite" xml:space="preserve">
+    <value>덮어쓰기</value>
+  </data>
+  <data name="Parse" xml:space="preserve">
+    <value>Parse</value>
+  </data>
+  <data name="Paste" xml:space="preserve">
+    <value>붙여넣기</value>
+  </data>
+  <data name="Reconnect" xml:space="preserve">
+    <value>다시 연결</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>새로 고침</value>
+  </data>
+  <data name="RestartNow" xml:space="preserve">
+    <value>지금 다시 시작</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>저장</value>
+  </data>
+  <data name="SearchDots" xml:space="preserve">
+    <value>검색...</value>
+  </data>
+  <data name="TimeUnit_Second" xml:space="preserve">
+    <value>초</value>
+  </data>
+  <data name="Send" xml:space="preserve">
+    <value>보내기</value>
+  </data>
+  <data name="SetMasterPasswordDots" xml:space="preserve">
+    <value>마스터 암호 설정...</value>
+  </data>
+  <data name="ShowLocalLicenses" xml:space="preserve">
+    <value>로컬 라이선스 표시</value>
+  </data>
+  <data name="SubnetCalculator" xml:space="preserve">
+    <value>서브넷 계산기</value>
+  </data>
+  <data name="Validate" xml:space="preserve">
+    <value>확인</value>
+  </data>
+  <data name="Connections" xml:space="preserve">
+    <value>연결</value>
+  </data>
+  <data name="EnterValidIPScanRange" xml:space="preserve">
+    <value>유효한 IP 범위를 입력하세요!</value>
+  </data>
+  <data name="EnterValidIPv4Address" xml:space="preserve">
+    <value>유효한 IPv4 주소를 입력하십시오!</value>
+  </data>
+  <data name="EnterValidMACAddress" xml:space="preserve">
+    <value>유효한 MAC 주소 (예: 00:F1:23:AB:F2:35)를 입력하세요!</value>
+  </data>
+  <data name="EnterValidPort" xml:space="preserve">
+    <value>유효한 포트를 입력하십시오 (1 - 65535)!</value>
+  </data>
+  <data name="EnterValidSubnetmask" xml:space="preserve">
+    <value>유효한 서브넷 마스크 (예: 255.255.255.0)를 입력하세요!</value>
+  </data>
+  <data name="EnterValidSubnetmaskOrCIDR" xml:space="preserve">
+    <value>유효한 서브마스크 또는 CIDR (예: 255.255.255.0 또는 /24)을 입력하세요!</value>
+  </data>
+  <data name="FieldCannotBeEmpty" xml:space="preserve">
+    <value>필드는 비어있을 수 없습니다!</value>
+  </data>
+  <data name="FileDoesNotExist" xml:space="preserve">
+    <value>파일이 없습니다!</value>
+  </data>
+  <data name="FolderDoesNotExist" xml:space="preserve">
+    <value>폴더가 없습니다!</value>
+  </data>
+  <data name="Listeners" xml:space="preserve">
+    <value>청취자</value>
+  </data>
+  <data name="Amber" xml:space="preserve">
+    <value>황색</value>
+  </data>
+  <data name="Appearance" xml:space="preserve">
+    <value>모양</value>
+  </data>
+  <data name="Applications" xml:space="preserve">
+    <value>응용 프로그램</value>
+  </data>
+  <data name="Theme_Dark" xml:space="preserve">
+    <value>어두운</value>
+  </data>
+  <data name="Theme_Light" xml:space="preserve">
+    <value>밝은</value>
+  </data>
+  <data name="Black" xml:space="preserve">
+    <value>검정</value>
+  </data>
+  <data name="Blue" xml:space="preserve">
+    <value>파랑</value>
+  </data>
+  <data name="Brown" xml:space="preserve">
+    <value>갈색</value>
+  </data>
+  <data name="Cobalt" xml:space="preserve">
+    <value>진청록</value>
+  </data>
+  <data name="Crimson" xml:space="preserve">
+    <value>진홍</value>
+  </data>
+  <data name="Cyan" xml:space="preserve">
+    <value>청록</value>
+  </data>
+  <data name="Emerald" xml:space="preserve">
+    <value>에메랄드</value>
+  </data>
+  <data name="EnterOneOrMoreValidIPAddresses" xml:space="preserve">
+    <value>하나 이상의 유효한 IP 주소를 입력하십시오!</value>
+  </data>
+  <data name="EnterValidBaud" xml:space="preserve">
+    <value>유효한 보우드를 입력하십시오!</value>
+  </data>
+  <data name="EnterValidHosts" xml:space="preserve">
+    <value>유효한 호스트를 입력하십시오 (여러 호스트는 ";"로 끝날 수 없습니다)!</value>
+  </data>
+  <data name="EnterValidIPAddress" xml:space="preserve">
+    <value>유효한 IP 주소를 입력하십시오!</value>
+  </data>
+  <data name="EnterValidNumber" xml:space="preserve">
+    <value>유효한 번호를 입력하십시오!</value>
+  </data>
+  <data name="EnterValidOID" xml:space="preserve">
+    <value>유효한 OID를 입력하십시오!</value>
+  </data>
+  <data name="EnterValidPortOrPortRange" xml:space="preserve">
+    <value>유효한 포트 및/또는 포트 범위를 입력하십시오 (1 - 65535)!</value>
+  </data>
+  <data name="EnterValidSubnet" xml:space="preserve">
+    <value>유효한 서브넷 (예: 192.168.178.133/26)을 입력하세요!</value>
+  </data>
+  <data name="EnterValidWebsiteUri" xml:space="preserve">
+    <value>유효한 웹사이트 (예: https://example.com/index.html) )를 입력하세요</value>
+  </data>
+  <data name="Green" xml:space="preserve">
+    <value>녹색</value>
+  </data>
+  <data name="ImportExport" xml:space="preserve">
+    <value>가져오기 / 내보내기</value>
+  </data>
+  <data name="Indigo" xml:space="preserve">
+    <value>남색</value>
+  </data>
+  <data name="IPStatus_DestinationHostUnreachable" xml:space="preserve">
+    <value>대상 호스트에 연결할 수 없습니다.</value>
+  </data>
+  <data name="IPStatus_DestinationNetworkUnreachable" xml:space="preserve">
+    <value>대상 네트워크에 연결할 수 없습니다.</value>
+  </data>
+  <data name="IPStatus_DestinationPortUnreachable" xml:space="preserve">
+    <value>대상 포트에 연결할 수 없습니다.</value>
+  </data>
+  <data name="IPStatus_Success" xml:space="preserve">
+    <value>성공</value>
+  </data>
+  <data name="IPStatus_TimedOut" xml:space="preserve">
+    <value>요청 시간이 초과되었습니다.</value>
+  </data>
+  <data name="IPStatus_TtlExpired" xml:space="preserve">
+    <value>TTL은 전송 중에 만료되었습니다.</value>
+  </data>
+  <data name="KeyMustHave8CharactersOrMore" xml:space="preserve">
+    <value>키는 8자 이상이어야 합니다!</value>
+  </data>
+  <data name="Lime" xml:space="preserve">
+    <value>라임</value>
+  </data>
+  <data name="Live" xml:space="preserve">
+    <value>Live</value>
+  </data>
+  <data name="Magenta" xml:space="preserve">
+    <value>자홍</value>
+  </data>
+  <data name="Mauve" xml:space="preserve">
+    <value>연보라</value>
+  </data>
+  <data name="Olive" xml:space="preserve">
+    <value>올리브</value>
+  </data>
+  <data name="OnlyNumbersCanBeEntered" xml:space="preserve">
+    <value>숫자만 입력할 수 있습니다!</value>
+  </data>
+  <data name="Orange" xml:space="preserve">
+    <value>주황</value>
+  </data>
+  <data name="Pink" xml:space="preserve">
+    <value>분홍</value>
+  </data>
+  <data name="Purple" xml:space="preserve">
+    <value>자주</value>
+  </data>
+  <data name="Red" xml:space="preserve">
+    <value>빨강</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_AtClientWinsockFDCLOSE" xml:space="preserve">
+    <value>소켓이 닫힙니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_ByServer" xml:space="preserve">
+    <value>서버별 원격 연결 끊기입니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_ClientDecompressionError" xml:space="preserve">
+    <value>압축 해제 오류입니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_ConnectionTimedOut" xml:space="preserve">
+    <value>연결 시간이 초과되었습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_DecryptionError" xml:space="preserve">
+    <value>암호 해독 오류입니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_DNSLookupFailed" xml:space="preserve">
+    <value>DNS 이름을 조회하지 못했습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_DNSLookupFailed2" xml:space="preserve">
+    <value>DNS 조회가 실패했습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_EncryptionError" xml:space="preserve">
+    <value>암호화 오류입니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_GetHostByNameFailed" xml:space="preserve">
+    <value>Windows 소켓 getbyname 호출에 실패했습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_HostNotFound" xml:space="preserve">
+    <value>호스트를 찾을 수 없습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_InternalError" xml:space="preserve">
+    <value>내부 오류입니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_InternalSecurityError" xml:space="preserve">
+    <value>내부 보안 오류입니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_InternalSecurityError2" xml:space="preserve">
+    <value>내부 보안 오류입니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_InvalidEncryption" xml:space="preserve">
+    <value>지정한 암호화 방법이 잘못되었습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_InvalidIP" xml:space="preserve">
+    <value>잘못된 IP 주소가 지정되었습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_InvalidIPAddr" xml:space="preserve">
+    <value>지정한 IP 주소가 잘못되었습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_InvalidSecurityData" xml:space="preserve">
+    <value>보안 데이터가 잘못되었습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_InvalidServerSecurityInfo" xml:space="preserve">
+    <value>서버 보안 데이터가 잘못되었습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_LicensingFailed" xml:space="preserve">
+    <value>라이선스 협상에 실패했습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_LicensingTimeout" xml:space="preserve">
+    <value>라이선스 제한 시간이 초과되었습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_LocalNotError" xml:space="preserve">
+    <value>로컬 연결이 끊어졌습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_NoInfo" xml:space="preserve">
+    <value>사용할 수 있는 정보가 없습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_OutOfMemory" xml:space="preserve">
+    <value>메모리가 부족합니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_OutOfMemory2" xml:space="preserve">
+    <value>메모리가 부족합니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_OutOfMemory3" xml:space="preserve">
+    <value>메모리가 부족합니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_RemoteByUser" xml:space="preserve">
+    <value>사용자가 원격 연결을 끊습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_ServerCertificateUnpackErr" xml:space="preserve">
+    <value>서버 인증서의 압축을 풀지 못했습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SocketConnectFailed" xml:space="preserve">
+    <value>Windows 소켓 연결에 실패했습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SocketRecvFailed" xml:space="preserve">
+    <value>Windows 소켓 recv 호출에 실패했습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrAccountDisabled" xml:space="preserve">
+    <value>계정을 사용할 수 없습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrAccountExpired" xml:space="preserve">
+    <value>계정이 만료되었습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrAccountLockedOut" xml:space="preserve">
+    <value>계정이 잠겼습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrAccountRestriction" xml:space="preserve">
+    <value>계정이 제한되어 있습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrCertExpired" xml:space="preserve">
+    <value>수신된 인증서가 만료되었습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrDelegationPolicy" xml:space="preserve">
+    <value>이 정책은 대상 서버에 대한 자격 증명 위임을 지원하지 않습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrFreshCredRequiredByServer" xml:space="preserve">
+    <value>서버 인증 정책에서 저장된 자격 증명을 사용한 연결 요청을 허용하지 않습니다. 사용자는 새 자격 증명을 입력해야 합니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrLogonFailure" xml:space="preserve">
+    <value>로그인에 실패했습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrNoAuthenticatingAuthority" xml:space="preserve">
+    <value>인증 기관에 연결할 수 없습니다. 인증 당사자의 도메인 이름이 잘못되었거나 도메인에 연결할 수 없거나 신뢰 관계 오류가 있을 수 있습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrNoSuchUser" xml:space="preserve">
+    <value>지정한 사용자에게 계정이 없습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrPasswordExpired" xml:space="preserve">
+    <value>암호가 만료되었습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrPasswordMustChange" xml:space="preserve">
+    <value>처음 로그온하기 전에 사용자 암호를 변경해야 합니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrPolicyNTLMOnly" xml:space="preserve">
+    <value>상호 인증이 이루어지지 않으면 대상 서버에 대한 자격 증명의 위임이 허용되지 않습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrSmartcardCardBlocked" xml:space="preserve">
+    <value>스마트 카드가 차단되었습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_SslErrSmartcardWrongPIN" xml:space="preserve">
+    <value>스마트 카드에 잘못된 PIN이 제공되었습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_TimeoutOccurred" xml:space="preserve">
+    <value>시간 초과가 발생했습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_TimerError" xml:space="preserve">
+    <value>내부 타이머 오류입니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_WinsockSendFailed" xml:space="preserve">
+    <value>Windows 소켓 전송 호출에 실패했습니다.</value>
+  </data>
+  <data name="Sienna" xml:space="preserve">
+    <value>황갈색</value>
+  </data>
+  <data name="SpacesAreNotAllowed" xml:space="preserve">
+    <value>공백은 허용되지 않습니다!</value>
+  </data>
+  <data name="Steel" xml:space="preserve">
+    <value>철색</value>
+  </data>
+  <data name="Taupe" xml:space="preserve">
+    <value>회갈색</value>
+  </data>
+  <data name="TcpState_Closed" xml:space="preserve">
+    <value>닫힘</value>
+  </data>
+  <data name="TcpState_CloseWait" xml:space="preserve">
+    <value>대기 종료</value>
+  </data>
+  <data name="TcpState_Closing" xml:space="preserve">
+    <value>폐쇄</value>
+  </data>
+  <data name="TcpState_DeleteTcb" xml:space="preserve">
+    <value>삭제Tcb</value>
+  </data>
+  <data name="TcpState_Established" xml:space="preserve">
+    <value>설립된</value>
+  </data>
+  <data name="TcpState_FinWait1" xml:space="preserve">
+    <value>FinWait1</value>
+  </data>
+  <data name="TcpState_FinWait2" xml:space="preserve">
+    <value>FinWait2</value>
+  </data>
+  <data name="TcpState_LastAck" xml:space="preserve">
+    <value>LastAck</value>
+  </data>
+  <data name="TcpState_Listen" xml:space="preserve">
+    <value>Listen</value>
+  </data>
+  <data name="TcpState_SynReceived" xml:space="preserve">
+    <value>SynReceived</value>
+  </data>
+  <data name="TcpState_SynSent" xml:space="preserve">
+    <value>SynSent</value>
+  </data>
+  <data name="TcpState_TimeWait" xml:space="preserve">
+    <value>시간 대기</value>
+  </data>
+  <data name="TcpState_Unknown" xml:space="preserve">
+    <value>알 수 없음</value>
+  </data>
+  <data name="Teal" xml:space="preserve">
+    <value>청록색</value>
+  </data>
+  <data name="Violet" xml:space="preserve">
+    <value>보라</value>
+  </data>
+  <data name="White" xml:space="preserve">
+    <value>흰색</value>
+  </data>
+  <data name="Yellow" xml:space="preserve">
+    <value>노랑</value>
+  </data>
+  <data name="ProfileWithThisNameAlreadyExists" xml:space="preserve">
+    <value>같은 이름의 프로필이 이미 있습니다!</value>
+  </data>
+  <data name="PortState_Closed" xml:space="preserve">
+    <value>닫힘</value>
+  </data>
+  <data name="PortState_Open" xml:space="preserve">
+    <value>열기</value>
+  </data>
+  <data name="AtLeastOneApplicationMustBeVisible" xml:space="preserve">
+    <value>하나 이상의 응용 프로그램이 표시되어야 합니다!</value>
+  </data>
+  <data name="HiddenApplications" xml:space="preserve">
+    <value>숨겨진 응용 프로그램</value>
+  </data>
+  <data name="VisibleApplications" xml:space="preserve">
+    <value>표시할 응용 프로그램:</value>
+  </data>
+  <data name="VisibleApplicationsInTheBar" xml:space="preserve">
+    <value>막대에 표시되는 응용 프로그램:</value>
+  </data>
+  <data name="Whois" xml:space="preserve">
+    <value>Whois</value>
+  </data>
+  <data name="AddATabToQueryWhois" xml:space="preserve">
+    <value>Whois를 쿼리할 탭을 추가...</value>
+  </data>
+  <data name="EnterValidDomain" xml:space="preserve">
+    <value>유효한 도메인 (예: "example.com ")을 입력하세요!</value>
+  </data>
+  <data name="EnterValidUsername" xml:space="preserve">
+    <value>Enter a valid Windows username (e.g., "user", "DOMAIN\user" or "user@domain.com")!</value>
+  </data>
+  <data name="WhoisServerNotFoundForTheDomain" xml:space="preserve">
+    <value>Whois 서버는 도메인에 대해 찾을 수 없습니다: "{0}"</value>
+  </data>
+  <data name="Routing" xml:space="preserve">
+    <value>라우팅</value>
+  </data>
+  <data name="Release" xml:space="preserve">
+    <value>Release</value>
+  </data>
+  <data name="ReleaseRenew" xml:space="preserve">
+    <value>Release 및 Renew</value>
+  </data>
+  <data name="Renew" xml:space="preserve">
+    <value>Renew</value>
+  </data>
+  <data name="WindowsDNSSettings" xml:space="preserve">
+    <value>Windows DNS 설정</value>
+  </data>
+  <data name="DeleteDNSServer" xml:space="preserve">
+    <value>DNS 서버 삭제</value>
+  </data>
+  <data name="DeleteDNSServerMessage" xml:space="preserve">
+    <value>선택한 DNS 서버가 영구적으로 삭제됩니다.</value>
+  </data>
+  <data name="AddDNSServer" xml:space="preserve">
+    <value>DNS 서버 추가</value>
+  </data>
+  <data name="EditDNSServer" xml:space="preserve">
+    <value>DNS 서버 편집</value>
+  </data>
+  <data name="DNSServerWithThisNameAlreadyExists" xml:space="preserve">
+    <value>같은 이름의 DNS 서버가 이미 있습니다!</value>
+  </data>
+  <data name="RestartSession" xml:space="preserve">
+    <value>세션 다시 시작</value>
+  </data>
+  <data name="TigerVNC" xml:space="preserve">
+    <value>TigerVNC</value>
+  </data>
+  <data name="ConfigureThePathToTigerVNCInTheSettingsDots" xml:space="preserve">
+    <value>설정에서 TigerVNC 경로 구성...</value>
+  </data>
+  <data name="TigerVNCProcessHasEnded" xml:space="preserve">
+    <value>TigerVNC 프로세스가 종료되었습니다!</value>
+  </data>
+  <data name="ConnectingDots" xml:space="preserve">
+    <value>연결 중...</value>
+  </data>
+  <data name="ResolveMACAddressAndVendor" xml:space="preserve">
+    <value>MAC 주소 및 벤더 해결</value>
+  </data>
+  <data name="Note" xml:space="preserve">
+    <value>참고</value>
+  </data>
+  <data name="ExportAll" xml:space="preserve">
+    <value>모두 내보내기</value>
+  </data>
+  <data name="ExportDots" xml:space="preserve">
+    <value>내보내기...</value>
+  </data>
+  <data name="ExportSelected" xml:space="preserve">
+    <value>선택 내보내기</value>
+  </data>
+  <data name="LocationDots" xml:space="preserve">
+    <value>위치...</value>
+  </data>
+  <data name="File" xml:space="preserve">
+    <value>파일</value>
+  </data>
+  <data name="EnterValidFilePath" xml:space="preserve">
+    <value>유효한 파일 경로를 입력하십시오!</value>
+  </data>
+  <data name="All" xml:space="preserve">
+    <value>모두</value>
+  </data>
+  <data name="Format" xml:space="preserve">
+    <value>형식</value>
+  </data>
+  <data name="Selected" xml:space="preserve">
+    <value>선택함</value>
+  </data>
+  <data name="AnErrorOccurredWhileExportingTheData" xml:space="preserve">
+    <value>데이터를 내보내는 동안 오류가 발생했습니다. 자세한 내용은 오류 메시지를 참조하십시오:</value>
+  </data>
+  <data name="Design" xml:space="preserve">
+    <value>디자인</value>
+  </data>
+  <data name="HighlightTimeouts" xml:space="preserve">
+    <value>시간 초과 강조</value>
+  </data>
+  <data name="EnterSubnetsToCreateAWideSubnet" xml:space="preserve">
+    <value>와이드 서브넷을 만들려면 서브넷을 입력하십시오...</value>
+  </data>
+  <data name="WideSubnet" xml:space="preserve">
+    <value>와이드 서브넷</value>
+  </data>
+  <data name="AddTabDots" xml:space="preserve">
+    <value>탭 추가...</value>
+  </data>
+  <data name="AddIPv4AddressDots" xml:space="preserve">
+    <value>IPv4 주소 추가...</value>
+  </data>
+  <data name="AddIPv4Address" xml:space="preserve">
+    <value>IPv4 주소 추가</value>
+  </data>
+  <data name="MaxHostThreads" xml:space="preserve">
+    <value>최대 동시 호스트 스레드 수</value>
+  </data>
+  <data name="MaxPortThreads" xml:space="preserve">
+    <value>최대 동시 포트 스레드 수</value>
+  </data>
+  <data name="PowerShell" xml:space="preserve">
+    <value>PowerShell</value>
+  </data>
+  <data name="ConfigureThePathToPowerShellInTheSettingsDots" xml:space="preserve">
+    <value>설정에서 PowerShell 경로 구성...</value>
+  </data>
+  <data name="PowerShellProcessHasEnded" xml:space="preserve">
+    <value>PowerShell 프로세스가 종료되었습니다!</value>
+  </data>
+  <data name="ExecutionPolicy" xml:space="preserve">
+    <value>실행 정책</value>
+  </data>
+  <data name="RemoteConsole" xml:space="preserve">
+    <value>원격 콘솔</value>
+  </data>
+  <data name="FilePath" xml:space="preserve">
+    <value>파일 경로</value>
+  </data>
+  <data name="OverrideDefaultSettings" xml:space="preserve">
+    <value>기본 설정 재정의</value>
+  </data>
+  <data name="ResolveIPv4AddressForThisHost" xml:space="preserve">
+    <value>이 호스트의 IPv4 주소 확인</value>
+  </data>
+  <data name="Hide" xml:space="preserve">
+    <value>숨기기</value>
+  </data>
+  <data name="TotalBytesReceived" xml:space="preserve">
+    <value>수신한 총 바이트 수</value>
+  </data>
+  <data name="TotalBytesSent" xml:space="preserve">
+    <value>보낸 총 바이트 수</value>
+  </data>
+  <data name="Download" xml:space="preserve">
+    <value>다운로드</value>
+  </data>
+  <data name="Bandwidth" xml:space="preserve">
+    <value>대역폭</value>
+  </data>
+  <data name="Upload" xml:space="preserve">
+    <value>업로드</value>
+  </data>
+  <data name="ApplyWindowsKeyCombinations" xml:space="preserve">
+    <value>Windows 키 조합 적용</value>
+  </data>
+  <data name="CredentialSecuritySupportProvider" xml:space="preserve">
+    <value>자격 증명 보안 지원 공급자</value>
+  </data>
+  <data name="BackgroundJob" xml:space="preserve">
+    <value>백그라운드 작업</value>
+  </data>
+  <data name="HelpMessage_BackgroundJob" xml:space="preserve">
+    <value>백그라운드 작업은 매 x분마다 설정과 프로필을 저장합니다.
+
+값이 0이면 이 기능이 비활성화됩니다.
+
+이 값의 변경 사항은 애플리케이션을 재시작한 후에 적용됩니다.</value>
+  </data>
+  <data name="RunBackgroundJobEveryXMinute" xml:space="preserve">
+    <value>x분마다 백그라운드 작업 실행</value>
+  </data>
+  <data name="YourSystemOSIsIncompatibleWithTheLatestRelease" xml:space="preserve">
+    <value>시스템 OS가 최신 릴리스와 호환되지 않습니다!</value>
+  </data>
+  <data name="Dashboard" xml:space="preserve">
+    <value>대시보드</value>
+  </data>
+  <data name="AllSettingsCanBeChangedLaterInTheSettings" xml:space="preserve">
+    <value>모든 설정은 나중에 설정에서 변경할 수 있습니다!</value>
+  </data>
+  <data name="CheckPublicIPAddress" xml:space="preserve">
+    <value>공용 IP 주소 확인</value>
+  </data>
+  <data name="WelcomeMessage" xml:space="preserve">
+    <value>NETworkManager를 이용해 주셔서 감사합니다!
+
+GitHub에 별을 남기거나 기부를 하거나 단순히 다른 사람들과 공유하는 등 개발을 지원하는 것을 고려해 보세요. 여러분의 지원은 프로젝트가 계속 성장할 수 있도록 도와줍니다.</value>
+  </data>
+  <data name="HelpMessage_CheckForUpdatesAtStartup" xml:space="preserve">
+    <value>프로그램을 시작할 때 GitHub에서 새 프로그램 버전을 사용할 수 있는지 백그라운드에서 확인합니다.
+
+URL: https://api.github.com/</value>
+  </data>
+  <data name="HelpMessage_CheckPublicIPAddress" xml:space="preserve">
+    <value>공용 IP 주소는 ipify.org을 통해 결정됩니다.
+
+URL: https://api.ipify.org/</value>
+  </data>
+  <data name="Privacy" xml:space="preserve">
+    <value>프라이버시</value>
+  </data>
+  <data name="Welcome" xml:space="preserve">
+    <value>환영합니다</value>
+  </data>
+  <data name="ExternalServices" xml:space="preserve">
+    <value>외부 서비스</value>
+  </data>
+  <data name="StarForkProjectOnGitHub" xml:space="preserve">
+    <value>Star/Fork the Project on GitHub.</value>
+  </data>
+  <data name="HelpTranslateOnTransifex" xml:space="preserve">
+    <value>Help translate the project on Transifex.</value>
+  </data>
+  <data name="ContactOrContactMeViaX" xml:space="preserve">
+    <value>Follow or contact me via X.</value>
+  </data>
+  <data name="Connection" xml:space="preserve">
+    <value>연결</value>
+  </data>
+  <data name="Computer" xml:space="preserve">
+    <value>컴퓨터</value>
+  </data>
+  <data name="GatewayRouter" xml:space="preserve">
+    <value>게이트웨이 / 라우터</value>
+  </data>
+  <data name="Internet" xml:space="preserve">
+    <value>인터넷</value>
+  </data>
+  <data name="CheckNetworkAdapterConfigurationAndDNSServerConfigurationMessage" xml:space="preserve">
+    <value>네트워크 어댑터 구성 (dns)과 DNS 서버가 올바르게 구성되어 있는지 확인합니다.</value>
+  </data>
+  <data name="CheckNetworkAdapterConfigurationAndNetworkConnectionMessage" xml:space="preserve">
+    <value>네트워크 어댑터 구성 (dhcp, 정적 IP)과 네트워크에 연결되어 있는지 확인합니다.</value>
+  </data>
+  <data name="CouldNotDetectGatewayIPAddressMessage" xml:space="preserve">
+    <value>게이트웨이 IP 주소를 검색할 수 없습니다!</value>
+  </data>
+  <data name="CouldNotDetectLocalIPAddressMessage" xml:space="preserve">
+    <value>로컬 IP 주소를 검색할 수 없습니다!</value>
+  </data>
+  <data name="CouldNotGetPublicIPAddressFromXXXMessage" xml:space="preserve">
+    <value>"{0}"에서 WebRequest(http/https)를 통해 공용 IP 주소를 가져올 수 없습니다! 네트워크 연결(방화벽, 프록시 등)을 확인합니다.</value>
+  </data>
+  <data name="NoADNSRecordsResolvedForXXXMessage" xml:space="preserve">
+    <value>"{0}"에 대해 해결된 A dns 레코드가 없습니다!</value>
+  </data>
+  <data name="NoPTRDNSRecordResolvedForXXXMessage" xml:space="preserve">
+    <value>"{0}"에 대해 해결된 PTR dns 레코드가 없습니다!</value>
+  </data>
+  <data name="XADNSRecordsResolvedForXXXMessage" xml:space="preserve">
+    <value>"{0}" A dns 레코드가 "{1}에 의해 해결되었습니다!"</value>
+  </data>
+  <data name="PTRDNSRecordResolvedForXXXMessage" xml:space="preserve">
+    <value>"{0}"에 대한 PTR dns 레코드가 해결되었습니다!!</value>
+  </data>
+  <data name="GotXXXAsPublicIPAddressFromXXXMessage" xml:space="preserve">
+    <value>"{0}" 공용 ip 주소를 "{1}"에서 받았습니다!</value>
+  </data>
+  <data name="ResolvedXXXAsHostnameForIPAddressXXXMessage" xml:space="preserve">
+    <value>"{0}" 이 "{1}"의 호스트 이름으로 해결되었습니다!</value>
+  </data>
+  <data name="PublicIPAddressCheckIsDisabled" xml:space="preserve">
+    <value>공용 IP 주소 검사
+비활성화되었습니다!</value>
+  </data>
+  <data name="TCPIPStackIsAvailableMessage" xml:space="preserve">
+    <value>TCP/IP 스택을 사용할 수 있습니다. ICMP를 통해 "{0}" 에 연결할 수 있습니다!</value>
+  </data>
+  <data name="TCPIPStackIsNotAvailableMessage" xml:space="preserve">
+    <value>TCP/IP 스택을 사용할 수 없습니다... ICMP를 통해 "{0}" 에 연결할 수 없습니다!</value>
+  </data>
+  <data name="XXXDetectedAsGatewayIPAddress" xml:space="preserve">
+    <value>"{0}" 이 게이트웨이 IP 주소로 검색되었습니다!</value>
+  </data>
+  <data name="XXXDetectedAsLocalIPAddressMessage" xml:space="preserve">
+    <value>"{0}" 이 로컬 IP 주소로 검색되었습니다!</value>
+  </data>
+  <data name="XXXIsNotReachableViaICMPMessage" xml:space="preserve">
+    <value>ICMP를 통해 "{0}" 에 연결할 수 없습니다!</value>
+  </data>
+  <data name="XXXIsReachableViaICMPMessage" xml:space="preserve">
+    <value>ICMP를 통해 "{0}" 에 연결할 수 있습니다!</value>
+  </data>
+  <data name="UseCustomIPv4AddressAPI" xml:space="preserve">
+    <value>Use custom IPv4 address API</value>
+  </data>
+  <data name="HelpMessage_CustomPublicIPv4AddressAPI" xml:space="preserve">
+    <value>http 또는 https를 통해 접속할 수 있는 웹 서비스의 URL이며 응답으로 IPv4 주소 (예: "xx.xx.xx.xx")를 반환합니다.</value>
+  </data>
+  <data name="CouldNotParsePublicIPAddressFromXXXMessage" xml:space="preserve">
+    <value>"{0}"에서 공용 IP 주소를 구문 분석할 수 없습니다! 다른 서비스를 시도하거나 기본값을 사용합니다... </value>
+  </data>
+  <data name="CouldNotConnectToXXXMessage" xml:space="preserve">
+    <value>"{0}"에 연결할 수 없습니다!</value>
+  </data>
+  <data name="IPv4ProtocolAvailable" xml:space="preserve">
+    <value>IPv4 프로토콜 사용 가능</value>
+  </data>
+  <data name="IPv6ProtocolAvailable" xml:space="preserve">
+    <value>IPv6 프로토콜 사용 가능</value>
+  </data>
+  <data name="CopyNoun" xml:space="preserve">
+    <value>복사</value>
+  </data>
+  <data name="Official" xml:space="preserve">
+    <value>공식</value>
+  </data>
+  <data name="NetworkConnectionType" xml:space="preserve">
+    <value>네트워크 연결 유형</value>
+  </data>
+  <data name="DesktopBackground" xml:space="preserve">
+    <value>데스크탑 배경</value>
+  </data>
+  <data name="DesktopComposition" xml:space="preserve">
+    <value>데스크톱 구성</value>
+  </data>
+  <data name="Experience" xml:space="preserve">
+    <value>경험</value>
+  </data>
+  <data name="FontSmoothing" xml:space="preserve">
+    <value>매끈한 글꼴</value>
+  </data>
+  <data name="MenuAndWindowAnimation" xml:space="preserve">
+    <value>메뉴 및 창 애니메이션</value>
+  </data>
+  <data name="Performance" xml:space="preserve">
+    <value>성능</value>
+  </data>
+  <data name="PersistentBitmapCaching" xml:space="preserve">
+    <value>영구 비트맵 캐싱</value>
+  </data>
+  <data name="ReconnectIfTheConnectionIsDropped" xml:space="preserve">
+    <value>연결이 끊긴 경우 다시 연결</value>
+  </data>
+  <data name="RemoteDesktopNetworkConnectionType_BroadbandHigh" xml:space="preserve">
+    <value>고속 광대역(2Mbps - 10Mbps)</value>
+  </data>
+  <data name="RemoteDesktopNetworkConnectionType_BroadbandLow" xml:space="preserve">
+    <value>저속 광대역 (256kbps - 2Mbps)</value>
+  </data>
+  <data name="RemoteDesktopNetworkConnectionType_DetectAutomatically" xml:space="preserve">
+    <value>연결 품질 자동 감지</value>
+  </data>
+  <data name="RemoteDesktopNetworkConnectionType_LAN" xml:space="preserve">
+    <value>LAN (10 Mbps 이상)</value>
+  </data>
+  <data name="RemoteDesktopNetworkConnectionType_Modem" xml:space="preserve">
+    <value>모뎀 (56 kbps)</value>
+  </data>
+  <data name="RemoteDesktopNetworkConnectionType_Satellite" xml:space="preserve">
+    <value>위성 (2Mbps - 16Mbps, 지연 시간 높음)</value>
+  </data>
+  <data name="RemoteDesktopNetworkConnectionType_WAN" xml:space="preserve">
+    <value>WAN (10Mbps 이상, 지연 시간 높음)</value>
+  </data>
+  <data name="ShowWindowContentsWhileDragging" xml:space="preserve">
+    <value>드래그하는 동안 창 내용 표시</value>
+  </data>
+  <data name="VisualStyles" xml:space="preserve">
+    <value>시각적 스타일</value>
+  </data>
+  <data name="ViewOnly" xml:space="preserve">
+    <value>View only</value>
+  </data>
+  <data name="ViewOnlyDescription" xml:space="preserve">
+    <value>Block keyboard and mouse input to the remote session</value>
+  </data>
+  <data name="RemoteAudio" xml:space="preserve">
+    <value>원격 오디오</value>
+  </data>
+  <data name="RemoteAudioPlayback" xml:space="preserve">
+    <value>원격 오디오 재생</value>
+  </data>
+  <data name="RemoteAudioRecording" xml:space="preserve">
+    <value>원격 오디오 녹음</value>
+  </data>
+  <data name="RemoteDesktopAudioCaptureRedirectionMode_DoNotRecord" xml:space="preserve">
+    <value>기록 안 함</value>
+  </data>
+  <data name="RemoteDesktopAudioCaptureRedirectionMode_RecordFromThisComputer" xml:space="preserve">
+    <value>이 컴퓨터에서 녹화</value>
+  </data>
+  <data name="RemoteDesktopAudioRedirectionMode_DoNotPlay" xml:space="preserve">
+    <value>재생 안 함</value>
+  </data>
+  <data name="RemoteDesktopAudioRedirectionMode_PlayOnRemoteComputer" xml:space="preserve">
+    <value>원격 컴퓨터에서 재생</value>
+  </data>
+  <data name="RemoteDesktopAudioRedirectionMode_PlayOnThisComputer" xml:space="preserve">
+    <value>이 컴퓨터에서 재생</value>
+  </data>
+  <data name="Gateway" xml:space="preserve">
+    <value>게이트웨이</value>
+  </data>
+  <data name="CustomCommands" xml:space="preserve">
+    <value>사용자 지정 명령</value>
+  </data>
+  <data name="AddCustomCommand" xml:space="preserve">
+    <value>사용자 지정 명령 추가</value>
+  </data>
+  <data name="Arguments" xml:space="preserve">
+    <value>인수</value>
+  </data>
+  <data name="DeleteCustomCommand" xml:space="preserve">
+    <value>사용자 지정 명령 삭제</value>
+  </data>
+  <data name="EditCustomCommand" xml:space="preserve">
+    <value>사용자 지정 명령 편집</value>
+  </data>
+  <data name="Program" xml:space="preserve">
+    <value>프로그램</value>
+  </data>
+  <data name="Private" xml:space="preserve">
+    <value>비공개</value>
+  </data>
+  <data name="Public" xml:space="preserve">
+    <value>공개</value>
+  </data>
+  <data name="DeleteCustomCommandMessage" xml:space="preserve">
+    <value>선택한 사용자 지정 명령이 영구적으로 삭제됩니다.</value>
+  </data>
+  <data name="Restart" xml:space="preserve">
+    <value>다시 시작</value>
+  </data>
+  <data name="WarningMessage_CouldNotResolveIPAddressForHostname" xml:space="preserve">
+    <value>호스트 이름에 대한 IP 주소를 확인할 수 없습니다!</value>
+  </data>
+  <data name="CtrlAltDel" xml:space="preserve">
+    <value>Ctrl+Alt+Del</value>
+  </data>
+  <data name="TaskManager" xml:space="preserve">
+    <value>Task Manager (Ctrl+Shift+Esc)</value>
+  </data>
+  <data name="Lock" xml:space="preserve">
+    <value>Lock (Win+L)</value>
+  </data>
+  <data name="ShowDesktop" xml:space="preserve">
+    <value>Show Desktop (Win+D)</value>
+  </data>
+  <data name="Explorer" xml:space="preserve">
+    <value>Explorer (Win+E)</value>
+  </data>
+  <data name="RunDialog" xml:space="preserve">
+    <value>Run dialog (Win+R)</value>
+  </data>
+  <data name="KeyboardShortcuts" xml:space="preserve">
+    <value>키보드 단축키</value>
+  </data>
+  <data name="AdjustScreen" xml:space="preserve">
+    <value>화면 조정</value>
+  </data>
+  <data name="Fullscreen" xml:space="preserve">
+    <value>전체 화면</value>
+  </data>
+  <data name="CouldNotSendKeystroke" xml:space="preserve">
+    <value>키 입력을 보낼 수 없습니다!</value>
+  </data>
+  <data name="Disconnect" xml:space="preserve">
+    <value>연결 끊기</value>
+  </data>
+  <data name="DetectLocalIPAddressAndSubnetmask" xml:space="preserve">
+    <value>로컬 IP 주소 및 서브넷 마스크 탐지</value>
+  </data>
+  <data name="CouldNotDetectSubnetmask" xml:space="preserve">
+    <value>서브넷 마스크를 감지할 수 없습니다!</value>
+  </data>
+  <data name="DetectingNetworkDots" xml:space="preserve">
+    <value>네트워크 검색 중...</value>
+  </data>
+  <data name="ClosingInXSecondsDots" xml:space="preserve">
+    <value>{0} 초 후에 닫는 중...</value>
+  </data>
+  <data name="NetworkUnavailable" xml:space="preserve">
+    <value>네트워크를 사용할 수 없습니다!</value>
+  </data>
+  <data name="IPAddressToDetectLocalIPAddressBasedOnRouting" xml:space="preserve">
+    <value>라우팅을 기반으로 로컬 IP 주소를 탐지하는 IP 주소</value>
+  </data>
+  <data name="ShowStatusWindowOnNetworkChange" xml:space="preserve">
+    <value>네트워크 변경시 상태 창 표시</value>
+  </data>
+  <data name="TimeInSecondsHowLongTheStatusWindowIsShown" xml:space="preserve">
+    <value>상태 창이 표시되는 시간 (초)</value>
+  </data>
+  <data name="WiFi" xml:space="preserve">
+    <value>WiFi</value>
+  </data>
+  <data name="Networks" xml:space="preserve">
+    <value>네트워크</value>
+  </data>
+  <data name="SearchingForNetworksDots" xml:space="preserve">
+    <value>네트워크 검색 중...</value>
+  </data>
+  <data name="NoWiFiAdaptersFound" xml:space="preserve">
+    <value>WiFi 어댑터를 찾을 수 없습니다!</value>
+  </data>
+  <data name="SearchingWiFiAdaptersDots" xml:space="preserve">
+    <value>WiFi 어댑터를 검색 중...</value>
+  </data>
+  <data name="NoWiFiNetworksFound" xml:space="preserve">
+    <value>WiFi 네트워크를 찾을 수 없습니다!</value>
+  </data>
+  <data name="Channels" xml:space="preserve">
+    <value>채널</value>
+  </data>
+  <data name="Channel" xml:space="preserve">
+    <value>채널</value>
+  </data>
+  <data name="ChannelWidth" xml:space="preserve">
+    <value>Channel width</value>
+  </data>
+  <data name="GHz2dot4" xml:space="preserve">
+    <value>2.4 GHz</value>
+  </data>
+  <data name="GHz5" xml:space="preserve">
+    <value>5 GHz</value>
+  </data>
+  <data name="GHz2dot4And5" xml:space="preserve">
+    <value>2.4 &amp; 5 GHz</value>
+  </data>
+  <data name="SignalStrength" xml:space="preserve">
+    <value>신호 세기</value>
+  </data>
+  <data name="CurrentDownloadSpeed" xml:space="preserve">
+    <value>현재 다운로드 속도</value>
+  </data>
+  <data name="CurrentUploadSpeed" xml:space="preserve">
+    <value>현재 업로드 속도</value>
+  </data>
+  <data name="MeasuredTime" xml:space="preserve">
+    <value>측정시간</value>
+  </data>
+  <data name="NetworkUsage" xml:space="preserve">
+    <value>네트워크 사용량</value>
+  </data>
+  <data name="TotalDownload" xml:space="preserve">
+    <value>총 다운로드</value>
+  </data>
+  <data name="TotalUpload" xml:space="preserve">
+    <value>총 업로드</value>
+  </data>
+  <data name="Retries" xml:space="preserve">
+    <value>재시도</value>
+  </data>
+  <data name="UseCache" xml:space="preserve">
+    <value>캐시 사용</value>
+  </data>
+  <data name="UseOnlyTCP" xml:space="preserve">
+    <value>TCP만 사용</value>
+  </data>
+  <data name="QueryClass" xml:space="preserve">
+    <value>쿼리 클래스</value>
+  </data>
+  <data name="DomainName" xml:space="preserve">
+    <value>도메인 이름</value>
+  </data>
+  <data name="TimeoutS" xml:space="preserve">
+    <value>시간 초과</value>
+  </data>
+  <data name="ReportIssueOrCreateFeatureRequest" xml:space="preserve">
+    <value>Report an issue or create a feature request.</value>
+  </data>
+  <data name="BeaconInterval" xml:space="preserve">
+    <value>신호 간격</value>
+  </data>
+  <data name="Encryption" xml:space="preserve">
+    <value>암호화</value>
+  </data>
+  <data name="Infrastructure" xml:space="preserve">
+    <value>인프라스트럭쳐</value>
+  </data>
+  <data name="NetworkKind" xml:space="preserve">
+    <value>네트워크 종류</value>
+  </data>
+  <data name="PhyKind" xml:space="preserve">
+    <value>Phy 종류</value>
+  </data>
+  <data name="Uptime" xml:space="preserve">
+    <value>가동 시간</value>
+  </data>
+  <data name="ShowErrorMessage" xml:space="preserve">
+    <value>오류 메시지 표시</value>
+  </data>
+  <data name="PingMonitor" xml:space="preserve">
+    <value>핑 모니터</value>
+  </data>
+  <data name="AddHost" xml:space="preserve">
+    <value>호스트 추가</value>
+  </data>
+  <data name="AddAHostToMonitor" xml:space="preserve">
+    <value>모니터링할 호스트 추가</value>
+  </data>
+  <data name="Pause" xml:space="preserve">
+    <value>일시 중지</value>
+  </data>
+  <data name="Resume" xml:space="preserve">
+    <value>재개</value>
+  </data>
+  <data name="CouldNotResolveIPAddressFor" xml:space="preserve">
+    <value>IP 주소를 확인할 수 없습니다: "{0}"</value>
+  </data>
+  <data name="PingMonitorNotification" xml:space="preserve">
+    <value>Notification</value>
+  </data>
+  <data name="ShowNotificationPopupOnStatusChange" xml:space="preserve">
+    <value>Show notification popup on status change</value>
+  </data>
+  <data name="PlaySoundOnStatusChange" xml:space="preserve">
+    <value>Play sound on status change</value>
+  </data>
+  <data name="NotificationSuccessThreshold" xml:space="preserve">
+    <value>Success threshold</value>
+  </data>
+  <data name="HelpMessage_NotificationSuccessThreshold" xml:space="preserve">
+    <value>Number of consecutive successful pings required before a "Host is up" notification is shown. Higher values reduce noise from flapping hosts.</value>
+  </data>
+  <data name="NotificationFailureThreshold" xml:space="preserve">
+    <value>Failure threshold</value>
+  </data>
+  <data name="HelpMessage_NotificationFailureThreshold" xml:space="preserve">
+    <value>Number of consecutive failed pings (timeouts) required before a "Host is down" notification is shown. Higher values reduce noise from flapping hosts.</value>
+  </data>
+  <data name="NotificationDurationInSeconds" xml:space="preserve">
+    <value>Display duration (seconds)</value>
+  </data>
+  <data name="HostIsUp" xml:space="preserve">
+    <value>Host is up</value>
+  </data>
+  <data name="HostIsDown" xml:space="preserve">
+    <value>Host is down</value>
+  </data>
+  <data name="TheApplicationWillBeRestarted" xml:space="preserve">
+    <value>응용 프로그램이 다시 시작됩니다...</value>
+  </data>
+  <data name="ClouldNotExportFileSeeErrorMessageXX" xml:space="preserve">
+    <value>파일을 내보낼 수 없습니다! 오류 메시지 참조: "{0}"</value>
+  </data>
+  <data name="FileExportedToXX" xml:space="preserve">
+    <value>파일을 "{0}"으로 내보냈습니다!</value>
+  </data>
+  <data name="ClouldNotImportFileSeeErrorMessageXX" xml:space="preserve">
+    <value>파일을 가져올 수 없습니다! 오류 메시지 참조: "{0}"</value>
+  </data>
+  <data name="LocationCannotBeChangedInThePortableVersion" xml:space="preserve">
+    <value>휴대용 버전에서는 위치를 변경할 수 없습니다!</value>
+  </data>
+  <data name="IsEncrypted" xml:space="preserve">
+    <value>암호화됨</value>
+  </data>
+  <data name="OpenTheDocumentation" xml:space="preserve">
+    <value>Open the documentation.</value>
+  </data>
+  <data name="ExampleProfileFileName" xml:space="preserve">
+    <value>고객 1</value>
+  </data>
+  <data name="AddProfileFile" xml:space="preserve">
+    <value>프로필 파일 추가</value>
+  </data>
+  <data name="DisableEncryptionDots" xml:space="preserve">
+    <value>암호화 사용 안 함...</value>
+  </data>
+  <data name="EditProfileFile" xml:space="preserve">
+    <value>프로필 파일 편집</value>
+  </data>
+  <data name="EnableEncryptionDots" xml:space="preserve">
+    <value>암호화 사용...</value>
+  </data>
+  <data name="EncryptionDots" xml:space="preserve">
+    <value>암호화...</value>
+  </data>
+  <data name="ProfileNameAlreadyExists" xml:space="preserve">
+    <value>프로필 이름이 이미 있습니다!</value>
+  </data>
+  <data name="Rename" xml:space="preserve">
+    <value>이름 바꾸기</value>
+  </data>
+  <data name="DeleteProfileFile" xml:space="preserve">
+    <value>프로필 파일 삭제</value>
+  </data>
+  <data name="ResetProfilesMessage" xml:space="preserve">
+    <value>이 프로필 파일의 모든 프로필이 영구적으로 삭제됩니다!</value>
+  </data>
+  <data name="Patch" xml:space="preserve">
+    <value>패치</value>
+  </data>
+  <data name="RestartTheApplicationToChangeTheLanguage" xml:space="preserve">
+    <value>언어를 변경하려면 응용 프로그램을 다시 시작합니다!</value>
+  </data>
+  <data name="CurrentlyDownloaded" xml:space="preserve">
+    <value>현재 다운로드됨</value>
+  </data>
+  <data name="CurrentlyUploaded" xml:space="preserve">
+    <value>현재 업로드됨</value>
+  </data>
+  <data name="LldpCdp" xml:space="preserve">
+    <value>LLDP / CDP</value>
+  </data>
+  <data name="RestartAsAdmin" xml:space="preserve">
+    <value>관리자로 재시작</value>
+  </data>
+  <data name="NetworkPacketsCaptureAdminMessage" xml:space="preserve">
+    <value>네트워크 패킷을 분석하려면 높은 권한이 필요합니다!</value>
+  </data>
+  <data name="Capture" xml:space="preserve">
+    <value>캡쳐</value>
+  </data>
+  <data name="Device" xml:space="preserve">
+    <value>장치</value>
+  </data>
+  <data name="DurationS" xml:space="preserve">
+    <value>기간</value>
+  </data>
+  <data name="Model" xml:space="preserve">
+    <value>모델</value>
+  </data>
+  <data name="VLAN" xml:space="preserve">
+    <value>VLAN</value>
+  </data>
+  <data name="CaptureNetworkPacketsToViewLLDPorCDPInformation" xml:space="preserve">
+    <value>LLDP 또는 CDP 정보를 보려면 네트워크 패킷을 캡처하십시오!</value>
+  </data>
+  <data name="NoDiscoveryProtocolPackagesReceived" xml:space="preserve">
+    <value>수신한 검색 프로토콜 패키지가 없습니다!</value>
+  </data>
+  <data name="CapturingNetworkPackagesDots" xml:space="preserve">
+    <value>네트워크 패키지 캡처 중...</value>
+  </data>
+  <data name="DiscoveryProtocol" xml:space="preserve">
+    <value>탐색 프로토콜</value>
+  </data>
+  <data name="DiscoveryProtocol_Cdp" xml:space="preserve">
+    <value>CDP</value>
+  </data>
+  <data name="DiscoveryProtocol_Lldp" xml:space="preserve">
+    <value>LLDP</value>
+  </data>
+  <data name="DiscoveryProtocol_LldpCdp" xml:space="preserve">
+    <value>LLDP / CDP</value>
+  </data>
+  <data name="XXSecondsRemainingDots" xml:space="preserve">
+    <value>{0}초 남음...</value>
+  </data>
+  <data name="Help" xml:space="preserve">
+    <value>도움말</value>
+  </data>
+  <data name="HelpMessage_ParameterApplication" xml:space="preserve">
+    <value>시작할 때 표시되는 응용 프로그램입니다.</value>
+  </data>
+  <data name="Parameter" xml:space="preserve">
+    <value>매개변수</value>
+  </data>
+  <data name="Value" xml:space="preserve">
+    <value>값</value>
+  </data>
+  <data name="WebConsole" xml:space="preserve">
+    <value>웹 콘솔</value>
+  </data>
+  <data name="Reload" xml:space="preserve">
+    <value>다시 불러오기</value>
+  </data>
+  <data name="Browser" xml:space="preserve">
+    <value>브라우저</value>
+  </data>
+  <data name="WebViewControlCertificateIsInvalidMessage" xml:space="preserve">
+    <value>WebView 제어 (Microsoft Edge)는 잘못된 인증서가 있는 웹 사이트에 연결할 수 없습니다!</value>
+  </data>
+  <data name="MicrosoftWindowsSDKContractsIsNotAvailable" xml:space="preserve">
+    <value>이 기능에 대해서는 Microsoft.Windows.SDK.Contracts가 필요하지만 이 시스템에서는 사용할 수 없습니다 (예: Windows 서버에서).</value>
+  </data>
+  <data name="ApplicationName_NeighborTable" xml:space="preserve">
+    <value>인접 테이블</value>
+  </data>
+  <data name="ApplicationName_Connections" xml:space="preserve">
+    <value>연결</value>
+  </data>
+  <data name="ApplicationName_Dashboard" xml:space="preserve">
+    <value>대시보드</value>
+  </data>
+  <data name="ApplicationName_DiscoveryProtocol" xml:space="preserve">
+    <value>탐색 프로토콜</value>
+  </data>
+  <data name="ApplicationName_DNSLookup" xml:space="preserve">
+    <value>DNS 조회</value>
+  </data>
+  <data name="ApplicationName_HTTPHeaders" xml:space="preserve">
+    <value>HTTP 헤더</value>
+  </data>
+  <data name="ApplicationName_IPScanner" xml:space="preserve">
+    <value>IP 스캐너</value>
+  </data>
+  <data name="ApplicationName_Listeners" xml:space="preserve">
+    <value>청취자</value>
+  </data>
+  <data name="ApplicationName_Lookup" xml:space="preserve">
+    <value>조회</value>
+  </data>
+  <data name="ApplicationName_NetworkInterface" xml:space="preserve">
+    <value>네트워크 인터페이스</value>
+  </data>
+  <data name="ApplicationName_Ping" xml:space="preserve">
+    <value>핑</value>
+  </data>
+  <data name="ApplicationName_PingMonitor" xml:space="preserve">
+    <value>핑 모니터</value>
+  </data>
+  <data name="ApplicationName_PortScanner" xml:space="preserve">
+    <value>포트 스캐너</value>
+  </data>
+  <data name="ApplicationName_PowerShell" xml:space="preserve">
+    <value>PowerShell</value>
+  </data>
+  <data name="ApplicationName_PuTTY" xml:space="preserve">
+    <value>PuTTY</value>
+  </data>
+  <data name="ApplicationName_RemoteDesktop" xml:space="preserve">
+    <value>원격 데스크탑</value>
+  </data>
+  <data name="ApplicationName_SNMP" xml:space="preserve">
+    <value>SNMP</value>
+  </data>
+  <data name="ApplicationName_SubnetCalculator" xml:space="preserve">
+    <value>서브넷 계산기</value>
+  </data>
+  <data name="ApplicationName_TigerVNC" xml:space="preserve">
+    <value>TigerVNC</value>
+  </data>
+  <data name="ApplicationName_Traceroute" xml:space="preserve">
+    <value>경로 추적</value>
+  </data>
+  <data name="ApplicationName_WakeOnLAN" xml:space="preserve">
+    <value>Wake on LAN</value>
+  </data>
+  <data name="ApplicationName_WebConsole" xml:space="preserve">
+    <value>웹 콘솔</value>
+  </data>
+  <data name="ApplicationName_Whois" xml:space="preserve">
+    <value>Whois</value>
+  </data>
+  <data name="ApplicationName_WiFi" xml:space="preserve">
+    <value>WiFi</value>
+  </data>
+  <data name="Accent_Amber" xml:space="preserve">
+    <value>황색</value>
+  </data>
+  <data name="Accent_Black" xml:space="preserve">
+    <value>검정</value>
+  </data>
+  <data name="Accent_Blue" xml:space="preserve">
+    <value>파랑</value>
+  </data>
+  <data name="Accent_Brown" xml:space="preserve">
+    <value>갈색</value>
+  </data>
+  <data name="Accent_Cobalt" xml:space="preserve">
+    <value>진청록</value>
+  </data>
+  <data name="Accent_Crimson" xml:space="preserve">
+    <value>진홍색</value>
+  </data>
+  <data name="Accent_Cyan" xml:space="preserve">
+    <value>청록</value>
+  </data>
+  <data name="Accent_Emerald" xml:space="preserve">
+    <value>에메랄드</value>
+  </data>
+  <data name="Accent_Green" xml:space="preserve">
+    <value>녹색</value>
+  </data>
+  <data name="Accent_Indigo" xml:space="preserve">
+    <value>남색</value>
+  </data>
+  <data name="Accent_Lime" xml:space="preserve">
+    <value>라임</value>
+  </data>
+  <data name="Accent_Magenta" xml:space="preserve">
+    <value>자홍</value>
+  </data>
+  <data name="Accent_Mauve" xml:space="preserve">
+    <value>연보라</value>
+  </data>
+  <data name="Accent_Olive" xml:space="preserve">
+    <value>올리브</value>
+  </data>
+  <data name="Accent_Orange" xml:space="preserve">
+    <value>주황</value>
+  </data>
+  <data name="Accent_Purple" xml:space="preserve">
+    <value>보라</value>
+  </data>
+  <data name="Accent_Red" xml:space="preserve">
+    <value>빨강</value>
+  </data>
+  <data name="Accent_Sienna" xml:space="preserve">
+    <value>황갈색</value>
+  </data>
+  <data name="Accent_Taupe" xml:space="preserve">
+    <value>회갈색</value>
+  </data>
+  <data name="Accent_Teal" xml:space="preserve">
+    <value>청록색</value>
+  </data>
+  <data name="Accent_Violet" xml:space="preserve">
+    <value>분홍</value>
+  </data>
+  <data name="Accent_Yellow" xml:space="preserve">
+    <value>노랑</value>
+  </data>
+  <data name="Accent_Steel" xml:space="preserve">
+    <value>스틸</value>
+  </data>
+  <data name="ProfileName_General" xml:space="preserve">
+    <value>일반</value>
+  </data>
+  <data name="SettingsGroup_Application" xml:space="preserve">
+    <value>응용 프로그램</value>
+  </data>
+  <data name="SettingsGroup_General" xml:space="preserve">
+    <value>일반</value>
+  </data>
+  <data name="SettingsName_Appearance" xml:space="preserve">
+    <value>모양</value>
+  </data>
+  <data name="SettingsName_Autostart" xml:space="preserve">
+    <value>자동 시작</value>
+  </data>
+  <data name="SettingsName_General" xml:space="preserve">
+    <value>일반</value>
+  </data>
+  <data name="SettingsName_HotKeys" xml:space="preserve">
+    <value>단축키</value>
+  </data>
+  <data name="SettingsName_Language" xml:space="preserve">
+    <value>언어</value>
+  </data>
+  <data name="SettingsName_Profiles" xml:space="preserve">
+    <value>프로필</value>
+  </data>
+  <data name="SettingsName_Settings" xml:space="preserve">
+    <value>설정</value>
+  </data>
+  <data name="SettingsName_Status" xml:space="preserve">
+    <value>상태</value>
+  </data>
+  <data name="SettingsName_Update" xml:space="preserve">
+    <value>업데이트</value>
+  </data>
+  <data name="SettingsName_Window" xml:space="preserve">
+    <value>창</value>
+  </data>
+  <data name="EnableLog" xml:space="preserve">
+    <value>로그 사용</value>
+  </data>
+  <data name="LogFileName" xml:space="preserve">
+    <value>로그 파일 이름</value>
+  </data>
+  <data name="LogPath" xml:space="preserve">
+    <value>로그 경로</value>
+  </data>
+  <data name="LogMode" xml:space="preserve">
+    <value>로그 모드</value>
+  </data>
+  <data name="Log" xml:space="preserve">
+    <value>로그</value>
+  </data>
+  <data name="SSHLog" xml:space="preserve">
+    <value>SSH 로그</value>
+  </data>
+  <data name="SSHRawLog" xml:space="preserve">
+    <value>SSH Raw 로그</value>
+  </data>
+  <data name="PuTTYLogMode_SessionLog" xml:space="preserve">
+    <value>세션 로그</value>
+  </data>
+  <data name="PuTTYLogMode_SSHLog" xml:space="preserve">
+    <value>SSH 로그</value>
+  </data>
+  <data name="PuTTYLogMode_SSHRawLog" xml:space="preserve">
+    <value>SSH 및 원시 로그</value>
+  </data>
+  <data name="EnterValidFileName" xml:space="preserve">
+    <value>유효한 파일 이름을 입력하십시오!</value>
+  </data>
+  <data name="Lost" xml:space="preserve">
+    <value>분실</value>
+  </data>
+  <data name="Received" xml:space="preserve">
+    <value>수신</value>
+  </data>
+  <data name="StatusChange" xml:space="preserve">
+    <value>상태 변경</value>
+  </data>
+  <data name="UpdateAvailable" xml:space="preserve">
+    <value>업데이트 가능!</value>
+  </data>
+  <data name="PrivateKeyFile" xml:space="preserve">
+    <value>개인 키 파일</value>
+  </data>
+  <data name="Preview" xml:space="preserve">
+    <value>미리보기</value>
+  </data>
+  <data name="PortProfiles" xml:space="preserve">
+    <value>포트 프로필</value>
+  </data>
+  <data name="AddPortProfile" xml:space="preserve">
+    <value>포트 프로필 추가</value>
+  </data>
+  <data name="DeletePortProfile" xml:space="preserve">
+    <value>포트 프로필 삭제</value>
+  </data>
+  <data name="EditPortProfile" xml:space="preserve">
+    <value>포트 프로필 편집</value>
+  </data>
+  <data name="DeletePortProfileMessage" xml:space="preserve">
+    <value>선택한 포트 프로필이 영구적으로 삭제됩니다.</value>
+  </data>
+  <data name="SelectPortProfile" xml:space="preserve">
+    <value>포트 프로필 선택</value>
+  </data>
+  <data name="OpenPortProfilesDots" xml:space="preserve">
+    <value>포트 프로파일 열기...</value>
+  </data>
+  <data name="ShowSplashScreenOnStart" xml:space="preserve">
+    <value>시작시 시작 화면 표시</value>
+  </data>
+  <data name="SplashScreen" xml:space="preserve">
+    <value>시작 화면</value>
+  </data>
+  <data name="DownloadMicrosoftEdgeWebView2Runtime" xml:space="preserve">
+    <value>Microsoft Edge WebView2 런타임 다운로드</value>
+  </data>
+  <data name="MicrosoftEdgeWebView2RuntimeIsNotAvailable" xml:space="preserve">
+    <value>Microsoft Edge WebView2 Runtime을 사용할 수 없습니다!</value>
+  </data>
+  <data name="Frequency" xml:space="preserve">
+    <value>주파수</value>
+  </data>
+  <data name="SSID" xml:space="preserve">
+    <value>SSID</value>
+  </data>
+  <data name="ProfileFileCouldNotBeLoaded" xml:space="preserve">
+    <value>프로필 파일을 로드할 수 없습니다!</value>
+  </data>
+  <data name="ProfileFileCouldNotBeLoadedMessage" xml:space="preserve">
+    <value>프로필 파일을 로드할 수 없으며 손상되었을 수 있습니다. 백업에서 파일을 복원하거나 삭제할 수 있습니다.
+
+예기치 않게 또는 업데이트 후에 이런 일이 발생하면 GitHub에서 오류를 보고해 주시기 바랍니다.
+
+
+오류 메시지:
+"{0}"</value>
+  </data>
+  <data name="EditGroupDots" xml:space="preserve">
+    <value>그룹 편집...</value>
+  </data>
+  <data name="DecryptionError" xml:space="preserve">
+    <value>암호 해독 오류</value>
+  </data>
+  <data name="DecryptionErrorMessage" xml:space="preserve">
+    <value>파일의 암호를 해독할 수 없습니다. GitHub에서 이 문제를 보고할 수 있습니다.</value>
+  </data>
+  <data name="EncryptionError" xml:space="preserve">
+    <value>암호화 오류</value>
+  </data>
+  <data name="EncryptionErrorMessage" xml:space="preserve">
+    <value>파일을 암호화할 수 없습니다. GitHub에서 이 문제를 보고할 수 있습니다.</value>
+  </data>
+  <data name="CurrentPassword" xml:space="preserve">
+    <value>현재 암호</value>
+  </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>새 암호</value>
+  </data>
+  <data name="ChangeMasterPassword" xml:space="preserve">
+    <value>마스터 암호 변경</value>
+  </data>
+  <data name="UnlockProfile" xml:space="preserve">
+    <value>프로필 잠금 해제</value>
+  </data>
+  <data name="UnlockTheProfileFileMessage" xml:space="preserve">
+    <value>프로필을 사용하려면 프로필 파일의 잠금을 해제하십시오!</value>
+  </data>
+  <data name="Disclaimer" xml:space="preserve">
+    <value>부인 성명</value>
+  </data>
+  <data name="Merge" xml:space="preserve">
+    <value>병합</value>
+  </data>
+  <data name="UseOther" xml:space="preserve">
+    <value>기타 사용</value>
+  </data>
+  <data name="Move" xml:space="preserve">
+    <value>이동</value>
+  </data>
+  <data name="LastScanAtX" xml:space="preserve">
+    <value>{0}에 마지막 검색</value>
+  </data>
+  <data name="HiddenNetwork" xml:space="preserve">
+    <value>숨겨진 네트워크</value>
+  </data>
+  <data name="DevelopedAndMaintainedByX" xml:space="preserve">
+    <value>{0}의 도움으로 개발 및 유지 관리</value>
+  </data>
+  <data name="ExternalService_ipify_Description" xml:space="preserve">
+    <value>간단한 공용 IP 주소 API</value>
+  </data>
+  <data name="Library_AirspaceFixer_Description" xml:space="preserve">
+    <value>AirSpacePanel WPF 호스팅 WinForms의 모든 영공 문제를 해결합니다.</value>
+  </data>
+  <data name="Library_ControlzEx_Description" xml:space="preserve">
+    <value>WPF 등에 대한 공유 제어 및 ... 기타</value>
+  </data>
+  <data name="Library_DnsClientNET_Description" xml:space="preserve">
+    <value>DnsClient.NET는 단순하지만 매우 강력하고 .NET Framework에서 DNS 검색을 수행할 수 있는 고성능 오픈 소스 라이브러리</value>
+  </data>
+  <data name="Library_Dragablz_Description" xml:space="preserve">
+    <value>WPF를 위한 드래그 가능 및 찢어진 탭 제어</value>
+  </data>
+  <data name="Library_IPNetwork_Description" xml:space="preserve">
+    <value>C# 라이브러리는 복잡한 네트워크, IP, IPv4, IPv6, NetMask, CIDR, 서브넷, 서브넷, 슈퍼넷 및 .NET 개발자를 위한 슈퍼넷팅 계산을 처리합니다.</value>
+  </data>
+  <data name="Library_LiveCharts_Description" xml:space="preserve">
+    <value>Beautiful, interactive charts, maps, and gauges.</value>
+  </data>
+  <data name="Library_LoadingIndicatorsWPF_Description" xml:space="preserve">
+    <value>WPF에 대한 부하 지시기 모음</value>
+  </data>
+  <data name="Library_MahAppsMetroIconPacks_Description" xml:space="preserve">
+    <value>WPF와 UWP를 위한 멋진 아이콘들...</value>
+  </data>
+  <data name="Library_MahAppsMetro_Description" xml:space="preserve">
+    <value>메트로 / 현대적인 UI 스타일의 WPF 앱을 만드는 툴킷입니다.</value>
+  </data>
+  <data name="Library_NewtonsoftJson_Description" xml:space="preserve">
+    <value>Json.NET는 널리 사용되는 .NET용 고성능 JSON 프레임워크입니다</value>
+  </data>
+  <data name="Library_Octokit_Description" xml:space="preserve">
+    <value>.NET용 GitHub API 클라이언트 라이브러리</value>
+  </data>
+  <data name="Library_PSDicoveryProtocol_Description" xml:space="preserve">
+    <value>로컬 또는 원격 시스템에서 CDP 및 LLDP 패킷 캡처 및 구문 분석</value>
+  </data>
+  <data name="Library_SharpSNMP_Description" xml:space="preserve">
+    <value>Sharp SNMP 라이브러리 - .NET 및 Mono용 오픈 소스 SNMP</value>
+  </data>
+  <data name="Resource_Flag_Description" xml:space="preserve">
+    <value>SVG의 모든 국가 깃발 모음</value>
+  </data>
+  <data name="Resource_ListTLD_Description" xml:space="preserve">
+    <value>포트 43을 통해 whois.iana.org에서 TLD의 서버를 쿼리하는 데 사용되는 iana.org의 최상위 도메인 목록</value>
+  </data>
+  <data name="Resource_OUI_Description" xml:space="preserve">
+    <value>ieee.org의 OUI 데이터입니다.</value>
+  </data>
+  <data name="Resource_ServiceNamePortNumber_Description" xml:space="preserve">
+    <value>iana.org의 서비스 이름 및 전송 프로토콜 포트 번호 레지스트리</value>
+  </data>
+  <data name="License_ApacheLicense2dot0" xml:space="preserve">
+    <value>Apache 라이선스 2.0</value>
+  </data>
+  <data name="License_BDS2Clause" xml:space="preserve">
+    <value>BSD-2-조항</value>
+  </data>
+  <data name="License_MITLicense" xml:space="preserve">
+    <value>MIT 라이선스</value>
+  </data>
+  <data name="License_Unlicense" xml:space="preserve">
+    <value>라이선스 취소</value>
+  </data>
+  <data name="Library_CsWinRT_Description" xml:space="preserve">
+    <value>C#/WinRT는 C# 언어에 대한 패키지 WinRT 예상 지원을 제공합니다.</value>
+  </data>
+  <data name="Library_PowerShellSDK_Description" xml:space="preserve">
+    <value>PowerShell 호스팅을 위한 런타임</value>
+  </data>
+  <data name="Library_WebView2_Description" xml:space="preserve">
+    <value>WebView2 컨트롤을 사용하면 Microsoft Edge (Chromium)에서 제공하는 기본 응용 프로그램에 웹 기술 (HTML, CSS 및 JavaScript)을 포함할 수 있습니다.</value>
+  </data>
+  <data name="Library_XamlBehaviorsWpf_Description" xml:space="preserve">
+    <value>WPF의 XAML 동작을 사용하여 앱에 상호 작용을 쉽게 추가할 수 있습니다.</value>
+  </data>
+  <data name="License_MicrosoftWebView2License" xml:space="preserve">
+    <value>Microsoft WebView2 라이선스</value>
+  </data>
+  <data name="WarningMessage_ProfileFileNotEncryptedStoringPasswords" xml:space="preserve">
+    <value>현재 프로파일 파일은 암호화되지 않고 암호가 디스크에 암호화되지 않은 상태로 저장됩니다!
+
+설정&gt; 프로파일에서 프로파일 파일 암호화를 사용하여 자격 증명을 안전하게 저장하십시오.</value>
+  </data>
+  <data name="ICMPv4" xml:space="preserve">
+    <value>ICMPv4</value>
+  </data>
+  <data name="ICMPv6" xml:space="preserve">
+    <value>ICMPv6</value>
+  </data>
+  <data name="CheckIsDisabled" xml:space="preserve">
+    <value>Check is disabled!</value>
+  </data>
+  <data name="EnterValidIPv6Address" xml:space="preserve">
+    <value>Enter a valid IPv6 address!</value>
+  </data>
+  <data name="HelpMessage_PublicIPv4Address" xml:space="preserve">
+    <value>ICMP를 통해 공용 IPv4 주소에 도달할 수 있습니다.</value>
+  </data>
+  <data name="HelpMessage_PublicIPv6Address" xml:space="preserve">
+    <value>ICMP를 통해 공용 IPv6 주소에 도달할 수 있습니다.</value>
+  </data>
+  <data name="PublicIPv4Address" xml:space="preserve">
+    <value>Public IPv4 address</value>
+  </data>
+  <data name="PublicIPv6Address" xml:space="preserve">
+    <value>Public IPv6 address</value>
+  </data>
+  <data name="UseCustomIPv6AddressAPI" xml:space="preserve">
+    <value>Use custom IPv6 address API</value>
+  </data>
+  <data name="TimeToLive" xml:space="preserve">
+    <value>Time to live</value>
+  </data>
+  <data name="ChassisId" xml:space="preserve">
+    <value>Chassis Id</value>
+  </data>
+  <data name="Management" xml:space="preserve">
+    <value>Management</value>
+  </data>
+  <data name="DeviceDescription" xml:space="preserve">
+    <value>Device description</value>
+  </data>
+  <data name="PortDescription" xml:space="preserve">
+    <value>Port description</value>
+  </data>
+  <data name="RemoveIPv4Address" xml:space="preserve">
+    <value>IPv4 주소 제거</value>
+  </data>
+  <data name="AdditionalConfigDots" xml:space="preserve">
+    <value>추가 구성...</value>
+  </data>
+  <data name="RemoveIPv4AddressDots" xml:space="preserve">
+    <value>IPv4 주소 제거...</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_TotalLoginTimeLimitReached" xml:space="preserve">
+    <value>총 로그인 시간 제한에 도달하여 원격 세션이 종료되었습니다. 이 제한은 서버 관리자 또는 네트워크 정책에 의해 설정됩니다.</value>
+  </data>
+  <data name="EnterValidHostname" xml:space="preserve">
+    <value>올바른 호스트 이름을 입력하십시오!</value>
+  </data>
+  <data name="EnterValidHostnameAndPort" xml:space="preserve">
+    <value>올바른 호스트 이름과 포트를 입력하십시오!</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_UnableToReconnectToRemoteSession" xml:space="preserve">
+    <value>원격 세션에 다시 연결할 수 없습니다.</value>
+  </data>
+  <data name="Migrate" xml:space="preserve">
+    <value>마이그레이션</value>
+  </data>
+  <data name="ReportOnGitHub" xml:space="preserve">
+    <value>GitHub에 보고</value>
+  </data>
+  <data name="Groups" xml:space="preserve">
+    <value>그룹</value>
+  </data>
+  <data name="AddGroup" xml:space="preserve">
+    <value>그룹 추가</value>
+  </data>
+  <data name="DeleteGroup" xml:space="preserve">
+    <value>그룹 삭제</value>
+  </data>
+  <data name="DeleteGroupMessage" xml:space="preserve">
+    <value>선택한 그룹 및 이 그룹 내의 모든 프로필이 영구적으로 삭제됩니다.</value>
+  </data>
+  <data name="ErrorMessage_NameIsAlreadyUsed" xml:space="preserve">
+    <value>이름이 이미 사용되었습니다!</value>
+  </data>
+  <data name="Resize" xml:space="preserve">
+    <value>크기 조정</value>
+  </data>
+  <data name="DeleteProfiles" xml:space="preserve">
+    <value>프로필 삭제</value>
+  </data>
+  <data name="DeleteProfilesMessage" xml:space="preserve">
+    <value>선택한 프로필은 영구적으로 삭제됩니다.</value>
+  </data>
+  <data name="UseCustomThemes" xml:space="preserve">
+    <value>사용자 지정 테마 사용</value>
+  </data>
+  <data name="CustomThemes" xml:space="preserve">
+    <value>사용자 지정 테마</value>
+  </data>
+  <data name="ResetSettingsQuestion" xml:space="preserve">
+    <value>설정을 재설정하시겠습니까?</value>
+  </data>
+  <data name="SettingsResetExclamationMark" xml:space="preserve">
+    <value>설정이 재설정되었습니다!</value>
+  </data>
+  <data name="InstanceId" xml:space="preserve">
+    <value>인스턴스 ID</value>
+  </data>
+  <data name="LocalConnection" xml:space="preserve">
+    <value>로컬 연결</value>
+  </data>
+  <data name="LocalInterface" xml:space="preserve">
+    <value>로컬 인터페이스</value>
+  </data>
+  <data name="Library_log4net_Description" xml:space="preserve">
+    <value>log4net은 프로그래머가 다양한 출력 대상에 로그 문장을 출력하는 데 도움이 되는 도구입니다.</value>
+  </data>
+  <data name="Enabled" xml:space="preserve">
+    <value>사용함</value>
+  </data>
+  <data name="Region" xml:space="preserve">
+    <value>지역</value>
+  </data>
+  <data name="ProfilesAndRegionsToSync" xml:space="preserve">
+    <value>동기화할 프로필 및 지역</value>
+  </data>
+  <data name="DefaultProfile" xml:space="preserve">
+    <value>기본 프로필</value>
+  </data>
+  <data name="DefaultRegion" xml:space="preserve">
+    <value>기본 지역</value>
+  </data>
+  <data name="GroupNameCannotStartWithX" xml:space="preserve">
+    <value>그룹 이름은 "{0}"로 시작할 수 없습니다!</value>
+  </data>
+  <data name="CheckForPreReleases" xml:space="preserve">
+    <value>사전 릴리스 확인</value>
+  </data>
+  <data name="SyncIsDisabled" xml:space="preserve">
+    <value>동기화가 비활성화되었습니다!</value>
+  </data>
+  <data name="Command" xml:space="preserve">
+    <value>명령</value>
+  </data>
+  <data name="ApplyThemeToPowerShellConsole" xml:space="preserve">
+    <value>PowerShell 콘솔에 테마 적용</value>
+  </data>
+  <data name="PowerShellConsoleColorCanBeChangedUnderSettingsGeneralApperance" xml:space="preserve">
+    <value>PowerShell 콘솔의 색상은 설정 &gt; 일반 &gt; 모양에서 응용 프로그램 테마로 변경할 수 있습니다.</value>
+  </data>
+  <data name="HelpMessage_ApplyThemeToPowerShellConsole" xml:space="preserve">
+    <value>If you enable this option, the default PowerShell console settings in the registry under HKCU:\Console are overridden so that the PowerShell console window matches the application theme. This is a global system setting that may affect the appearance of the normal PowerShell window.
+
+Only the PowerShell consoles configured in the PowerShell settings are modified. Both Windows PowerShell and PWSH (PowerShell 7 and higher) are supported.
+
+Click in the upper right corner on the help / documentation button (left of the minimize button) or navigate to https://borntoberoot.net/NETworkManager/Documentation/Settings/Appearance for more details. Here are the values documented which will be adjusted.
+
+If the option is disabled again, the values are no longer modified. However, the original values are NOT restored.</value>
+  </data>
+  <data name="InputCannotEndWithSemicolon" xml:space="preserve">
+    <value>입력은 ";"로 끝날 수 없습니다!</value>
+  </data>
+  <data name="InputDoesNotContainAnyText" xml:space="preserve">
+    <value>입력 내용에 텍스트가 없습니다!</value>
+  </data>
+  <data name="ApplicationName_BitCalculator" xml:space="preserve">
+    <value>비트 계산기</value>
+  </data>
+  <data name="BitCalculator" xml:space="preserve">
+    <value>비트 계산기</value>
+  </data>
+  <data name="Notation" xml:space="preserve">
+    <value>표기법</value>
+  </data>
+  <data name="Input" xml:space="preserve">
+    <value>입력</value>
+  </data>
+  <data name="Unit" xml:space="preserve">
+    <value>단위</value>
+  </data>
+  <data name="Bits" xml:space="preserve">
+    <value>비트</value>
+  </data>
+  <data name="Gigabits" xml:space="preserve">
+    <value>기가비트</value>
+  </data>
+  <data name="Gigabytes" xml:space="preserve">
+    <value>기가바이트</value>
+  </data>
+  <data name="Kilobits" xml:space="preserve">
+    <value>킬로비트</value>
+  </data>
+  <data name="Kilobytes" xml:space="preserve">
+    <value>킬로바이트</value>
+  </data>
+  <data name="Megabits" xml:space="preserve">
+    <value>메가비트</value>
+  </data>
+  <data name="Megabytes" xml:space="preserve">
+    <value>메가바이트</value>
+  </data>
+  <data name="Petabits" xml:space="preserve">
+    <value>페타비트</value>
+  </data>
+  <data name="Petabytes" xml:space="preserve">
+    <value>페타바이트</value>
+  </data>
+  <data name="Terabits" xml:space="preserve">
+    <value>테라비트</value>
+  </data>
+  <data name="Terabytes" xml:space="preserve">
+    <value>테라바이트</value>
+  </data>
+  <data name="EnterANumberAndSelectAUnitToCalculateTheUnitsDots" xml:space="preserve">
+    <value>계산할 숫자를 입력하고 단위를 선택하세요...</value>
+  </data>
+  <data name="SettingsName_Network" xml:space="preserve">
+    <value>네트워크</value>
+  </data>
+  <data name="Proxy" xml:space="preserve">
+    <value>프록시</value>
+  </data>
+  <data name="ResolveIPAddressForThisHost" xml:space="preserve">
+    <value>이 호스트의 IP 주소를 확인합니다 (IPv4가 권장됨)</value>
+  </data>
+  <data name="NoValidPowerShellPath" xml:space="preserve">
+    <value>PowerShell의 유효한 경로는 "pwsh.exe" 또는 "powershell.exe"로 끝나야 합니다!</value>
+  </data>
+  <data name="NoValidPuTTYPath" xml:space="preserve">
+    <value>PuTTY의 유효한 경로는 "PuTTY.exe"로 끝나야 합니다!</value>
+  </data>
+  <data name="NoValidTigerVNCPath" xml:space="preserve">
+    <value>TigerVNC의 유효한 경로는 "vncviewer-*.exe" 또는 "vncviewer64-*.exe"로 끝나야 합니다!</value>
+  </data>
+  <data name="ApplicationName_SNTPLookup" xml:space="preserve">
+    <value>SNTP 조회</value>
+  </data>
+  <data name="Library_nulastudioNetBeauty_Description" xml:space="preserve">
+    <value>.NET Framework/.NET Core 앱 런타임 구성 요소와 종속성을 하위 디렉터리로 옮겨서 보기 좋게 만듭니다.</value>
+  </data>
+  <data name="AddATabToPerformASNTPLookup" xml:space="preserve">
+    <value>SNTP 조회를 수행하려면 탭을 추가하세요...</value>
+  </data>
+  <data name="SNTPServers" xml:space="preserve">
+    <value>SNTP 서버</value>
+  </data>
+  <data name="HelpMessage_CustomPublicIPv6AddressAPI" xml:space="preserve">
+    <value>http 또는 https를 통해 접속할 수 있는 웹 서비스의 URL이며 응답으로 IPv6 주소 (예: "xxxx:xx:xxx::xx")를 반환합니다.</value>
+  </data>
+  <data name="IPEndPoint" xml:space="preserve">
+    <value>IP 엔드포인트</value>
+  </data>
+  <data name="LocalEndTime" xml:space="preserve">
+    <value>로컬 종료 시간</value>
+  </data>
+  <data name="LocalStartTime" xml:space="preserve">
+    <value>로컬 시작 시간</value>
+  </data>
+  <data name="NetworkTime" xml:space="preserve">
+    <value>네트워크 시간</value>
+  </data>
+  <data name="Offset" xml:space="preserve">
+    <value>오프셋</value>
+  </data>
+  <data name="RoundTripDelay" xml:space="preserve">
+    <value>왕복 지연</value>
+  </data>
+  <data name="Server" xml:space="preserve">
+    <value>서버</value>
+  </data>
+  <data name="SNTPLookup" xml:space="preserve">
+    <value>SNTP 조회</value>
+  </data>
+  <data name="AddSNTPServer" xml:space="preserve">
+    <value>SNTP 서버 추가</value>
+  </data>
+  <data name="DeleteSNTPServer" xml:space="preserve">
+    <value>SNTP 서버 삭제</value>
+  </data>
+  <data name="DeleteSNTPServerMessage" xml:space="preserve">
+    <value>선택한 SNTP 서버가 영구적으로 삭제됩니다.</value>
+  </data>
+  <data name="EditSNTPServer" xml:space="preserve">
+    <value>SNTP 서버 편집</value>
+  </data>
+  <data name="SNTPServerWithThisNameAlreadyExists" xml:space="preserve">
+    <value>이 이름을 가진 SNTP 서버가 이미 존재합니다!</value>
+  </data>
+  <data name="EnterValidHostnameOrIPAddress" xml:space="preserve">
+    <value>유효한 호스트 이름 (예: "server-01" 또는 "example.com ") 또는 유효한 IP 주소 (예: 192.168.178.1)를 입력하세요!</value>
+  </data>
+  <data name="Servers" xml:space="preserve">
+    <value>서버</value>
+  </data>
+  <data name="EnterMasterPasswordToUnlockProfile" xml:space="preserve">
+    <value>마스터 비밀번호를 입력하여 프로필 파일을 잠금 해제합니다:</value>
+  </data>
+  <data name="UnlockProfileFile" xml:space="preserve">
+    <value>프로필 파일 잠금 해제</value>
+  </data>
+  <data name="PortState_TimedOut" xml:space="preserve">
+    <value>시간 초과</value>
+  </data>
+  <data name="Hostkey" xml:space="preserve">
+    <value>호스트키</value>
+  </data>
+  <data name="SettingsAreResetAndApplicationWillBeRestartedMessage" xml:space="preserve">
+    <value>설정이 재설정되고 나중에 응용 프로그램 재시작됩니다!</value>
+  </data>
+  <data name="SettingsHaveBeenReset" xml:space="preserve">
+    <value>설정이 재설정되었습니다!</value>
+  </data>
+  <data name="PingStatus" xml:space="preserve">
+    <value>핑 상태</value>
+  </data>
+  <data name="ThreadPoolAdditionalMinThreads" xml:space="preserve">
+    <value>스레드풀 추가 최소 스레드</value>
+  </data>
+  <data name="HelpMessage_ThreadPoolAdditionalMinThreads" xml:space="preserve">
+    <value>이 설정은 요청 시 응용 프로그램의 스레드풀에서 생성될 최소 스레드 수를 지정합니다. 이렇게 하면 IP 스캐너나 포트 스캐너와 같은 성능이 향상될 수 있습니다.
+
+이 값은 기본 최소 스레드 (CPU 스레드 수)에 추가됩니다. 값 0은 기본 설정을 남깁니다. 이 값이 스레드풀의 기본 최대값보다 높으면 이 값이 사용됩니다.
+
+값이 너무 높으면 성능 문제가 발생할 수 있습니다.
+
+이 값의 변경 사항은 응용 프로그램이 재시작된 후에 적용됩니다. 값이 성공적으로 설정되었는지 여부는 로그 파일의 %LocalAppData%\\NETWORKManager\\NETWORKManager.log에서 확인할 수 있습니다</value>
+  </data>
+  <data name="MaxThreadsOnlyGoToSettingsGeneralGeneral" xml:space="preserve">
+    <value>이 설정은 호스트/포트 스캔당 동시에 실행되는 스레드의 최대 수만 변경합니다. 응용 프로그램의 (최소) 스레드를 조정하려면 설정 &gt; 일반 &gt; 일반으로 이동합니다.</value>
+  </data>
+  <data name="PortStatus" xml:space="preserve">
+    <value>포트 상태</value>
+  </data>
+  <data name="PingDetails" xml:space="preserve">
+    <value>핑 세부 정보</value>
+  </data>
+  <data name="NoOpenPortsFound" xml:space="preserve">
+    <value>열린 포트를 찾을 수 없습니다!</value>
+  </data>
+  <data name="PortScanIsDisabled" xml:space="preserve">
+    <value>포트 검색이 비활성화되었습니다!</value>
+  </data>
+  <data name="ScanPorts" xml:space="preserve">
+    <value>포트 검색</value>
+  </data>
+  <data name="CouldNotFindApplicationXXXMessage" xml:space="preserve">
+    <value>"{0}" 응용 프로그램을 찾을 수 없습니다. 설정에 응용 프로그램이 숨겨져 있었던 것은 아닐까요?</value>
+  </data>
+  <data name="StatusWindow" xml:space="preserve">
+    <value>상태 창</value>
+  </data>
+  <data name="ShowAddressBar" xml:space="preserve">
+    <value>주소 표시줄 표시</value>
+  </data>
+  <data name="WarnMessage_MultipleInstances" xml:space="preserve">
+    <value>이 설정을 활성화하는 것은 권장되지 않습니다. 응용 프로그램의 여러 인스턴스가 동일한 설정과 프로필 파일을 공유합니다. 마지막으로 닫히는 인스턴스는 다른 인스턴스의 변경 사항을 덮어쓸 수 있습니다.</value>
+  </data>
+  <data name="BypassForLocalAddresses" xml:space="preserve">
+    <value>로컬 주소 우회</value>
+  </data>
+  <data name="EnableGatewayServer" xml:space="preserve">
+    <value>게이트웨이 서버 사용</value>
+  </data>
+  <data name="LogonMethod" xml:space="preserve">
+    <value>로그인 방법</value>
+  </data>
+  <data name="GatewayServer" xml:space="preserve">
+    <value>게이트웨이 서버</value>
+  </data>
+  <data name="ServerName" xml:space="preserve">
+    <value>서버 이름</value>
+  </data>
+  <data name="ShareGatewayCredentialsWithRemoteComputer" xml:space="preserve">
+    <value>원격 컴퓨터와 게이트웨이 자격 증명 공유</value>
+  </data>
+  <data name="RemoteDesktopGatewayServerLogonMethod_Any" xml:space="preserve">
+    <value>나중에 선택하도록 허용</value>
+  </data>
+  <data name="RemoteDesktopGatewayServerLogonMethod_Smartcard" xml:space="preserve">
+    <value>비즈니스용 스마트 카드 또는 Windows Hello</value>
+  </data>
+  <data name="RemoteDesktopGatewayServerLogonMethod_Userpass" xml:space="preserve">
+    <value>비밀번호 요청 (NTLM)</value>
+  </data>
+  <data name="UseGatewayCredentials" xml:space="preserve">
+    <value>게이트웨이 자격 증명 사용</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331661" xml:space="preserve">
+    <value>원격 데스크톱 게이트웨이 서버를 일시적으로 사용할 수 없기 때문에 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다. 나중에 다시 연결하거나 네트워크 관리자에게 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331651" xml:space="preserve">
+    <value>다음 이유 중 하나로 인해 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다: 1) 요청한 원격 데스크톱 게이트웨이 서버 주소와 서버 SSL 인증서 주체 이름이 일치하지 않습니다. 2) 인증서가 만료되었거나 취소되었습니다. 3) 인증서 루트 권한이 인증서를 신뢰하지 않습니다. 네트워크 관리자에게 문의하여 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331653" xml:space="preserve">
+    <value>이 컴퓨터는 RD 게이트웨이의 신원을 확인할 수 없습니다. 식별할 수 없는 서버에 연결하는 것은 안전하지 않습니다. 네트워크 관리자에게 문의하여 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331654" xml:space="preserve">
+    <value>요청한 원격 데스크톱 게이트웨이 서버 주소와 인증서 주체 이름이 일치하지 않아 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다. 네트워크 관리자에게 문의하여 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331655" xml:space="preserve">
+    <value>원격 데스크톱 게이트웨이 서버의 인증서가 만료되었거나 취소되었기 때문에 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다. 네트워크 관리자에게 문의하여 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331657" xml:space="preserve">
+    <value>원격 데스크톱 게이트웨이 서버로 데이터를 전송하는 동안 오류가 발생했습니다. 서버를 일시적으로 사용할 수 없거나 네트워크 연결이 중단되었습니다. 나중에 다시 시도하거나 네트워크 관리자에게 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331658" xml:space="preserve">
+    <value>원격 데스크톱 게이트웨이 서버에서 데이터를 수신하는 동안 오류가 발생했습니다. 서버를 일시적으로 사용할 수 없거나 네트워크 연결이 중단되었습니다. 나중에 다시 시도하거나 네트워크 관리자에게 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331660" xml:space="preserve">
+    <value>원격 데스크톱 게이트웨이 서버 주소가 연결할 수 없거나 잘못되어 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다. 올바른 원격 데스크톱 게이트웨이 서버 주소를 입력합니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331663" xml:space="preserve">
+    <value>원격 데스크톱 게이트웨이 서버의 서버 리소스가 부족하여 일시적으로 사용할 수 없기 때문에 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다. 나중에 다시 연결하거나 네트워크 관리자에게 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331672" xml:space="preserve">
+    <value>원격 데스크톱 게이트웨이 서버가 연결을 종료했습니다. 나중에 다시 연결해 보거나 네트워크 관리자에게 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331673" xml:space="preserve">
+    <value>원격 데스크톱 게이트웨이 서버 관리자가 연결을 종료했습니다. 나중에 다시 연결해 보거나 네트워크 관리자에게 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331675" xml:space="preserve">
+    <value>원격 데스크톱이 원격 컴퓨터에 연결할 수 없는 이유 중 하나입니다: 1) 사용자 계정이 RD 게이트웨이의 권한 목록에 없습니다 2) 원격 컴퓨터를 NetBIOS 형식(예: computer1)으로 지정했을 수도 있지만 RD 게이트웨이는 FQDN 또는 IP 주소 형식 (예: computer1.fabrikam.com 또는 157.60.0.1)을 기대하고 있습니다. 네트워크 관리자에게 문의하여 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331676" xml:space="preserve">
+    <value>원격 데스크톱이 원격 컴퓨터에 연결할 수 없는 이유 중 하나입니다: 1) 사용자 계정이 RD 게이트웨이에 액세스할 권한이 없습니다. 2) 컴퓨터가 RD 게이트웨이에 액세스할 권한이 없습니다. 3) 호환되지 않는 인증 방법을 사용 중입니다(예: RD 게이트웨이가 스마트 카드를 기대하고 있지만 비밀번호를 제공한 경우). 네트워크 관리자에게 문의하여 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331679" xml:space="preserve">
+    <value>네트워크 관리자가 이 RD 게이트웨이 서버에 대한 액세스를 제한했기 때문에 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다. 네트워크 관리자에게 문의하여 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331680" xml:space="preserve">
+    <value>웹 프록시 서버에 인증이 필요하기 때문에 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다. 웹 프록시 서버를 통해 RD 게이트웨이 서버로 인증되지 않은 트래픽을 허용하려면 네트워크 관리자에게 문의하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331682" xml:space="preserve">
+    <value>원격 데스크톱 게이트웨이 서버가 허용된 최대 연결 수에 도달했기 때문에 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다. 나중에 다시 연결해 보거나 네트워크 관리자에게 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331683" xml:space="preserve">
+    <value>원격 데스크톱 게이트웨이 서버가 요청을 지원하지 않기 때문에 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다. 네트워크 관리자에게 문의하여 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331684" xml:space="preserve">
+    <value>클라이언트가 원격 데스크톱 게이트웨이의 기능 중 하나를 지원하지 않기 때문에 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다. 네트워크 관리자에게 문의하여 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331685" xml:space="preserve">
+    <value>원격 데스크톱 게이트웨이 서버와 이 컴퓨터가 호환되지 않아 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다. 네트워크 관리자에게 문의하여 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331688" xml:space="preserve">
+    <value>원격 데스크톱 게이트웨이 서버에서 사용하도록 인증서가 구성되어 있지 않아 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다. 네트워크 관리자에게 문의하여 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331689" xml:space="preserve">
+    <value>컴퓨터 관리자가 연결하려는 RD 게이트웨이 서버가 허용되지 않아 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다. 관리자인 경우 이 원격 데스크톱 게이트웨이 서버 이름을 컴퓨터의 신뢰할 수 있는 원격 데스크톱 게이트웨이 서버 목록에 추가한 다음 다시 연결해 보세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331690" xml:space="preserve">
+    <value>컴퓨터나 장치가 네트워크 관리자가 설정한 네트워크 접근 보호 요구 사항을 충족하지 못했기 때문에 다음과 같은 이유로 원격 컴퓨터에 연결할 수 없습니다: 1) 원격 데스크톱 게이트웨이 서버 이름과 서버의 공용 키 인증서 주체 이름이 일치하지 않습니다. 2) 인증서가 만료되었거나 취소되었습니다. 3) 인증서 루트 권한이 인증서를 신뢰하지 않습니다. 4) 인증서 키 확장이 암호화를 지원하지 않습니다. 5) 컴퓨터가 인증서 해지 목록을 확인할 수 없습니다. 네트워크 관리자에게 문의하여 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331691" xml:space="preserve">
+    <value>스마트 카드 자격 증명 대신 원격 데스크톱 게이트웨이 서버에 인증하려면 사용자 이름과 비밀번호가 필요하므로 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331692" xml:space="preserve">
+    <value>원격 데스크톱 게이트웨이 서버에 인증하려면 사용자 이름과 비밀번호 대신 스마트 카드 자격 증명이 필요하므로 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331700" xml:space="preserve">
+    <value>잘못된 쿠키가 원격 데스크톱 게이트웨이 서버로 전송되어 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다. 네트워크 관리자에게 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331701" xml:space="preserve">
+    <value>쿠키가 원격 데스크톱 게이트웨이 서버에서 거부되어 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다. 네트워크 관리자에게 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331703" xml:space="preserve">
+    <value>원격 데스크톱 게이트웨이 서버가 시도한 인증 방법과 다른 인증 방법을 기대하고 있기 때문에 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다. 네트워크 관리자에게 문의하여 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331704" xml:space="preserve">
+    <value>주기적인 사용자 인증에 실패하여 RD 게이트웨이 연결이 종료되었습니다. 올바른 사용자 이름과 비밀번호로 다시 연결해 보세요. 재연결에 실패하면 네트워크 관리자에게 연락하여 추가 지원을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331705" xml:space="preserve">
+    <value>주기적인 사용자 승인에 실패하여 RD 게이트웨이 연결이 종료되었습니다. 올바른 사용자 이름과 비밀번호로 다시 연결해 보세요. 재연결에 실패하면 네트워크 관리자에게 연락하여 추가 지원을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331707" xml:space="preserve">
+    <value>원격 데스크톱 게이트웨이와 원격 컴퓨터가 정책을 교환할 수 없기 때문에 컴퓨터가 원격 컴퓨터에 연결할 수 없습니다. 이는 다음과 같은 이유 중 하나로 인해 발생할 수 있습니다: 1. 원격 컴퓨터가 원격 데스크톱 게이트웨이와 정책을 교환할 수 없습니다. 2. 원격 컴퓨터의 구성이 새 연결을 허용하지 않습니다. 3. 원격 데스크톱 게이트웨이와 원격 컴퓨터 간의 연결이 종료되었습니다. 네트워크 관리자에게 문의하여 도움을 요청하세요.</value>
+  </data>
+  <data name="RemoteDesktopDisconnectReason_50331713" xml:space="preserve">
+    <value>주기적인 사용자 승인에 실패하여 RD 게이트웨이 연결이 종료되었습니다. 컴퓨터나 장치가 네트워크 관리자가 설정한 네트워크 액세스 보호(NAP) 요구 사항을 통과하지 못했습니다. 도움을 받으려면 네트워크 관리자에게 문의하세요.</value>
+  </data>
+  <data name="Connected" xml:space="preserve">
+    <value>연결됨</value>
+  </data>
+  <data name="ErrorWhileScanningWiFiAdapterXXXWithErrorXXX" xml:space="preserve">
+    <value>WiFi 어댑터 "{0}" 을 스캔하는 동안 오류가 발생했습니다: "{1}"</value>
+  </data>
+  <data name="ConnectDots" xml:space="preserve">
+    <value>연결...</value>
+  </data>
+  <data name="XXXDisconnected" xml:space="preserve">
+    <value>{0} 연결 끊김!</value>
+  </data>
+  <data name="ConnectToXXX" xml:space="preserve">
+    <value>{0}에 연결</value>
+  </data>
+  <data name="WPS" xml:space="preserve">
+    <value>WPS</value>
+  </data>
+  <data name="ConnectAutomatically" xml:space="preserve">
+    <value>자동으로 연결</value>
+  </data>
+  <data name="PreSharedKey" xml:space="preserve">
+    <value>사전 공유 키</value>
+  </data>
+  <data name="ConnectingToXXX" xml:space="preserve">
+    <value>{0}에 연결...</value>
+  </data>
+  <data name="CouldNotConnectToXXXReasonXXX" xml:space="preserve">
+    <value>{0} ({1})에 연결할 수 없습니다!</value>
+  </data>
+  <data name="SuccessfullyConnectedToXXX" xml:space="preserve">
+    <value>{0}에 성공적으로 연결되었습니다!!</value>
+  </data>
+  <data name="WiFiConnectionStatus_AccessRevoked" xml:space="preserve">
+    <value>네트워크에 대한 액세스가 취소되었습니다</value>
+  </data>
+  <data name="WiFiConnectionStatus_InvalidCredential" xml:space="preserve">
+    <value>잘못된 자격 증명</value>
+  </data>
+  <data name="WiFiConnectionStatus_NetworkNotAvailable" xml:space="preserve">
+    <value>네트워크를 사용할 수 없습니다</value>
+  </data>
+  <data name="WiFiConnectionStatus_Success" xml:space="preserve">
+    <value>성공</value>
+  </data>
+  <data name="WiFiConnectionStatus_Timeout" xml:space="preserve">
+    <value>연결 시도가 시간 초과되었습니다</value>
+  </data>
+  <data name="WiFiConnectionStatus_UnspecifiedFailure" xml:space="preserve">
+    <value>-/-</value>
+  </data>
+  <data name="WiFiConnectionStatus_UnsupportedAuthenticationProtocol" xml:space="preserve">
+    <value>인증 프로토콜이 지원되지 않습니다!</value>
+  </data>
+  <data name="CheckingWPSDots" xml:space="preserve">
+    <value>WPS 확인 중...</value>
+  </data>
+  <data name="OpenOIDProfilesDots" xml:space="preserve">
+    <value>OID 프로필 열기...</value>
+  </data>
+  <data name="MIB" xml:space="preserve">
+    <value>MIB</value>
+  </data>
+  <data name="OIDProfiles" xml:space="preserve">
+    <value>OID 프로필</value>
+  </data>
+  <data name="SelectOIDProfile" xml:space="preserve">
+    <value>OID 프로필 선택</value>
+  </data>
+  <data name="AddOIDProfile" xml:space="preserve">
+    <value>OID 프로필 추가</value>
+  </data>
+  <data name="DeleteOIDProfile" xml:space="preserve">
+    <value>OID 프로필 삭제</value>
+  </data>
+  <data name="DeleteOIDProfileMessage" xml:space="preserve">
+    <value>선택한 OID 프로필은 영구적으로 삭제됩니다.</value>
+  </data>
+  <data name="EditOIDProfile" xml:space="preserve">
+    <value>OID 프로필 편집</value>
+  </data>
+  <data name="EnterPasswordDots" xml:space="preserve">
+    <value>비밀번호 입력...</value>
+  </data>
+  <data name="AddTab" xml:space="preserve">
+    <value>탭 추가</value>
+  </data>
+  <data name="FromProfile" xml:space="preserve">
+    <value>(프로필에서)</value>
+  </data>
+  <data name="NewSubnetMask" xml:space="preserve">
+    <value>새 서브넷 마스크</value>
+  </data>
+  <data name="AddServer" xml:space="preserve">
+    <value>서버 추가</value>
+  </data>
+  <data name="SNTPServer" xml:space="preserve">
+    <value>SNTP 서버</value>
+  </data>
+  <data name="ErrorMessage_TabPageHasError" xml:space="preserve">
+    <value>이 페이지의 설정에 오류가 있습니다. 저장할 수 있도록 수정하세요.</value>
+  </data>
+  <data name="HelpMessage_PuTTYHostkey" xml:space="preserve">
+    <value>연결에 사용할 SSH 호스트키입니다 (예: "71:b8:f2:6e..."). 모드가 "SSH"인 경우에만 사용할 수 있습니다.</value>
+  </data>
+  <data name="HelpMessage_PuTTYPrivateKeyFile" xml:space="preserve">
+    <value>개인 키 파일의 전체 경로입니다 (예: "C:\\Users\\BornToBeRoot\\SSH\\private_key.ppk"). 모드가 "SSH"인 경우에만 사용할 수 있습니다.</value>
+  </data>
+  <data name="HelpMessage_PuTTYUsername" xml:space="preserve">
+    <value>PuTTY 세션에 전달될 사용자 이름입니다. 모드가 "SSH", "Telnet" 또는 "Rlogin"일 때만 사용할 수 있습니다.</value>
+  </data>
+  <data name="ASN" xml:space="preserve">
+    <value>ASN</value>
+  </data>
+  <data name="ASName" xml:space="preserve">
+    <value>AS 이름</value>
+  </data>
+  <data name="City" xml:space="preserve">
+    <value>도시</value>
+  </data>
+  <data name="Continent" xml:space="preserve">
+    <value>대륙</value>
+  </data>
+  <data name="Country" xml:space="preserve">
+    <value>국가</value>
+  </data>
+  <data name="Currency" xml:space="preserve">
+    <value>통화</value>
+  </data>
+  <data name="District" xml:space="preserve">
+    <value>지역</value>
+  </data>
+  <data name="DNSResolver" xml:space="preserve">
+    <value>DNS 해결사</value>
+  </data>
+  <data name="EDNS" xml:space="preserve">
+    <value>EDNS</value>
+  </data>
+  <data name="Geolocation" xml:space="preserve">
+    <value>지리적 위치</value>
+  </data>
+  <data name="Hosting" xml:space="preserve">
+    <value>호스팅</value>
+  </data>
+  <data name="IPGeolocation" xml:space="preserve">
+    <value>IP 지리적 위치</value>
+  </data>
+  <data name="ISP" xml:space="preserve">
+    <value>ISP</value>
+  </data>
+  <data name="Latitude" xml:space="preserve">
+    <value>위도</value>
+  </data>
+  <data name="Longitude" xml:space="preserve">
+    <value>경도</value>
+  </data>
+  <data name="Mobile" xml:space="preserve">
+    <value>모바일</value>
+  </data>
+  <data name="Organization" xml:space="preserve">
+    <value>조직</value>
+  </data>
+  <data name="PTRRecord" xml:space="preserve">
+    <value>PTR 레코드</value>
+  </data>
+  <data name="Timezone" xml:space="preserve">
+    <value>시간대</value>
+  </data>
+  <data name="ZipCode" xml:space="preserve">
+    <value>우편번호</value>
+  </data>
+  <data name="ExternalService_ip_api_Description" xml:space="preserve">
+    <value>IP 지리적 위치 API - 빠르고, 정확하며, 신뢰할 수 있음</value>
+  </data>
+  <data name="CheckDNSResolver" xml:space="preserve">
+    <value>DNS 확인 확인</value>
+  </data>
+  <data name="CheckIPGeolocation" xml:space="preserve">
+    <value>IP 지리적 위치 확인</value>
+  </data>
+  <data name="HelpMessage_CheckDNSResolver" xml:space="preserve">
+    <value>DNS 해결기는 ip-api.com 을 통해 결정됩니다.
+
+URL: https://edns.ip-api.com/</value>
+  </data>
+  <data name="HelpMessage_CheckIPGeolocation" xml:space="preserve">
+    <value>IP 지리적 위치는 ip-api.com 을 통해 확인할 수 있습니다.
+
+URL: http://ip-api.com/</value>
+  </data>
+  <data name="WelcomePrivacyMessage" xml:space="preserve">
+    <value>추가 기능을 제공하기 위해 제가 운영하지 않는 타사 서비스가 사용됩니다. 아래에서 선택을 해제할 수 있습니다. 어떠한 데이터도 저에게 전송되지 않습니다.</value>
+  </data>
+  <data name="CheckingDNSResolverDots" xml:space="preserve">
+    <value>DNS 해결기를 확인하는 중...</value>
+  </data>
+  <data name="CheckingIPGeolocationDots" xml:space="preserve">
+    <value>IP 위치 확인 중...</value>
+  </data>
+  <data name="CheckNetworkConnectionTryAgainMessage" xml:space="preserve">
+    <value>네트워크 연결을 확인한 후 몇 초 후에 다시 시도해 보세요.</value>
+  </data>
+  <data name="IPApiRateLimitMessage" xml:space="preserve">
+    <value>ip-api.com 요금 제한에 도달했습니다 (네트워크에서 요청이 너무 많습니다)!
+몇 초 후에 다시 시도해 보세요.</value>
+  </data>
+  <data name="HTTPStatusCode" xml:space="preserve">
+    <value>HTTP 상태 코드</value>
+  </data>
+  <data name="Accen_Steel" xml:space="preserve">
+    <value>스틸</value>
+  </data>
+  <data name="RateLimitReachedTryAgainInXSeconds" xml:space="preserve">
+    <value>속도 제한에 도달했습니다! {0} 초 후에 다시 시도하세요...</value>
+  </data>
+  <data name="ProfileGroup_General" xml:space="preserve">
+    <value>일반</value>
+  </data>
+  <data name="BSSID" xml:space="preserve">
+    <value>BSSID</value>
+  </data>
+  <data name="NoReachableHostsFound" xml:space="preserve">
+    <value>연결 가능한 호스트를 찾을 수 없습니다!</value>
+  </data>
+  <data name="ProfileGroup_Application" xml:space="preserve">
+    <value>응용 프로그램</value>
+  </data>
+  <data name="HelpMessage_ExperimentalFeatures" xml:space="preserve">
+    <value>실험 기능을 활성화하여 새 기능을 테스트합니다. 아직 완료되지 않았고 버그가 포함되어 있으며 응용 프로그램이 크래시될 수 있으며 출시될 때까지 다시 변경될 수 있습니다.</value>
+  </data>
+  <data name="ExperimentalFeatures" xml:space="preserve">
+    <value>실험적 기능</value>
+  </data>
+  <data name="Experimental" xml:space="preserve">
+    <value>실험적</value>
+  </data>
+  <data name="RunCommandDots" xml:space="preserve">
+    <value>Run command...</value>
+  </data>
+  <data name="ApplicationName_IPGeolocation" xml:space="preserve">
+    <value>IP 지리적 위치</value>
+  </data>
+  <data name="AddATabToQueryTheIPGeolocation" xml:space="preserve">
+    <value>IP 지리적 위치를 쿼리하기 위해 탭을 추가합니다...</value>
+  </data>
+  <data name="EnterADomainToQueryWhoisDots" xml:space="preserve">
+    <value>whois를 쿼리하려면 도메인을 입력하세요...</value>
+  </data>
+  <data name="EnterHostToQueryIPGeolocationDots" xml:space="preserve">
+    <value>IP 지리적 위치를 쿼리할 호스트 입력...</value>
+  </data>
+  <data name="SNMPV3ErrorCode_UnknownUserName" xml:space="preserve">
+    <value>알 수 없는 사용자 이름입니다.</value>
+  </data>
+  <data name="SNMPV3ErrorCode_AuthenticationFailed" xml:space="preserve">
+    <value>인증 실패 (잘못된 비밀번호, 커뮤니티 또는 키)입니다.</value>
+  </data>
+  <data name="SNMPErrorCode_NoError" xml:space="preserve">
+    <value>작업은 오류 없이 성공적으로 완료되었습니다.</value>
+  </data>
+  <data name="SNMPErrorCode_TooBig" xml:space="preserve">
+    <value>요청에 대한 응답이 너무 커서 단일 응답에 적합하지 않았습니다!</value>
+  </data>
+  <data name="SNMPErrorCode_NoSuchName" xml:space="preserve">
+    <value>요청한 OID를 찾을 수 없습니다!</value>
+  </data>
+  <data name="SNMPErrorCode_BadValue" xml:space="preserve">
+    <value>읽기-쓰기 또는 쓰기 전용 객체가 일관되지 않은 값으로 설정되었습니다!</value>
+  </data>
+  <data name="SNMPErrorCode_ReadOnly" xml:space="preserve">
+    <value>요청한 OID가 존재하지 않으며 쓸 수 없습니다!</value>
+  </data>
+  <data name="SNMPErrorCode_GenError" xml:space="preserve">
+    <value>특정 메시지를 사용할 수 없는 오류가 발생했습니다!</value>
+  </data>
+  <data name="SNMPErrorCode_NoAccess" xml:space="preserve">
+    <value>요청된 객체는 수정할 수 없습니다!</value>
+  </data>
+  <data name="SNMPErrorCode_WrongType" xml:space="preserve">
+    <value>객체가 호환되지 않는 데이터 유형으로 설정되었습니다!</value>
+  </data>
+  <data name="SNMPErrorCode_WrongLength" xml:space="preserve">
+    <value>객체에 할당된 값이 최대 길이를 초과합니다!</value>
+  </data>
+  <data name="SNMPErrorCode_WrongEncoding" xml:space="preserve">
+    <value>객체에 사용된 인코딩이 잘못되었습니다!</value>
+  </data>
+  <data name="SNMPErrorCode_WrongValue" xml:space="preserve">
+    <value>객체에 할당된 값은 유효한 선택이 아닙니다!</value>
+  </data>
+  <data name="SNMPErrorCode_NoCreation" xml:space="preserve">
+    <value>요청한 객체가 존재하지 않으며 생성할 수 없습니다!</value>
+  </data>
+  <data name="SNMPErrorCode_InconsistentValue" xml:space="preserve">
+    <value>MIB 변수가 현재 일관되지 않은 상태에 있으며 수정할 수 없습니다!</value>
+  </data>
+  <data name="SNMPErrorCode_ResourceUnavailable" xml:space="preserve">
+    <value>요청된 작업을 수행할 수 있는 시스템 리소스가 없습니다!</value>
+  </data>
+  <data name="SNMPErrorCode_CommitFailed" xml:space="preserve">
+    <value>설정 작업 중에 오류가 발생했습니다!</value>
+  </data>
+  <data name="SNMPErrorCode_UndoFailed" xml:space="preserve">
+    <value>설정 작업이 실패하여 이전 변경 사항을 롤백할 수 없습니다!</value>
+  </data>
+  <data name="SNMPErrorCode_AuthorizationError" xml:space="preserve">
+    <value>인증에 실패했습니다. 커뮤니티 문자열을 확인해 주세요!</value>
+  </data>
+  <data name="SNMPErrorCode_NotWritable" xml:space="preserve">
+    <value>요청한 객체는 쓸 수 없으며 수정할 수 없습니다!</value>
+  </data>
+  <data name="SNMPErrorCode_InconsistentName" xml:space="preserve">
+    <value>객체의 상태가 일관되지 않아 설정 작업을 방해합니다!</value>
+  </data>
+  <data name="CloseAll" xml:space="preserve">
+    <value>모두 닫기</value>
+  </data>
+  <data name="ExpandHostView" xml:space="preserve">
+    <value>호스트 보기 확장</value>
+  </data>
+  <data name="CannotSetHostWhileRunningMessage" xml:space="preserve">
+    <value>다른 호스트를 추가하는 동안에는 호스트를 설정할 수 없습니다. 프로세스가 완료될 때까지 기다렸다가 다시 시도해 주세요.</value>
+  </data>
+  <data name="NoMatchingCommands" xml:space="preserve">
+    <value>일치하는 명령이 없습니다!</value>
+  </data>
+  <data name="RemoteHostname" xml:space="preserve">
+    <value>원격 호스트 이름</value>
+  </data>
+  <data name="ProcessID" xml:space="preserve">
+    <value>프로세스 ID</value>
+  </data>
+  <data name="ProcessPath" xml:space="preserve">
+    <value>프로세스 경로</value>
+  </data>
+  <data name="ProcessName" xml:space="preserve">
+    <value>프로세스 이름</value>
+  </data>
+  <data name="NetBIOS" xml:space="preserve">
+    <value>NetBIOS</value>
+  </data>
+  <data name="ComputerName" xml:space="preserve">
+    <value>컴퓨터 이름</value>
+  </data>
+  <data name="ConnectionState_Error" xml:space="preserve">
+    <value>오류</value>
+  </data>
+  <data name="ConnectionState_OK" xml:space="preserve">
+    <value>확인</value>
+  </data>
+  <data name="ConnectionState_Warning" xml:space="preserve">
+    <value>경고</value>
+  </data>
+  <data name="GroupDomain" xml:space="preserve">
+    <value>그룹 / 도메인</value>
+  </data>
+  <data name="NetBIOSReachable" xml:space="preserve">
+    <value>NetBIOS에 도달 가능</value>
+  </data>
+  <data name="ScanForNetBIOS" xml:space="preserve">
+    <value>NetBIOS 검색</value>
+  </data>
+  <data name="NetBIOSIsDisabled" xml:space="preserve">
+    <value>NetBIOS 검색이 비활성화되었습니다!</value>
+  </data>
+  <data name="ResolveHostnameIsDisabled" xml:space="preserve">
+    <value>호스트 이름 해결이 비활성화되었습니다!</value>
+  </data>
+  <data name="ResolveMACAddressIsDisabled" xml:space="preserve">
+    <value>MAC 주소 해결이 비활성화되었습니다!</value>
+  </data>
+  <data name="CloseGroup" xml:space="preserve">
+    <value>그룹 닫기</value>
+  </data>
+  <data name="RunCommandDotsWithHotKey" xml:space="preserve">
+    <value>Run command... (Ctrl+Shift+P)</value>
+  </data>
+  <data name="ProfileFiles" xml:space="preserve">
+    <value>프로필 파일</value>
+  </data>
+  <data name="OpenSettingsDots" xml:space="preserve">
+    <value>설정 열기...</value>
+  </data>
+  <data name="ExpandAndOpenSearchDots" xml:space="preserve">
+    <value>검색을 확장하고 열기...</value>
+  </data>
+  <data name="WiFiAccessNotAvailableMessage" xml:space="preserve">
+    <value>Windows 11 24H2부터는 Wi-Fi 어댑터에 대한 액세스를 허용해야 합니다.
+
+Windows 설정 &gt; 개인정보 보호 및 보안 &gt; 위치를 열고 데스크톱 앱 / NETworkManager에 대한 액세스를 활성화한 다음 응용 프로그램을 재시작하세요.</value>
+  </data>
+  <data name="DragDropApplicationsToReorderRightClickForMoreOptions" xml:space="preserve">
+    <value>응용 프로그램을 끌어서 놓기하여 재정렬합니다.
+더 많은 옵션을 보려면 마우스 오른쪽 버튼을 클릭하세요.</value>
+  </data>
+  <data name="RestoreDefaults" xml:space="preserve">
+    <value>기본값 복원</value>
+  </data>
+  <data name="Library_GongSolutionsWpfDragDrop_Description" xml:space="preserve">
+    <value>WPF를 위한 사용하기 쉬운 끌어서 놓기 프레임워크입니다.</value>
+  </data>
+  <data name="License_BDS3Clause" xml:space="preserve">
+    <value>BSD 3조항</value>
+  </data>
+  <data name="SetDefault" xml:space="preserve">
+    <value>기본 설정</value>
+  </data>
+  <data name="ExampleProfileDescription" xml:space="preserve">
+    <value>Nextcloud 및 Traefik을 사용하여 도커를 실행하는 우분투 서버...</value>
+  </data>
+  <data name="ExampleGroupDescription" xml:space="preserve">
+    <value>AWS에서 실행 중인 리눅스 서버...</value>
+  </data>
+  <data name="GHz6" xml:space="preserve">
+    <value>6 GHz</value>
+  </data>
+  <data name="SupportThisProjectWithADonation" xml:space="preserve">
+    <value>Support this project with a donation.</value>
+  </data>
+  <data name="OpenDocumentation" xml:space="preserve">
+    <value>문서 열기</value>
+  </data>
+  <data name="Donate" xml:space="preserve">
+    <value>기부</value>
+  </data>
+  <data name="ProfileFile" xml:space="preserve">
+    <value>프로필 파일</value>
+  </data>
+  <data name="ApplicationName_HostsFileEditor" xml:space="preserve">
+    <value>호스트 파일 편집기</value>
+  </data>
+  <data name="HostsFileEditor" xml:space="preserve">
+    <value>호스트 파일 편집기</value>
+  </data>
+  <data name="HostsFileEditorAdminMessage" xml:space="preserve">
+    <value>읽기 전용 모드입니다. 호스트 파일을 수정하려면 권한 상승이 필요합니다!</value>
+  </data>
+  <data name="OpenHostsFile" xml:space="preserve">
+    <value>호스트 파일 열기</value>
+  </data>
+  <data name="Comment" xml:space="preserve">
+    <value>주석</value>
+  </data>
+  <data name="Disable" xml:space="preserve">
+    <value>사용 안 함</value>
+  </data>
+  <data name="EditEntry" xml:space="preserve">
+    <value>항목 편집</value>
+  </data>
+  <data name="EditEntryDots" xml:space="preserve">
+    <value>항목 편집...</value>
+  </data>
+  <data name="EnableEntry" xml:space="preserve">
+    <value>항목 활성화</value>
+  </data>
+  <data name="DisableEntry" xml:space="preserve">
+    <value>항목 비활성화</value>
+  </data>
+  <data name="RefreshingDots" xml:space="preserve">
+    <value>새로 고치는 중...</value>
+  </data>
+  <data name="ReloadedAtX" xml:space="preserve">
+    <value>{0}에서 다시 로드됨</value>
+  </data>
+  <data name="FailedToLoadHostsFileMessage" xml:space="preserve">
+    <value>호스트 파일을 로드하지 못했습니다: {0}</value>
+  </data>
+  <data name="RetryingInXSecondsDots" xml:space="preserve">
+    <value>{0} 초 후에 다시 시도...</value>
+  </data>
+  <data name="WhatsNew" xml:space="preserve">
+    <value>새로운 소식은?</value>
+  </data>
+  <data name="Changelog" xml:space="preserve">
+    <value>변경 로그</value>
+  </data>
+  <data name="UpgradedToXXX" xml:space="preserve">
+    <value>{0}로 업그레이드됨</value>
+  </data>
+  <data name="WhatsNewMessage" xml:space="preserve">
+    <value>이번 릴리스에는 새로운 기능, 개선 사항 및 버그 수정 사항이 포함되어 있습니다. 자세한 내용은 Changelog에서 확인하세요!</value>
+  </data>
+  <data name="Entries" xml:space="preserve">
+    <value>항목</value>
+  </data>
+  <data name="DeleteHostsFileEntryMessage" xml:space="preserve">
+    <value>선택한 항목이 영구적으로 삭제됩니다:
+
+{0} {1} {2}</value>
+  </data>
+  <data name="ExampleHostsFileEntryComment" xml:space="preserve">
+    <value>기본 DNS 서버</value>
+  </data>
+  <data name="EnterValidHostsFileEntryHostname" xml:space="preserve">
+    <value>유효한 호스트 이름 (예: "server-01" 또는 "example.com ")을 입력하세요! 여러 호스트 이름을 공백으로 구분할 수 있습니다.</value>
+  </data>
+  <data name="HostsFileReadErrorMessage" xml:space="preserve">
+    <value>"hosts" 파일을 읽을 수 없습니다! 자세한 내용은 로그 파일을 참조하세요.</value>
+  </data>
+  <data name="HostsFileWriteErrorMessage" xml:space="preserve">
+    <value>"hosts" 파일을 쓸 수 없습니다. 자세한 내용은 로그 파일을 참조하세요.</value>
+  </data>
+  <data name="HostsFileEntryNotFoundMessage" xml:space="preserve">
+    <value>"hosts" 파일에서 항목을 찾을 수 없습니다! 파일이 수정되었을 수도 있습니다.</value>
+  </data>
+  <data name="HostsFileBackupErrorMessage" xml:space="preserve">
+    <value>"hosts" 파일의 백업을 만들 수 없습니다! 자세한 내용은 로그 파일을 참조하세요.</value>
+  </data>
+  <data name="ShowStatusBar" xml:space="preserve">
+    <value>상태 표시줄 표시</value>
+  </data>
+  <data name="HelpMessage_ShowStatusBar" xml:space="preserve">
+    <value>링크를 탐색할 때 WebView의 왼쪽 하단에 상태 표시줄을 표시합니다.</value>
+  </data>
+  <data name="SaveCredentials" xml:space="preserve">
+    <value>자격 증명 저장</value>
+  </data>
+  <data name="HelpMessage_SaveCredentials" xml:space="preserve">
+    <value>성공적으로 로그인한 후 자격 증명을 저장하는 대화 상자를 표시합니다.</value>
+  </data>
+  <data name="DeleteBrowsingData" xml:space="preserve">
+    <value>브라우징 데이터 삭제</value>
+  </data>
+  <data name="DeleteBrowsingDataMessage" xml:space="preserve">
+    <value>현재 WebView2 프로필의 브라우징 데이터 (기록, 쿠키, 캐시, 자격 증명 등)를 영구적으로 삭제합니다.</value>
+  </data>
+  <data name="BrowsingData" xml:space="preserve">
+    <value>브라우징 데이터</value>
+  </data>
+  <data name="BrowsingDataSuccessfullyDeletedMessage" xml:space="preserve">
+    <value>브라우징 데이터가 성공적으로 삭제되었습니다!</value>
+  </data>
+  <data name="BrowsingDataErrorMessage" xml:space="preserve">
+    <value>브라우징 데이터를 삭제하는 동안 오류가 발생했습니다. 이 문제를 GitHub에 자유롭게 신고해 주세요.</value>
+  </data>
+  <data name="ExampleTag" xml:space="preserve">
+    <value>제품</value>
+  </data>
+  <data name="AddTag" xml:space="preserve">
+    <value>태그 추가</value>
+  </data>
+  <data name="ApplyFilter" xml:space="preserve">
+    <value>필터 적용</value>
+  </data>
+  <data name="FilterProfilesDots" xml:space="preserve">
+    <value>필터 프로필...</value>
+  </data>
+  <data name="FilterByTags" xml:space="preserve">
+    <value>태그로 필터링</value>
+  </data>
+  <data name="NoTagsFound" xml:space="preserve">
+    <value>태그를 찾을 수 없습니다!</value>
+  </data>
+  <data name="Match" xml:space="preserve">
+    <value>일치</value>
+  </data>
+  <data name="Any" xml:space="preserve">
+    <value>모든</value>
+  </data>
+  <data name="AddGroupDots" xml:space="preserve">
+    <value>그룹 추가...</value>
+  </data>
+  <data name="ExpandAll" xml:space="preserve">
+    <value>모두 확장</value>
+  </data>
+  <data name="CollapseAll" xml:space="preserve">
+    <value>모두 축소</value>
+  </data>
+  <data name="HelpMessage_UseCustomThemes" xml:space="preserve">
+    <value>사용자 지정 테마를 사용하여 응용 프로그램의 모양을 개인화합니다. "프로그램 폴더 &gt; 테마" 디렉터리에서 테마를 편집하거나 추가할 수 있습니다. 자세한 내용은 설명서를 참조하세요.</value>
+  </data>
+  <data name="AdminConsoleSession" xml:space="preserve">
+    <value>관리자 (콘솔) 세션</value>
+  </data>
+  <data name="DeleteProfileFileXMessage" xml:space="preserve">
+    <value>프로필 파일 "{0}"이 영구적으로 삭제됩니다.</value>
+  </data>
+  <data name="EnableEncryptionQuestion" xml:space="preserve">
+    <value>암호화를 활성화하시겠습니까?</value>
+  </data>
+  <data name="EnableEncryptionForProfileFileMessage" xml:space="preserve">
+    <value>호스트, IP 주소, URL, 저장된 자격 증명과 같은 민감한 데이터를 보호하기 위해 프로필 파일 암호화를 활성화하시겠습니까?
+
+나중에 언제든지 프로필 파일을 마우스 오른쪽 버튼으로 클릭하여 암호화 설정을 관리하여 암호화를 활성화 또는 비활성화할 수 있습니다.
+"취소"를 클릭하면 프로필 파일은 암호화되지 않은 상태로 유지됩니다.</value>
+  </data>
+  <data name="RestartRequiredMessage" xml:space="preserve">
+    <value>A restart is required to apply changes such as language settings.</value>
+  </data>
+  <data name="CouldNotParseOrResolveDNSServers" xml:space="preserve">
+    <value>지정된 DNS 서버를 분석하거나 확인할 수 없습니다.</value>
+  </data>
+  <data name="CouldNotParseX" xml:space="preserve">
+    <value>"{0}"을 구문 분석할 수 없습니다..</value>
+  </data>
+  <data name="MaximumNumberOfBackups" xml:space="preserve">
+    <value>최대 백업 수</value>
+  </data>
+  <data name="CreateDailyBackup" xml:space="preserve">
+    <value>일일 백업 생성</value>
+  </data>
+  <data name="HelpMessage_MaximumNumberOfBackups" xml:space="preserve">
+    <value>가장 오래된 백업이 삭제되기 전에 유지되는 백업 수입니다.</value>
+  </data>
+  <data name="SettingManagedByAdministrator" xml:space="preserve">
+    <value>이 설정은 관리자가 관리합니다.</value>
+  </data>
+  <data name="RestoreDefaultLocation" xml:space="preserve">
+    <value>기본 위치 복원</value>
+  </data>
+  <data name="Restore" xml:space="preserve">
+    <value>복원</value>
+  </data>
+  <data name="RestoreDefaultLocationQuestion" xml:space="preserve">
+    <value>기본 위치로 복원하시겠습니까?</value>
+  </data>
+  <data name="RestoreDefaultSettingsLocationMessage" xml:space="preserve">
+    <value>기본 설정 위치가 복원되고 이후에 응용 프로그램이 재시작됩니다.
+
+필요한 경우 "setings.json" 파일을 "{0}"에서 "{1}"로 복사하여 이전 설정을 마이그레이션할 수 있습니다. 이를 위해 응용 프로그램을 닫아야 설정이 덮어쓰이지 않습니다.</value>
+  </data>
+  <data name="ChangeLocationQuestion" xml:space="preserve">
+    <value>위치를 변경하시겠습니까?</value>
+  </data>
+  <data name="ChangeSettingsLocationMessage" xml:space="preserve">
+    <value>설정 위치가 변경되고 이후 응용 프로그램이 재시작됩니다..
+
+필요한 경우 "setings.json" 파일을 "{0}"에서 "{1}"로 복사하여 이전 설정을 마이그레이션할 수 있습니다. 이를 위해 응용 프로그램을 닫아야 설정이 덮어쓰이지 않습니다.</value>
+  </data>
+  <data name="EnterValidFolderPath" xml:space="preserve">
+    <value>유효한 폴더 경로를 입력하세요!</value>
+  </data>
+  <data name="ChangeProfilesLocationMessage" xml:space="preserve">
+    <value>프로필 위치가 변경되고 이후 응용 프로그램이 재시작됩니다
+
+필요한 경우 프로필 파일을 “{0}”에서 “{1}”로 복사하여 기존 프로필을 마이그레이션할 수 있습니다. 프로필을 덮어쓰지 않으려면 응용 프로그램을 닫아야 합니다.</value>
+  </data>
+  <data name="RestoreDefaultProfilesLocationMessage" xml:space="preserve">
+    <value>기본 프로필 위치가 복원되고 이후에 애플리케이션이 재시작됩니다.
+
+필요한 경우 프로필 파일을 “{0}”에서 “{1}”로 복사하여 기존 프로필을 마이그레이션할 수 있습니다. 프로필을 덮어쓰지 않으려면 애플리케이션을 닫아야 합니다.</value>
+  </data>
+  <data name="NetworkConnection" xml:space="preserve">
+    <value>네트워크 연결</value>
+  </data>
+  <data name="NetworkStatus" xml:space="preserve">
+    <value>네트워크 상태</value>
+  </data>
+  <data name="ActiveDirectoryImportFailed" xml:space="preserve">
+    <value>Active Directory import failed.</value>
+  </data>
+  <data name="ActiveDirectoryImportOptions" xml:space="preserve">
+    <value>Options</value>
+  </data>
+
+  <data name="ActiveDirectoryImportUsesCurrentCredentials" xml:space="preserve">
+    <value>Uses your current Windows credentials to read from Active Directory. The account must be allowed to enumerate computer objects under the search base (subtree).</value>
+  </data>
+  <data name="ActiveDirectorySearchBase" xml:space="preserve">
+    <value>Search base (DN)</value>
+  </data>
+  <data name="ActiveDirectoryAdditionalLdapFilter" xml:space="preserve">
+    <value>Additional LDAP filter</value>
+  </data>
+  <data name="ActiveDirectoryAdditionalLdapFilterInvalid" xml:space="preserve">
+    <value>Filter must be a valid LDAP expression starting with '(' and ending with ')'.</value>
+  </data>
+  <data name="ActiveDirectorySearchBaseInvalid" xml:space="preserve">
+    <value>Search base must be a valid LDAP distinguished name (e.g. DC=example,DC=com).</value>
+  </data>
+  <data name="ActiveDirectory_ImportDescription" xml:space="preserve">
+    <value>Imported from Active Directory on {0}</value>
+  </data>
+  <data name="ActiveDirectoryNoComputersFound" xml:space="preserve">
+    <value>No computers found for the given search base and filter.</value>
+  </data>
+  <data name="SearchingActiveDirectoryDots" xml:space="preserve">
+    <value>Searching Active Directory...</value>
+  </data>
+  <data name="ActiveDirectoryNonDomainHint" xml:space="preserve">
+    <value>If your computer is not joined to the domain, specify the domain controller (hostname or IP) and use custom credentials.</value>
+  </data>
+  <data name="LdapServer" xml:space="preserve">
+    <value>Server (optional)</value>
+  </data>
+  <data name="LdapPort" xml:space="preserve">
+    <value>Port (optional)</value>
+  </data>
+  <data name="UseSsl" xml:space="preserve">
+    <value>Use SSL (LDAPS)</value>
+  </data>
+  <data name="UseCurrentWindowsCredentials" xml:space="preserve">
+    <value>Use current Windows credentials</value>
+  </data>
+  <data name="UseTheseCredentials" xml:space="preserve">
+    <value>Use these credentials</value>
+  </data>
+  <data name="Advanced" xml:space="preserve">
+    <value>Advanced</value>
+  </data>
+  <data name="SelectAll" xml:space="preserve">
+    <value>Select all</value>
+  </data>
+  <data name="DeselectAll" xml:space="preserve">
+    <value>Deselect all</value>
+  </data>
+  <data name="EnableFor" xml:space="preserve">
+    <value>Enable for</value>
+  </data>
+  <data name="SkipAlreadyImported" xml:space="preserve">
+    <value>Skip already imported</value>
+  </data>
+  <data name="ImportResultsHeader" xml:space="preserve">
+    <value>{0} · {1} result(s)</value>
+  </data>
+  <data name="ProfileImportSummary" xml:space="preserve">
+    <value>{0} profile(s) imported.
+{1} duplicate entries skipped.
+{2} without a host skipped.</value>
+  </data>
+  <data name="ImportProfiles_Source_ActiveDirectory" xml:space="preserve">
+    <value>Active Directory</value>
+  </data>
+  <data name="ImportProfiles_Source_Csv" xml:space="preserve">
+    <value>CSV file</value>
+  </data>
+  <data name="ImportProfiles_Method_Csv" xml:space="preserve">
+    <value>CSV file</value>
+  </data>
+  <data name="ImportProfilesFromCsvFile" xml:space="preserve">
+    <value>Import profiles from CSV file</value>
+  </data>
+  <data name="Csv_ImportDescription" xml:space="preserve">
+    <value>Imported from CSV file on {0}</value>
+  </data>
+  <data name="CsvNoEntriesFound" xml:space="preserve">
+    <value>No entries were found in the CSV file.</value>
+  </data>
+  <data name="CsvImportFormatHint" xml:space="preserve">
+    <value>Expected CSV format — one profile per line:</value>
+  </data>
+  <data name="CsvImportFormatNote" xml:space="preserve">
+    <value>A header row and the delimiter (semicolon, comma or tab) are detected automatically. The description column is optional. Entries without a host cannot be imported.</value>
+  </data>
+  <data name="ImportResults" xml:space="preserve">
+    <value>Import results</value>
+  </data>
+  <data name="ImportProfiles_StatusNew" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="ImportProfiles_StatusImported" xml:space="preserve">
+    <value>Imported</value>
+  </data>
+  <data name="ImportProfiles_StatusNoHost" xml:space="preserve">
+    <value>No host</value>
+  </data>
+  <data name="ExcludeDisabledAccounts" xml:space="preserve">
+    <value>Exclude disabled accounts</value>
+  </data>
+  <data name="ImportComputersFromActiveDirectory" xml:space="preserve">
+    <value>Import computers from Active Directory</value>
+  </data>
+  <data name="ImportComputersFromActiveDirectoryDots" xml:space="preserve">
+    <value>Import computers from Active Directory...</value>
+  </data>
+  <data name="ImportProfiles" xml:space="preserve">
+    <value>Import profiles</value>
+  </data>
+  <data name="Source" xml:space="preserve">
+    <value>Source</value>
+  </data>
+  <data name="ImportProfiles_Method_ActiveDirectory" xml:space="preserve">
+    <value>Active Directory</value>
+  </data>
+  <data name="ProfileGroup" xml:space="preserve">
+    <value>Profile group</value>
+  </data>
+  <data name="ExistingOrNewGroupDots" xml:space="preserve">
+    <value>Existing or new group name</value>
+  </data>
+  <data name="Firewall" xml:space="preserve">
+    <value>방화벽</value>
+  </data>
+  <data name="FirewallRules" xml:space="preserve">
+    <value>방화벽 규칙</value>
+  </data>
+  <data name="WindowsFirewallSettings" xml:space="preserve">
+    <value>Windows 방화벽 설정</value>
+  </data>
+  <data name="Direction" xml:space="preserve">
+    <value>방향</value>
+  </data>
+  <data name="Inbound" xml:space="preserve">
+    <value>인바운드</value>
+  </data>
+  <data name="Outbound" xml:space="preserve">
+    <value>아웃바운드</value>
+  </data>
+  <data name="Action" xml:space="preserve">
+    <value>동작</value>
+  </data>
+  <data name="Allow" xml:space="preserve">
+    <value>허용</value>
+  </data>
+  <data name="Block" xml:space="preserve">
+    <value>차단</value>
+  </data>
+  <data name="NetworkProfile" xml:space="preserve">
+    <value>네트워크 프로필</value>
+  </data>
+  <data name="NetworkProfiles" xml:space="preserve">
+    <value>네트워크 프로필</value>
+  </data>
+  <data name="InterfaceType" xml:space="preserve">
+    <value>인터페이스 유형</value>
+  </data>
+  <data name="FailedToLoadFirewallRulesMessage" xml:space="preserve">
+    <value>방화벽 규칙을 불러오지 못했습니다. {0}</value>
+  </data>
+  <data name="DeleteFirewallRuleMessage" xml:space="preserve">
+    <value>선택한 방화벽 규칙이 영구적으로 삭제되었습니다:
+
+{0}</value>
+  </data>
+  <data name="FirewallProtocol_Any" xml:space="preserve">
+    <value>모두</value>
+  </data>
+  <data name="FirewallProtocol_TCP" xml:space="preserve">
+    <value>TCP</value>
+  </data>
+  <data name="FirewallProtocol_UDP" xml:space="preserve">
+    <value>UDP</value>
+  </data>
+  <data name="FirewallProtocol_ICMPv4" xml:space="preserve">
+    <value>ICMPv4</value>
+  </data>
+  <data name="FirewallProtocol_ICMPv6" xml:space="preserve">
+    <value>ICMPv6</value>
+  </data>
+  <data name="FirewallProtocol_HOPOPT" xml:space="preserve">
+    <value>HOPOPT</value>
+  </data>
+  <data name="FirewallProtocol_GRE" xml:space="preserve">
+    <value>GRE</value>
+  </data>
+  <data name="FirewallProtocol_IPv6" xml:space="preserve">
+    <value>IPv6</value>
+  </data>
+  <data name="FirewallProtocol_IPv6_Route" xml:space="preserve">
+    <value>IPv6 경로</value>
+  </data>
+  <data name="FirewallProtocol_IPv6_Frag" xml:space="preserve">
+    <value>IPv6 분할</value>
+  </data>
+  <data name="FirewallProtocol_IPv6_NoNxt" xml:space="preserve">
+    <value>IPv6-NoNxt</value>
+  </data>
+  <data name="FirewallProtocol_IPv6_Opts" xml:space="preserve">
+    <value>IPv6 옵션</value>
+  </data>
+  <data name="FirewallProtocol_VRRP" xml:space="preserve">
+    <value>VRRP</value>
+  </data>
+  <data name="FirewallProtocol_PGM" xml:space="preserve">
+    <value>PGM</value>
+  </data>
+  <data name="FirewallProtocol_L2TP" xml:space="preserve">
+    <value>L2TP</value>
+  </data>
+  <data name="FirewallInterfaceType_Any" xml:space="preserve">
+    <value>모두</value>
+  </data>
+  <data name="FirewallInterfaceType_Wired" xml:space="preserve">
+    <value>유선</value>
+  </data>
+  <data name="FirewallInterfaceType_Wireless" xml:space="preserve">
+    <value>무선</value>
+  </data>
+  <data name="FirewallInterfaceType_RemoteAccess" xml:space="preserve">
+    <value>원격 접속</value>
+  </data>
+  <data name="FirewallAdminMessage" xml:space="preserve">
+    <value>읽기 전용 모드입니다. 방화벽 규칙을 수정하려면 관리자 권한이 필요합니다!</value>
+  </data>
+  <data name="FirewallRuleDirection_Inbound" xml:space="preserve">
+    <value>인바운드</value>
+  </data>
+  <data name="FirewallRuleDirection_Outbound" xml:space="preserve">
+    <value>아웃바운드</value>
+  </data>
+  <data name="FirewallRuleAction_Block" xml:space="preserve">
+    <value>차단</value>
+  </data>
+  <data name="FirewallRuleAction_Allow" xml:space="preserve">
+    <value>허용</value>
+  </data>
+  <data name="LocalPorts" xml:space="preserve">
+    <value>로컬 포트</value>
+  </data>
+  <data name="RemotePorts" xml:space="preserve">
+    <value>원격 포트</value>
+  </data>
+  <data name="LocalAddresses" xml:space="preserve">
+    <value>로컬 주소</value>
+  </data>
+  <data name="RemoteAddresses" xml:space="preserve">
+    <value>원격 주소</value>
+  </data>
+  <data name="EnterValidFirewallAddress" xml:space="preserve">
+    <value>유효한 IP 주소, 서브넷 (예: 10.0.0.0/8), 범위 (예: 10.0.0.1-10.0.0.10) 또는 키워드(Any, LocalSubnet, DNS, DHCP, WINS, DefaultGateway, Internet, Intranet, IntranetRemoteAccess, PlayToDevice, CaptivePortal)를 입력하세요.</value>
+  </data>
+  <data name="AddRule" xml:space="preserve">
+    <value>규칙 추가</value>
+  </data>
+  <data name="AddRuleDots" xml:space="preserve">
+    <value>규칙 추가...</value>
+  </data>
+  <data name="EditRule" xml:space="preserve">
+    <value>규칙 편집</value>
+  </data>
+  <data name="EditRuleDots" xml:space="preserve">
+    <value>규칙 편집...</value>
+  </data>
+  <data name="DeleteRule" xml:space="preserve">
+    <value>규칙 삭제</value>
+  </data>
+  <data name="EnableRule" xml:space="preserve">
+    <value>규칙 사용함</value>
+  </data>
+  <data name="DisableRule" xml:space="preserve">
+    <value>규칙 사용 안 함</value>
+  </data>
+  <data name="ImportProfilesDots" xml:space="preserve">
+    <value>Import profiles...</value>
+  </data>
+  <data name="SpeedTest" xml:space="preserve">
+    <value>Speed Test</value>
+  </data>
+  <data name="RunSpeedTest" xml:space="preserve">
+    <value>Run speed test</value>
+  </data>
+  <data name="FetchingMetadataDots" xml:space="preserve">
+    <value>Fetching metadata...</value>
+  </data>
+  <data name="MeasuringLatencyDots" xml:space="preserve">
+    <value>Measuring latency...</value>
+  </data>
+  <data name="MeasuringDownloadSpeedDots" xml:space="preserve">
+    <value>Measuring download speed...</value>
+  </data>
+  <data name="MeasuringUploadSpeedDots" xml:space="preserve">
+    <value>Measuring upload speed...</value>
+  </data>
+  <data name="SpeedTestDisclaimerMessage" xml:space="preserve">
+    <value>Measure download and upload speeds, latency, and jitter with speed.cloudflare.com.
+Cloudflare may log your IP address and network information. See Cloudflare's privacy policy for details.</value>
+  </data>
+  <data name="Latency" xml:space="preserve">
+    <value>Latency</value>
+  </data>
+  <data name="Jitter" xml:space="preserve">
+    <value>Jitter</value>
+  </data>
+  <data name="ExternalService_speed_cloudflare_Description" xml:space="preserve">
+    <value>Speed test service used to measure download speed, upload speed, latency, and jitter.</value>
+  </data>
+  <data name="Stop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+</root>

@@ -1,0 +1,65 @@
+﻿using System.Collections.Generic;
+
+namespace NETworkManager.Models.RemoteDesktop;
+
+public static class RemoteDesktop
+{
+    public static List<string> ScreenResolutions =>
+    [
+        "640x480",
+        "800x600",
+        "1024x768",
+        "1280x720",
+        "1280x768",
+        "1280x800",
+        "1280x1024",
+        "1366x768",
+        "1440x900",
+        "1400x1050",
+        "1680x1050",
+        "1920x1080"
+    ];
+
+    public static List<int> ColorDepths =>
+    [
+        15,
+        16,
+        24,
+        32
+    ];
+
+    public static RemoteDesktopKeystrokeInfo GetKeystroke(Keystroke keystroke)
+    {
+        RemoteDesktopKeystrokeInfo info = new();
+
+        switch (keystroke)
+        {
+            case Keystroke.CtrlAltDel:
+                info.ArrayKeyUp = [false, false, false, true, true, true];
+                info.KeyData = [0x1d, 0x38, 0x53, 0x53, 0x38, 0x1d];
+                break;
+            case Keystroke.TaskManager: // Ctrl + Shift + Esc
+                info.ArrayKeyUp = [false, false, false, true, true, true];
+                info.KeyData = [0x1d, 0x2a, 0x01, 0x01, 0x2a, 0x1d];
+                break;
+            case Keystroke.Lock: // Win + L
+                info.ArrayKeyUp = [false, false, true, true];
+                info.KeyData = [0x15b, 0x26, 0x26, 0x15b];
+                break;
+            case Keystroke.ShowDesktop: // Win + D
+                info.ArrayKeyUp = [false, false, true, true];
+                info.KeyData = [0x15b, 0x20, 0x20, 0x15b];
+                break;
+            case Keystroke.Explorer: // Win + E
+                info.ArrayKeyUp = [false, false, true, true];
+                info.KeyData = [0x15b, 0x12, 0x12, 0x15b];
+                break;
+            case Keystroke.RunDialog: // Win + R
+                info.ArrayKeyUp = [false, false, true, true];
+                info.KeyData = [0x15b, 0x13, 0x13, 0x15b];
+                break;
+        }
+
+        return info;
+    }
+}

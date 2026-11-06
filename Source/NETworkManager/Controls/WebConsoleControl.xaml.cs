@@ -1,0 +1,277 @@
+﻿using log4net;
+using Microsoft.Web.WebView2.Core;
+using NETworkManager.Models.WebConsole;
+using NETworkManager.Settings;
+using NETworkManager.Utilities;
+using System;
+using System.Threading;
+using System.Windows;
+using System.Windows.Input;
+
+namespace NETworkManager.Controls;
+
+public partial class WebConsoleControl : UserControlBase, IDragablzTabItem
+{
+    #region Variables
+
+    private static readonly ILog Log = LogManager.GetLogger(typeof(WebConsoleControl));
+
+    private bool _initialized;
+    private bool _closed;
+    private readonly CancellationTokenSource _loadCancellationTokenSource = new();
+
+    private readonly Guid _tabId;
+    private readonly WebConsoleSessionInfo _sessionInfo;
+
+    public bool IsLoading
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool FirstLoad
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    } = true;
+
+    public string Url
+    {
+        get;
+        set
+        {
+            if (value == field)
+                return;
+
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    #endregion
+
+    #region Constructor, load
+
+    public WebConsoleControl(Guid tabId, WebConsoleSessionInfo sessionInfo)
+    {
+        InitializeComponent();
+        DataContext = this;
+
+        ConfigurationManager.Current.WebConsoleTabCount++;
+
+        _tabId = tabId;
+        _sessionInfo = sessionInfo;
+
+        Browser.NavigationStarting += Browser2_NavigationStarting;
+        Browser.NavigationCompleted += Browser2_NavigationCompleted;
+        Browser.SourceChanged += Browser2_SourceChanged;
+
+        Dispatcher.ShutdownStarted += Dispatcher_ShutdownStarted;
+
+        // Detect if settings have changed...
+        SettingsManager.Current.PropertyChanged += Current_PropertyChanged;
+    }
+
+    private void Browser2_SourceChanged(object sender, CoreWebView2SourceChangedEventArgs e)
+    {
+        Url = Browser.Source.ToString();
+    }
+
+    private async void UserControl_Loaded(object sender, RoutedEventArgs e)
+    {
+        // Connect after the control is drawn and only on the first init
+        if (_initialized || _closed || _loadCancellationTokenSource.IsCancellationRequested)
+            return;
+
+        try
+        {
+            // Set user data folder - Fix #382
+            var webView2Environment =
+                await CoreWebView2Environment.CreateAsync(null, GlobalStaticConfiguration.WebConsole_Cache);
+
+            if (_closed || _loadCancellationTokenSource.IsCancellationRequested)
+                return;
+
+            await Browser.EnsureCoreWebView2Async(webView2Environment);
+
+            if (_closed || _loadCancellationTokenSource.IsCancellationRequested || Browser.CoreWebView2 == null)
+                return;
+
+            Log.Debug($"UserControl_Loaded - WebView2 profile path: {Browser.CoreWebView2.Profile.ProfilePath}");
+
+            // Set the default settings
+            Browser.CoreWebView2.Settings.IsStatusBarEnabled = SettingsManager.Current.WebConsole_IsStatusBarEnabled;
+            Browser.CoreWebView2.Settings.IsPasswordAutosaveEnabled =
+                SettingsManager.Current.WebConsole_IsPasswordSaveEnabled;
+
+            Navigate(_sessionInfo.Url);
+
+            _initialized = true;
+        }
+        catch (ObjectDisposedException)
+        {
+            if (!_closed && !_loadCancellationTokenSource.IsCancellationRequested)
+                throw;
+        }
+        catch (InvalidOperationException)
+        {
+            if (!_closed && !_loadCancellationTokenSource.IsCancellationRequested)
+                throw;
+        }
+    }
+
+    #endregion
+
+    #region ICommands & Actions
+
+    private bool NavigateCommand_CanExecute(object obj)
+    {
+        return !IsLoading;
+    }
+
+    public ICommand NavigateCommand => new RelayCommand(_ => NavigateAction(), NavigateCommand_CanExecute);
+
+    private void NavigateAction()
+    {
+        Navigate(Url);
+    }
+
+    private bool StopCommand_CanExecute(object obj)
+    {
+        return IsLoading;
+    }
+
+    public ICommand StopCommand => new RelayCommand(_ => StopAction(), StopCommand_CanExecute);
+
+    private void StopAction()
+    {
+        Stop();
+    }
+
+    private bool ReloadCommand_CanExecute(object obj)
+    {
+        return !IsLoading;
+    }
+
+    public ICommand ReloadCommand => new RelayCommand(_ => ReloadAction(), ReloadCommand_CanExecute);
+
+    private void ReloadAction()
+    {
+        Browser.Reload();
+    }
+
+    private bool GoBackCommand_CanExecute(object obj)
+    {
+        return !IsLoading && Browser.CanGoBack;
+    }
+
+    public ICommand GoBackCommand => new RelayCommand(_ => GoBackAction(), GoBackCommand_CanExecute);
+
+    private void GoBackAction()
+    {
+        Browser.GoBack();
+    }
+
+    private bool GoForwardCommand_CanExecute(object obj)
+    {
+        return !IsLoading && Browser.CanGoForward;
+    }
+
+    public ICommand GoForwardCommand => new RelayCommand(_ => GoForwardAction(), GoForwardCommand_CanExecute);
+
+    private void GoForwardAction()
+    {
+        Browser.GoForward();
+    }
+
+    #endregion
+
+    #region Methods
+
+    private void Navigate(string url)
+    {
+        Browser.Source = new Uri(url);
+    }
+
+    private void Stop()
+    {
+        Browser.Stop();
+    }
+
+    public void CloseTab()
+    {
+        // Prevent multiple calls
+        if (_closed)
+            return;
+
+        _closed = true;
+        _loadCancellationTokenSource.Cancel();
+        _loadCancellationTokenSource.Dispose();
+
+        // Release the subscriptions that would otherwise keep this transient per-tab
+        // control (and its heavyweight WebView2 instance) alive for the lifetime of the
+        // application, then dispose the browser to free the native resources.
+        SettingsManager.Current.PropertyChanged -= Current_PropertyChanged;
+        Dispatcher.ShutdownStarted -= Dispatcher_ShutdownStarted;
+
+        Browser.NavigationStarting -= Browser2_NavigationStarting;
+        Browser.NavigationCompleted -= Browser2_NavigationCompleted;
+        Browser.SourceChanged -= Browser2_SourceChanged;
+        Browser.Dispose();
+
+        ConfigurationManager.Current.WebConsoleTabCount--;
+    }
+
+    #endregion
+
+    #region Events
+
+    private void Browser2_NavigationStarting(object sender, CoreWebView2NavigationStartingEventArgs e)
+    {
+        IsLoading = true;
+    }
+
+    private void Browser2_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
+    {
+        if (FirstLoad)
+            FirstLoad = false;
+
+        IsLoading = false;
+    }
+
+    private void Dispatcher_ShutdownStarted(object sender, EventArgs e)
+    {
+        CloseTab();
+    }
+
+    private void Current_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        switch (e.PropertyName)
+        {
+            case nameof(SettingsManager.Current.WebConsole_IsStatusBarEnabled):
+                Browser.CoreWebView2.Settings.IsStatusBarEnabled =
+                    SettingsManager.Current.WebConsole_IsStatusBarEnabled;
+                break;
+            case nameof(SettingsManager.Current.WebConsole_IsPasswordSaveEnabled):
+                Browser.CoreWebView2.Settings.IsPasswordAutosaveEnabled =
+                    SettingsManager.Current.WebConsole_IsPasswordSaveEnabled;
+                break;
+        }
+    }
+
+    #endregion
+}

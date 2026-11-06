@@ -1,0 +1,27 @@
+version: 2
+updates:
+- package-ecosystem: "nuget"
+  directory: "/Source"
+  schedule:
+    interval: weekly
+  target-branch: main
+  commit-message:
+    prefix: "Dependency (dependabot/nuget):"
+- package-ecosystem: "dotnet-sdk"
+  directory: "/Source"
+  ignore:
+  - dependency-name: dotnet-sdk
+    update-types:
+    - "version-update:semver-major"
+  schedule:
+    interval: weekly
+  target-branch: main
+  commit-message:
+    prefix: "Dependency (dependabot/dotnet-sdk):"
+- package-ecosystem: "npm"
+  directory: "/Website"
+  schedule:
+    interval: weekly
+  target-branch: main
+  commit-message:
+    prefix: "Dependency (dependabot/npm):"

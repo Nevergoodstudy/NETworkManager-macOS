@@ -1,0 +1,229 @@
+table {
+  width: 100%;
+  display: table;
+}
+
+/* ─── Hero ─────────────────────────────────────────── */
+
+@keyframes jack-in-the-box {
+  0% {
+    opacity: 0;
+    transform: scale(0.1) rotate(30deg);
+    transform-origin: center bottom;
+  }
+  50% {
+    transform: rotate(-10deg);
+  }
+  70% {
+    transform: rotate(3deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.hero {
+  background-color: var(--ifm-background-dark);
+  padding: 48px;
+}
+
+.heroInner {
+  margin: 0 auto;
+  max-width: 1100px;
+  padding: 0 20px;
+}
+
+.heroProjectTitle {
+  color: #fff;
+  font-size: 60px;
+  margin: 0;
+}
+
+.heroProjectTagline {
+  color: #fff;
+  font-size: 32px;
+  margin: 0;
+}
+
+.heroTextHtml b {
+  color: var(--ifm-color-primary);
+}
+
+.heroLogo {
+  animation-duration: 2s;
+  animation-name: jack-in-the-box;
+  float: right;
+  margin-top: 20px;
+  padding: 0 20px 20px;
+  height: auto;
+}
+
+.indexCtas {
+  --ifm-button-size-multiplier: 1.6;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 24px;
+}
+
+.indexCtas a,
+.indexCtas a:hover {
+  color: black;
+}
+
+.indexCtas > a:last-of-type {
+  margin: 20px 36px;
+}
+
+.indexCtasGitHubButtonWrapper {
+  display: flex;
+  align-items: center;
+}
+
+.indexCtasGitHubButton {
+  margin: 0.5rem;
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.directDownloads {
+  margin-top: 4px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.directDownloads a {
+  color: var(--ifm-color-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.directDownloads a:hover {
+  text-decoration: underline;
+}
+
+.directDownloadsSep {
+  margin: 0 8px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* ─── Hero screenshot ───────────────────────────────── */
+
+.heroScreenshotWrapper {
+  margin-top: 40px;
+}
+
+.heroScreenshot {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+/* ─── Tool grid ─────────────────────────────────────── */
+
+.toolGrid {
+  padding: 64px 0;
+}
+
+.toolGridSubtitle {
+  color: var(--ifm-color-emphasis-600);
+  font-size: 18px;
+  margin-bottom: 32px;
+}
+
+.additionalButton {
+  margin: 20px;
+  height: 44px;
+  width: 200px;
+  font-size: 18px;
+}
+
+.thankYouCard {
+  margin: 2.5rem 0;
+  padding: 24px 28px;
+  border-radius: 16px;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-left: 4px solid var(--ifm-color-primary);
+  background: var(--ifm-color-emphasis-100);
+}
+
+.thankYouCard h3 {
+  margin-top: 0;
+}
+
+.shieldsContainer {
+  text-align: center;
+}
+
+.shields {
+  margin: 0rem 0.25rem;
+}
+
+/* ─── Preview ("See It in Action") ─────────────────── */
+
+.previewSingle {
+  margin: 32px auto 40px;
+  max-width: var(--content-max-width);
+}
+
+.previewSingle img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  border: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.previewCaption {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.previewCtas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}
+
+/* ─── Responsive ────────────────────────────────────── */
+
+@media only screen and (max-width: 768px) {
+  .hero {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .heroInner {
+    padding: 0;
+  }
+
+  .heroProjectTitle {
+    font-size: 36px;
+    text-align: center;
+  }
+
+  .heroProjectTagline {
+    font-size: 24px;
+    text-align: center;
+  }
+
+  .heroLogo {
+    display: block;
+    float: none;
+    margin: 0 auto;
+  }
+
+  .indexCtas {
+    justify-content: center;
+  }
+
+  .indexCtas > a {
+    margin: 20px 36px;
+  }
+}
