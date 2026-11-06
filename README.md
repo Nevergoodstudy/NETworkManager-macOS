@@ -58,6 +58,12 @@
   </p>
 </div>
 
+## Project Origin and macOS Adaptation
+
+This repository adapts the original [NETworkManager project by BornToBeRoot](https://github.com/BornToBeRoot/NETworkManager) for macOS. The macOS edition is a native SwiftUI/AppKit implementation with platform-specific integrations; the original Windows/WPF source remains in `Source/`. This is an independent adaptation and is not an official upstream release. The project is distributed under GPL-3.0; original license and attribution notices are retained.
+
+本仓库基于 BornToBeRoot 的 [NETworkManager 原版项目](https://github.com/BornToBeRoot/NETworkManager)进行 macOS 系统适配。macOS 版本采用 SwiftUI/AppKit 原生实现，并针对 macOS 平台提供相应功能；`Source/` 中保留原版 Windows/WPF 源码。本适配项目为独立维护版本，并非上游官方发行版。项目遵循 GPL-3.0 许可证并保留原项目的版权与署名信息。
+
 <div align="center">
   <img alt="NETworkManager Features Preview" src="https://github.com/BornToBeRoot/NETworkManager/blob/main/Website/static/img/preview-features.gif?raw=true" />
 </div>
