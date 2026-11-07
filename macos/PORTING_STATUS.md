@@ -36,6 +36,54 @@ Windows 对应的公开 API，某些高级选项仍受平台限制。
 | Listeners | Native + system replacement | 从 `lsof` 结构化筛选 LISTEN socket。 |
 | Neighbor Table | Native + system replacement | `arp -an` 结构化解析地址、MAC、接口和状态。 |
 | Profiles | Native | Application Support JSON、分组、Windows JSON/XML 导入转换和 AES-GCM 加密导出；新导出使用带随机 salt 与 120,000 次 PBKDF2-HMAC-SHA256 的 macOS `NME2` 容器，旧 `NME1` 仍可导入，与 Windows 加密容器不保证二进制兼容。 |
+| MCP 客户端集成 | Native + bundled CLI | 应用内置 `NMCP`，通过“设置 → MCP → 连接 Codex”注册。提供接口枚举、IPv4 子网、端口及 OUI 查询，GUI 网络诊断开关默认开启，额外提供单目标 Ping、DNS 和 TCP；另有两项静态资源。使用官方 Swift SDK 0.12.1 与 stdio；不开放资产/配置写入、Keychain、SSH 或任意 shell。详见 [MCP.md](MCP.md)。 |
+
+## MCP 实现范围（2026-11-07）
+
+应用打包默认包含 `Contents/Helpers/NMCP` 与所需 SwiftPM 资源包。用户把应用
+安装到“应用程序”，在“设置 → MCP”点击“连接 Codex”，再新建 Codex 聊天即可
+使用；不需要终端命令或 Swift 工具链。应用自动寻找 Codex，找不到时可通过
+“选择 Codex…”选择 `Codex.app` 或可执行文件。网络诊断开关默认开启；改变后
+点击“更新 Codex 连接”，“断开 Codex 连接”可撤销注册。首次打开应用不会
+自动修改客户端配置。移动应用后需重新连接；从 DMG 或 App Translocation
+运行时会先提示安装到“应用程序”。本机已在安装后的应用设置页点击更新连接，
+界面确认配置完成；Codex 注册指向应用内 helper，网络诊断参数已启用。
+
+MCP 是客户端按需启动的独立命令行进程，GUI 无需保持运行，也不安装 daemon、
+特权 helper 或 HTTP 服务。GUI 根据网络诊断开关添加 `--allow-network`；直接
+启动命令行产品时默认仅四项本地工具。参数校验、最多四个并发网络诊断、各阶段
+`0.1...5` 秒超时和取消逻辑用于限制单次诊断；总请求时长可能包含多个阶段。
+结果通过文本 JSON 和等价 `structuredContent` 返回，不写入应用诊断历史。
+共享本地化会读取应用语言偏好，可能创建 Application Support 目录，但不为
+MCP 调用保存诊断或修改配置；可用绝对路径环境变量
+`NETWORKMANAGER_SUPPORT_DIRECTORY` 隔离验证目录。
+设置初始化错误改为在初始化完成后按需本地化，避免损坏设置触发
+`SettingsStore.shared` 与 `Loc.shared` 的递归初始化。
+同步 DNS、TCP、SNTP、SNMP 及原生 ICMP 等待改由后台 Dispatch 队列执行，
+避免少量 Swift cooperative 工作线程被占满后，后续请求与取消无法及时运行。
+CI 为 MCP 集成套件设置 `LIBDISPATCH_COOPERATIVE_POOL_STRICT=1`，覆盖受限
+工作线程下的并发、取消及 EOF 退出。
+
+包的构建工具链要求 Swift 6.2+，最低运行目标仍为 macOS 14。stdio 集成脚本
+`Scripts/test-mcp.py` 使用本机 loopback TCP/DNS fixture 检查协议交互，验证
+命令及客户端配置见 [MCP 使用指南](MCP.md)。启动脚本优先直接执行已有
+Debug/Release 产物；更新源码后需显式重建，首次缺少二进制时的自动构建可能
+超过客户端握手超时。
+
+2026-11-07 本机（arm64、Swift 6.4.2）Debug/Release `NMCP` 构建及真实
+stdio 集成套件通过，包含七项工具、资源、参数错误、loopback ICMP/TCP/DNS、
+超时、取消、并发限制、在途请求 EOF、损坏 `settings.json` 原字节保留与
+无新增应用 JSON 的独立进程回归。预编译产物经启动脚本在四秒预算内完成
+握手、工具调用和 EOF 退出；存在其他 SwiftPM 构建时也验证通过。
+`NMTest`、`NMCheck` 与 GUI Debug/Release 构建复验通过。新增 GUI 连接回归
+使用临时假客户端检查含空格及 shell 字符的参数、权限更新、错误反馈与删除
+前后核验；真实 Codex CLI 在临时配置中验证新增、更新、移除及其他注册保留。
+arm64 应用及 DMG 打包通过；完整 MCP 套件在应用复制、重命名到含空格目录、
+禁止读取源码及构建目录且禁止调用开发工具的条件下通过，验证随包 OUI/端口
+数据可用、helper 与 GUI 架构一致、原包和移动后的签名有效。DMG 挂载安装、
+替换升级、两次应用启动、两次随包 MCP 回归及卸载均通过。这些是本机验证
+结果；远端结果以本次提交的 Actions 检查为准。下方 2026-11-06 的历史记录
+不包含 MCP。
 
 ## 依赖与打包
 
@@ -90,4 +138,5 @@ Apple Developer 签名身份；发布签名与公证需由发布者通过 `CODES
 - 2026-11-05 安全扫描封存后修复四项风险：SNMP 诊断结果在进入历史前精确脱敏 community 与 SNMPv3 密码；NetBox/Zabbix 响应体受 8 MiB 上限保护；profile 新导出升级为 `NME2`/PBKDF2-SHA256（120,000 次）且保留 `NME1` 导入兼容；SSH 命令审阅拒绝 Unicode format/bidi 控制字符并在确认文本中转义不可见字符。`NMTest` 覆盖这些回归路径。
 - 2026-11-05 独立 SNMP 页面 GET/WALK/SET 现写入统一诊断历史，记录目标、版本、OID、端口及成功/失败/超时/取消状态；varbind 与历史详情使用同一秘密脱敏器。GUI 在本机 `127.0.0.1:161` 无代理时实测运行态、超时提示和历史回写均正确。
 - 2026-11-05 文档收尾后重新生成最终交付包：`dist/macos-delivery-2026-11-05-zabbix-ping-final/NETworkManager.app` 与 Universal DMG 保留 `arm64`/`x86_64`，`codesign --verify --deep --strict`、Info.plist、`hdiutil verify` 和 DMG 安装/替换/启动/卸载生命周期均通过。当前 DMG SHA-256 为 `bceff533c8e582bd95957cc359bba62d8ad7f001b4ab0b747348e437c9ad12c2`。旧 `dist/macos/NETworkManager.app`、隔离 GUI 数据、Zabbix fixture、测试日志和 SwiftPM 构建缓存已清理；最终 `.app`/DMG 与源代码保留。正式 Developer ID 签名、公证和 Gatekeeper 仍未验证。
+- 2026-11-07 清理 GitHub Actions 构建提示：checkout 与 artifact 上传升级到 Node.js 24 运行时的官方 Action 主版本；CI 架构矩阵改为 macOS 15 Intel 与 macOS 26 Apple Silicon，覆盖 x86_64/arm64 并减少一个 ARM 托管 runner 的容量提示。macOS 26 ARM runner 仍会显示 GitHub 服务端容量 notice；保留 Apple Silicon 验证时无法由仓库配置消除此提示。
 

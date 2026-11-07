@@ -755,7 +755,9 @@ private enum SNMPv3BER {
         return tlv(tag, Data(bytes))
     }
 
-    static func uint32(_ value: Int32) -> Data { withUnsafeBytes(of: UInt32(bitPattern: value).bigEndian, Data.init) }
+    static func uint32(_ value: Int32) -> Data {
+        withUnsafeBytes(of: UInt32(bitPattern: value).bigEndian) { Data($0) }
+    }
     static func null() -> Data { tlv(0x05, Data()) }
     static func octets(_ value: Data) -> Data { tlv(0x04, value) }
     static func sequence(_ value: Data) -> Data { tlv(0x30, value) }

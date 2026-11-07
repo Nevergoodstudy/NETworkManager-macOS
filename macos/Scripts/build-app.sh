@@ -18,20 +18,25 @@ esac
 
 BUILD_TMP=""
 if [[ "$ARCHITECTURE" == "universal" ]]; then
-  echo "Building NETworkManagerMac for arm64 and x86_64..."
+  echo "Building NETworkManagerMac and NMCP for arm64 and x86_64..."
   BUILD_TMP="$(mktemp -d)"
   for build_arch in arm64 x86_64; do
     swift build --package-path "$MACOS_DIR" --product NETworkManagerMac \
+      --configuration "$CONFIGURATION" --triple "$build_arch-apple-macos14"
+    swift build --package-path "$MACOS_DIR" --product NMCP \
       --configuration "$CONFIGURATION" --triple "$build_arch-apple-macos14"
     build_bin_dir="$(swift build --package-path "$MACOS_DIR" --show-bin-path \
       --product NETworkManagerMac --configuration "$CONFIGURATION" \
       --triple "$build_arch-apple-macos14")"
     cp "$build_bin_dir/NETworkManagerMac" "$BUILD_TMP/NETworkManagerMac-$build_arch"
+    cp "$build_bin_dir/NMCP" "$BUILD_TMP/NMCP-$build_arch"
     BIN_DIR="$build_bin_dir"
   done
 else
-  echo "Building NETworkManagerMac for $ARCHITECTURE..."
+  echo "Building NETworkManagerMac and NMCP for $ARCHITECTURE..."
   swift build --package-path "$MACOS_DIR" --product NETworkManagerMac \
+    --configuration "$CONFIGURATION" --triple "$ARCHITECTURE-apple-macos14"
+  swift build --package-path "$MACOS_DIR" --product NMCP \
     --configuration "$CONFIGURATION" --triple "$ARCHITECTURE-apple-macos14"
   BIN_DIR="$(swift build --package-path "$MACOS_DIR" --show-bin-path \
     --product NETworkManagerMac --configuration "$CONFIGURATION" \
@@ -39,16 +44,20 @@ else
 fi
 
 rm -rf "$APP_DIR"
-mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
+mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Helpers" "$APP_DIR/Contents/Resources"
 if [[ "$ARCHITECTURE" == "universal" ]]; then
   lipo -create "$BUILD_TMP/NETworkManagerMac-arm64" "$BUILD_TMP/NETworkManagerMac-x86_64" \
     -output "$APP_DIR/Contents/MacOS/NETworkManagerMac"
+  lipo -create "$BUILD_TMP/NMCP-arm64" "$BUILD_TMP/NMCP-x86_64" \
+    -output "$APP_DIR/Contents/Helpers/NMCP"
   rm -rf "$BUILD_TMP"
 else
   cp "$BIN_DIR/NETworkManagerMac" "$APP_DIR/Contents/MacOS/NETworkManagerMac"
+  cp "$BIN_DIR/NMCP" "$APP_DIR/Contents/Helpers/NMCP"
 fi
 cp "$MACOS_DIR/Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
 cp "$MACOS_DIR/THIRD_PARTY_NOTICES.md" "$APP_DIR/Contents/Resources/ThirdPartyNotices.md"
+cp "$MACOS_DIR/MCP.md" "$APP_DIR/Contents/Resources/MCP.md"
 
 for bundle in "$BIN_DIR"/*.bundle; do
   [[ -e "$bundle" ]] && cp -R "$bundle" "$APP_DIR/Contents/Resources/"
@@ -68,13 +77,26 @@ if command -v sips >/dev/null 2>&1 && command -v iconutil >/dev/null 2>&1 && [[ 
 fi
 
 if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
-  codesign --deep --force --options runtime --timestamp \
+  codesign --force --options runtime --timestamp \
+    --sign "$CODESIGN_IDENTITY" "$APP_DIR/Contents/Helpers/NMCP"
+  for bundle in "$APP_DIR/Contents/Resources/"*.bundle; do
+    # SwiftPM can emit a plain resource directory without an Info.plist.
+    # Its contents are sealed by the outer app; only real bundles need signing.
+    [[ -f "$bundle/Contents/Info.plist" || -f "$bundle/Info.plist" ]] || continue
+    codesign --force --options runtime --timestamp --sign "$CODESIGN_IDENTITY" "$bundle"
+  done
+  codesign --force --options runtime --timestamp \
     --sign "$CODESIGN_IDENTITY" "$APP_DIR"
 else
+  codesign --force --sign - "$APP_DIR/Contents/Helpers/NMCP"
   # An ad-hoc signature makes a locally built bundle launchable and lets
   # `codesign --verify --deep` validate the copied SwiftPM resource bundle.
   # Release builds should set CODESIGN_IDENTITY for Developer ID signing.
-  codesign --deep --force --sign - "$APP_DIR"
+  for bundle in "$APP_DIR/Contents/Resources/"*.bundle; do
+    [[ -f "$bundle/Contents/Info.plist" || -f "$bundle/Info.plist" ]] || continue
+    codesign --force --sign - "$bundle"
+  done
+  codesign --force --sign - "$APP_DIR"
 fi
 
 echo "Created $APP_DIR"

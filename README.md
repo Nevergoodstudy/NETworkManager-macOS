@@ -17,9 +17,14 @@ NETworkManager for macOS 是基于 [BornToBeRoot/NETworkManager](https://github.
 - **网络诊断**：提供 Ping、IP/端口扫描、DNS 查询、Traceroute、WHOIS、SNMP 等工具。网络扫描会显示目标范围并支持取消。
 - **远程操作**：在应用终端标签页中使用系统 OpenSSH；命令模板和确认流程帮助操作人员检查目标及命令。RDP、VNC 等使用 macOS URL 交接给已安装的客户端。
 - **凭据与配置**：秘密值保存在 macOS Keychain；凭据备份仅导出引用信息。配置文件支持 JSON 导入导出及 macOS 版本的加密导出。
-- **独立运行**：网络操作由可见的应用进程执行，不安装项目专属常驻守护进程或特权助手。
+- **MCP 接口**：应用内置 `NMCP` stdio 服务器。在“设置 → MCP”点击“连接 Codex”，即可向新建的 Codex 聊天提供本机接口、子网、端口、OUI 查询及单目标 Ping、DNS、TCP 诊断；网络诊断开关默认开启。配置与参数见 [MCP 使用指南](macos/MCP.md)。
+- **独立运行**：GUI 网络操作由可见的应用进程执行；MCP 客户端按需启动独立命令行进程。不安装项目专属常驻守护进程或特权助手。
 
 具体实现范围和平台差异请参阅 [macOS 功能状态与平台映射](macos/PORTING_STATUS.md) 和 [macOS 使用及构建指南](macos/README.md)。
+
+### 在 Codex 中使用 MCP
+
+将新构建的 `NETworkManager.app` 安装到“应用程序”后，打开应用的“设置 → MCP”，点击“连接 Codex”，再新建一个 Codex 聊天即可使用。应用会自动寻找 Codex；如未找到，可点击“选择 Codex…”选择 `Codex.app`。此流程无需终端命令、Swift 工具链或服务器 API key。MCP 已包含在应用中，但首次启动不会自动改写 Codex 配置；连接完成后可以退出 NETworkManager。调整网络诊断开关后点击“更新 Codex 连接”，移动应用后也需重新连接。
 
 ### macOS 界面概念图
 
@@ -38,7 +43,7 @@ NETworkManager for macOS 是基于 [BornToBeRoot/NETworkManager](https://github.
 
 ### 构建
 
-需要安装 Xcode Command Line Tools。创建本机 `.app`：
+需要安装带 Swift 6.2 或更高版本的 Xcode Command Line Tools。创建本机 `.app`：
 
 ```bash
 ./macos/Scripts/build-app.sh
@@ -68,9 +73,14 @@ The app is designed for network engineers and administrators who need a focused 
 - **Network diagnostics**: Use Ping, IP and port scanning, DNS lookup, Traceroute, WHOIS, SNMP, and other tools. Scans preview their target ranges and can be cancelled.
 - **Remote operations**: Use system OpenSSH in the app's terminal tabs. Command templates and review prompts help operators check the target and command. RDP and VNC are handed off to installed macOS clients through their URL schemes.
 - **Credentials and profiles**: Secret values stay in the macOS Keychain; credential backups contain references only. Profiles support JSON import/export and a macOS-specific encrypted export format.
-- **Standalone runtime**: Network operations run in the visible app process. The project does not install a persistent project-specific daemon or privileged helper.
+- **MCP interface**: The app includes the `NMCP` stdio server. Click **Settings → MCP → Connect Codex** to make local interface, subnet, port, and OUI lookups plus single-target Ping, DNS, and TCP diagnostics available in a new Codex chat. The network diagnostics switch is on by default. See the [MCP guide](macos/MCP.md) for setup and parameters.
+- **Standalone runtime**: GUI network operations run in the visible app process; an MCP client starts a separate command-line process on demand. The project does not install a persistent project-specific daemon or privileged helper.
 
 See the [macOS feature and platform status](macos/PORTING_STATUS.md) and the [macOS usage and build guide](macos/README.md) for implementation details and platform-specific limits.
+
+### Use MCP in Codex
+
+Install the newly built `NETworkManager.app` in Applications, open **Settings → MCP**, click **Connect Codex**, and start a new Codex chat. The app finds Codex automatically; if needed, click **Choose Codex…** and select `Codex.app`. This flow requires no terminal commands, Swift toolchain, or server API key. MCP is bundled with the app, and the first launch waits for you to connect before changing Codex configuration. NETworkManager can close after connection. Click **Update Codex connection** after changing the network diagnostics switch, and reconnect if you move the app.
 
 ### macOS UI concepts
 
@@ -89,7 +99,7 @@ These images were generated with the **gpt-image-2.5-flare** AI image model to i
 
 ### Build
 
-Install the Xcode Command Line Tools, then create a local `.app` bundle:
+Install Xcode Command Line Tools with Swift 6.2 or later, then create a local `.app` bundle:
 
 ```bash
 ./macos/Scripts/build-app.sh
