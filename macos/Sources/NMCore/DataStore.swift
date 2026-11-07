@@ -15,10 +15,22 @@ public final class DataStore {
     private var whoisTable: [String: String]?
 
     private var resourceDirectory: URL? {
+        // A stdio helper under Contents/Helpers is not necessarily recognized as
+        // the outer app's main bundle. Resolve its resources before Bundle.module,
+        // whose generated accessor terminates the process when no bundle is found.
+        if let executable = Bundle.main.executableURL {
+            let contents = executable.deletingLastPathComponent().deletingLastPathComponent()
+            let app = contents.deletingLastPathComponent()
+            if contents.lastPathComponent == "Contents", app.pathExtension == "app" {
+                let resourceBundle = contents.appendingPathComponent("Resources/NETworkManagerMac_NMCore.bundle")
+                if let directory = Bundle(url: resourceBundle)?.resourceURL?.appendingPathComponent("Resources"),
+                   FileManager.default.fileExists(atPath: directory.path) { return directory }
+            }
+        }
         #if SWIFT_PACKAGE
-        Bundle.module.resourceURL?.appendingPathComponent("Resources")
+        return Bundle.module.resourceURL?.appendingPathComponent("Resources")
         #else
-        Bundle.main.resourceURL?.appendingPathComponent("Resources")
+        return Bundle.main.resourceURL?.appendingPathComponent("Resources")
         #endif
     }
 

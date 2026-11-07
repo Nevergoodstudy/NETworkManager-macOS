@@ -4,7 +4,7 @@
 
 ## 简体中文
 
-`NMCP` 把 macOS 版已有的本机查询和单目标网络诊断提供给 MCP 客户端。
+macOS 应用已经内置 `NMCP`，把本机查询和单目标网络诊断提供给 MCP 客户端。
 它使用官方 [MCP Swift SDK](https://github.com/modelcontextprotocol/swift-sdk)
 `0.12.1`，通过 **stdio** 交换 JSON-RPC 消息；SDK 声明的协议版本为
 `2025-11-25`，连接时由 SDK 协商客户端支持的版本。
@@ -18,64 +18,54 @@ daemon 或特权 helper，不监听 HTTP 端口。当前 MCP 接口只提供下�
 新的诊断记录或修改设置。需要隔离本机验证时，可将
 `NETWORKMANAGER_SUPPORT_DIRECTORY` 设为一个临时目录的绝对路径。
 
-### 构建与启动
+### 在应用中连接 Codex
 
-要求 macOS 14+、Swift 6.2+，可使用包含对应 Swift 工具链的 Xcode 或
-Command Line Tools。在仓库根目录运行：
+使用本轮新构建、包含 MCP 的 `NETworkManager.app`，要求 macOS 14+。安装后的
+连接流程不需要终端命令、Swift 工具链或服务器 API key：
 
-```bash
-swift --version
-swift build --package-path macos --product NMCP
-./macos/Scripts/run-mcp.sh --help
-```
+1. 把 `NETworkManager.app` 放到“应用程序”，然后打开应用。
+2. 打开“设置 → MCP”。页面显示“已内置 MCP，可直接连接”。
+3. 保持默认开启的“启用 Ping、DNS 和 TCP 诊断”，点击“连接 Codex”。如果
+   没有自动找到 Codex，点击“选择 Codex…”选择 `Codex.app` 或 Codex 可执行
+   文件，再点击连接。
+4. 看到“连接已配置。请新建 Codex 聊天以使用 networkmanager。”后，新建一个
+   Codex 聊天。可以让 Codex“使用 networkmanager 查看本机网络接口”或
+   “计算 192.0.2.10/24 的子网”。
 
-请先完成显式构建，再连接 MCP 客户端。`run-mcp.sh` 找到已有 `NMCP` 时会
-直接用 `exec` 启动，仅在缺少可执行文件时自动构建。更新源码或依赖后，必须
-重新运行 `swift build --package-path macos --product NMCP` 才会使用新实现。
-首次自动构建可能超过客户端的初始化超时时间；构建完成后可重新连接。
-构建输出和诊断日志走 stderr，stdout 只保留 MCP 协议消息。直接在终端运行
-服务器时，它会等待客户端输入；用 `--help` 或 `--version` 检查命令即可。
+若新聊天仍未出现 `networkmanager`，退出并重新打开 Codex 后再新建聊天。
 
-启动脚本默认选择 Debug 产物。可以通过 `NMCP_CONFIGURATION=release`
-选择 Release；此时也应先构建对应配置：
+**应用默认包含 MCP；Codex 连接需要点击一次“连接 Codex”。** 首次启动应用
+不会自动修改 Codex 配置。连接按钮使用 Codex 自身的 CLI 注册随包服务器，
+客户端之后按需启动它；连接完成后可以退出 NETworkManager。
 
-```bash
-swift build --package-path macos --configuration release --product NMCP
-NMCP_CONFIGURATION=release ./macos/Scripts/run-mcp.sh --help
-```
+如果只需要本地查询，关闭网络诊断开关后点击“更新 Codex 连接”，再新建
+Codex 聊天；已有注册时按钮显示为“更新 Codex 连接”。“刷新”重新读取连接
+状态；“断开 Codex 连接”移除该注册，后续聊天不再启动此服务器。
+Codex 自己的模型账户配置与此服务器独立。
 
-客户端需在服务器环境变量中设置相同的 `NMCP_CONFIGURATION`。
-该变量只接受 `debug` 或 `release`。
+应先将应用安装到“应用程序”；从 DMG 或 App Translocation 启动时，连接
+页面会提示先安装。也可放在其他持久目录中使用。Codex 保存的是应用中服务器
+的绝对路径，移动应用后需重新连接。请保留完整 `.app`，包含服务器及资源包。
 
-默认只启用四个本地工具。需要 Ping、DNS、TCP 诊断时，在客户端启动参数中
-加入 `--allow-network`。该选项按进程生效，客户端结束 stdio 会话并关闭输入
-后服务器退出。
+### 连接其他 MCP 客户端
 
-### 连接客户端
-
-把示例中的 `/absolute/path/to/NETworkManager-macOS` 替换成当前仓库的绝对
-路径。以下命令将服务器注册到 Codex，并启用网络诊断：
-
-```bash
-codex mcp add networkmanager -- /absolute/path/to/NETworkManager-macOS/macos/Scripts/run-mcp.sh --allow-network
-```
-
-只需要本地查询时省略 `--allow-network`。注册后，在支持 MCP 的 Codex 会话
-中连接 `networkmanager`。其他使用 `mcpServers` 配置格式的客户端可采用：
+其他客户端可以直接运行应用内的服务器，无需另行构建。以下示例假设应用位于
+`/Applications/NETworkManager.app`；若位置不同，请使用实际绝对路径。
+使用 `mcpServers` 配置格式的客户端可采用：
 
 ```json
 {
   "mcpServers": {
     "networkmanager": {
-      "command": "/absolute/path/to/NETworkManager-macOS/macos/Scripts/run-mcp.sh",
+      "command": "/Applications/NETworkManager.app/Contents/Helpers/NMCP",
       "args": ["--allow-network"]
     }
   }
 }
 ```
 
-服务器不需要 API key。客户端自己的模型账户配置与此服务器独立。撤销 Codex
-注册可运行 `codex mcp remove networkmanager`。
+省略 `--allow-network` 即只开放四项本地查询。该参数按服务器进程生效；客户端
+关闭输入后服务器退出。其他客户端的配置入口和刷新方式由该客户端决定。
 
 ### 可用工具
 
@@ -134,7 +124,46 @@ MCP 取消通知；按协议，取消后的请求不保证再收到结果响应�
 可达性仍由 macOS 及网络环境决定。MCP 进程与 GUI 分别运行，关闭 GUI 不会
 结束客户端仍在使用的 MCP 会话。
 
-### 验证与排障
+### 开发者：从源码构建与连接
+
+仅在开发或使用源码版本时需要以下步骤。要求 Swift 6.2+，可使用包含对应
+Swift 工具链的 Xcode 或 Command Line Tools。在仓库根目录运行：
+
+```bash
+swift --version
+swift build --package-path macos --product NMCP
+./macos/Scripts/run-mcp.sh --help
+```
+
+请先显式构建，再连接 MCP 客户端。`run-mcp.sh` 找到已有 `NMCP` 时直接用
+`exec` 启动，仅在缺少可执行文件时自动构建。更新源码或依赖后，必须重新运行
+`swift build --package-path macos --product NMCP` 才会使用新实现。首次自动
+构建可能超过客户端初始化超时；构建完成后重新连接。构建输出和日志使用
+stderr，stdout 只保留 MCP 协议消息。直接在终端运行服务器会等待客户端输入；
+用 `--help` 或 `--version` 检查命令即可。
+
+启动脚本默认选择 Debug 产物。可通过 `NMCP_CONFIGURATION=release` 选择
+Release，此时也应先构建对应配置：
+
+```bash
+swift build --package-path macos --configuration release --product NMCP
+NMCP_CONFIGURATION=release ./macos/Scripts/run-mcp.sh --help
+```
+
+客户端需在服务器环境变量中设置相同的 `NMCP_CONFIGURATION`；该变量只接受
+`debug` 或 `release`。将下面示例中的仓库路径替换成实际绝对路径，可以连接
+源码版服务器：
+
+```bash
+codex mcp add networkmanager -- /absolute/path/to/NETworkManager-macOS/macos/Scripts/run-mcp.sh --allow-network
+```
+
+直接启动命令行产品时默认仅开放四个本地工具；加入 `--allow-network` 才开放
+Ping、DNS、TCP。撤销 CLI 注册可运行 `codex mcp remove networkmanager`。
+应用打包脚本会构建并复制 `Contents/Helpers/NMCP` 及所需资源，因此正式应用
+连接流程不依赖仓库路径、启动脚本或开发工具链。
+
+### 开发者：验证与排障
 
 ```bash
 python3 ./macos/Scripts/test-mcp.py \
@@ -164,14 +193,16 @@ CI 还通过 `LIBDISPATCH_COOPERATIVE_POOL_STRICT=1` 限制 Swift cooperative
 工作线程，运行同一集成套件。同步 socket 等待使用后台 Dispatch 队列，避免
 并发 DNS、TCP 或 ICMP 诊断阻塞后续请求与取消通知。
 
-若连接时没有工具，先检查客户端日志、绝对路径和脚本执行权限；若只有四个
-工具，检查 `--allow-network`。移动构建产物时，应一并保留
+应用连接失败时，先在“设置 → MCP”刷新状态，检查 Codex 选择和应用是否仍在
+连接时的路径；需要时重新连接并新建 Codex 聊天。若只有四个工具，开启网络
+诊断并更新连接。源码方式则检查客户端日志、绝对路径、脚本执行权限和
+`--allow-network`。移动构建产物时，应一并保留
 `NETworkManagerMac_NMCore.bundle` 等 SwiftPM 资源包；单独复制 `NMCP` 会
 丢失 OUI/端口参考数据。用仓库内启动脚本可以保留正确的资源布局。
 
 ## English
 
-`NMCP` exposes the macOS edition's existing local lookups and single-target
+The macOS app includes `NMCP`, which exposes local lookups and single-target
 network diagnostics to MCP clients. It uses the official
 [MCP Swift SDK](https://github.com/modelcontextprotocol/swift-sdk) pinned to
 `0.12.1` over **stdio**. The SDK declares protocol version `2025-11-25` and
@@ -187,42 +218,59 @@ new diagnostic records or change settings for MCP calls. Set
 `NETWORKMANAGER_SUPPORT_DIRECTORY` to an absolute temporary directory when
 running isolated local checks.
 
-### Build and connect
+### Connect Codex from the app
 
-Use macOS 14+ and Swift 6.2+ from a suitable Xcode or Command Line Tools
-installation. Run from the repository root:
+Use a newly built `NETworkManager.app` that includes MCP, on macOS 14 or later.
+The installed app needs no terminal commands, Swift toolchain, or server API key:
 
-```bash
-swift build --package-path macos --product NMCP
-./macos/Scripts/run-mcp.sh --help
-codex mcp add networkmanager -- /absolute/path/to/NETworkManager-macOS/macos/Scripts/run-mcp.sh --allow-network
+1. Install `NETworkManager.app` in Applications and open it.
+2. Open **Settings → MCP**. The section shows **MCP included and ready**.
+3. Leave **Include Ping, DNS, and TCP diagnostics** on and click **Connect Codex**.
+   If Codex is not found automatically, click **Choose Codex…**, select
+   `Codex.app` or a Codex executable, and connect.
+4. After **Configured. Open a new Codex chat to use networkmanager.** appears,
+   start a new Codex chat. Try asking Codex to use `networkmanager` to list local
+   interfaces or calculate the subnet for `192.0.2.10/24`.
+
+If a new chat still does not expose `networkmanager`, quit and reopen Codex,
+then start a new chat.
+
+**MCP is bundled by default; Codex needs one click on Connect Codex.** First launch
+does not change Codex configuration automatically. The button uses Codex's own
+CLI to register the bundled server. Codex then starts it as needed, so
+NETworkManager can close after connecting.
+
+For local lookups only, turn off the diagnostics switch, click **Update Codex
+connection**, and start a new chat. An existing registration uses the update
+button label. **Refresh** rereads connection status; **Disconnect
+Codex** removes this registration so future chats do not start the server.
+The client's own model account configuration remains separate.
+
+Install the app before connecting. A launch from a DMG or App Translocation
+prompts you to install in Applications first. Other persistent directories also
+work. Codex stores the server's absolute path, so reconnect after moving the app.
+Keep the entire `.app`, including its server and resource bundles, together.
+
+### Connect another MCP client
+
+Other clients can directly run the bundled executable without building it.
+For clients using `mcpServers`, use this configuration and adjust the absolute
+path for your installation:
+
+```json
+{
+  "mcpServers": {
+    "networkmanager": {
+      "command": "/Applications/NETworkManager.app/Contents/Helpers/NMCP",
+      "args": ["--allow-network"]
+    }
+  }
+}
 ```
 
-Replace the example path with this checkout's absolute path. Omit
-`--allow-network` to expose only the four local tools. The generic client JSON
-configuration in the Chinese section above uses the same command and arguments.
-No server API key is required. Use `codex mcp remove networkmanager` to remove
-the registration.
-
-Build explicitly before connecting an MCP client. The wrapper starts an existing
-`NMCP` directly with `exec` and builds automatically only when the executable
-is absent. After changing source or dependencies, run
-`swift build --package-path macos --product NMCP` again to use the updated
-implementation. A first automatic build can exceed the client's initialization
-timeout; reconnect after the build completes. Build output and logs use stderr;
-stdout contains only MCP messages. Starting it in a terminal waits for a client,
-so use `--help` or `--version` for a command check. Closing the client's input
-ends the server process.
-
-The wrapper selects Debug by default. To use Release, first build that
-configuration and set the same environment variable in the client:
-
-```bash
-swift build --package-path macos --configuration release --product NMCP
-NMCP_CONFIGURATION=release ./macos/Scripts/run-mcp.sh --help
-```
-
-`NMCP_CONFIGURATION` accepts only `debug` or `release`.
+Omit `--allow-network` for the four local tools only. The argument applies per
+server process; closing the client's input ends the process. The other client's
+configuration and refresh controls depend on that client.
 
 ### Tools and result contract
 
@@ -272,7 +320,42 @@ access, or inventory/profile writes. Network tools reuse `NMCore` diagnostics
 and cancellation; macOS permissions and target reachability still apply.
 Closing the GUI does not terminate an MCP process owned by a connected client.
 
-### Verify and troubleshoot
+### Developers: build and connect from source
+
+These steps are only needed for development or a source checkout. Use Swift 6.2+
+from a suitable Xcode or Command Line Tools installation. Run from the repository
+root:
+
+```bash
+swift build --package-path macos --product NMCP
+./macos/Scripts/run-mcp.sh --help
+codex mcp add networkmanager -- /absolute/path/to/NETworkManager-macOS/macos/Scripts/run-mcp.sh --allow-network
+```
+
+Replace the repository path with this checkout's actual absolute path. Build
+explicitly before connecting. The wrapper directly executes an existing `NMCP`
+and builds automatically only when the executable is absent. After changing
+source or dependencies, run `swift build --package-path macos --product NMCP`
+again. A first automatic build can exceed client initialization timeouts;
+reconnect after it finishes. Build output and logs use stderr; stdout contains
+only MCP messages. A terminal launch waits for client input, so use `--help` or
+`--version` to check the command.
+
+The wrapper selects Debug by default. To use Release, build that configuration
+first and set the same environment variable in the client:
+
+```bash
+swift build --package-path macos --configuration release --product NMCP
+NMCP_CONFIGURATION=release ./macos/Scripts/run-mcp.sh --help
+```
+
+`NMCP_CONFIGURATION` accepts only `debug` or `release`. Raw CLI launches expose
+four local tools unless `--allow-network` is passed. Remove a CLI registration
+with `codex mcp remove networkmanager`. App packaging builds and copies the
+helper to `Contents/Helpers/NMCP` with its resources; the installed GUI connection
+does not depend on this checkout, wrapper, or developer toolchain.
+
+### Developers: verify and troubleshoot
 
 ```bash
 python3 ./macos/Scripts/test-mcp.py \
@@ -306,8 +389,11 @@ Swift's cooperative workers. Synchronous socket waits use a background Dispatch
 queue so concurrent DNS, TCP, and ICMP diagnostics leave workers available for
 new requests and cancellation notifications.
 
-Check client logs, the absolute command path, and executable permissions if the
-server cannot connect. If only four tools appear, check `--allow-network`.
+If the app cannot connect, refresh **Settings → MCP**, check the selected Codex
+and the app's location, reconnect if needed, and open a new Codex chat. Enable
+the diagnostics switch and update the connection if only four tools appear.
+For source launches, check client logs, the absolute command path, executable
+permissions, and `--allow-network`.
 Keep the SwiftPM resource bundles, including `NETworkManagerMac_NMCore.bundle`,
 beside `NMCP` when moving build output. Copying the executable alone loses the
 OUI and port data; using the checkout's wrapper preserves the resource layout.

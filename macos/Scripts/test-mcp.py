@@ -6,14 +6,18 @@ or writes NETworkManager user data: each subprocess gets a temporary application
 support directory. Build first, then pass --server /path/to/NMCP. Optionally pass
 --launcher /path/to/run-mcp.sh to check the normal client entry point too;
 NMCP_CONFIGURATION is inherited so it can select the prebuilt configuration.
+Pass --app /path/to/NETworkManager.app instead to verify the signed, relocated
+package and exercise its built-in helper without access to the source checkout.
 """
 
 import argparse
 import collections
+import contextlib
 import json
 import os
 from pathlib import Path
 import queue
+import shlex
 import signal
 import socket
 import struct
@@ -561,25 +565,120 @@ def check_launcher(launcher, deadline):
     print("PASS: warm launcher without SwiftPM, handshake within 4 seconds, offline inventory, subnet, protocol stdout, EOF, CLI")
 
 
+def package_command(arguments, deadline):
+    result = subprocess.run([str(argument) for argument in arguments], capture_output=True, text=True,
+                            timeout=deadline.remaining(8))
+    check(result.returncode == 0, "Packaged MCP check failed: " + shlex.join(map(str, arguments)) + "\n" +
+          (result.stderr or result.stdout).strip()[-4096:])
+    return result.stdout.strip()
+
+
+def verify_packaged_signatures(app, deadline):
+    helper = app / "Contents/Helpers/NMCP"
+    executable = app / "Contents/MacOS/NETworkManagerMac"
+    for binary in [helper, executable]:
+        check(binary.is_file() and os.access(binary, os.X_OK), "App package is missing an executable: " + str(binary))
+        check(binary.resolve().is_relative_to(app), "Packaged executable points outside the app: " + str(binary))
+    package_command(["/usr/bin/codesign", "--verify", "--deep", "--strict", app], deadline)
+    package_command(["/usr/bin/codesign", "--verify", "--strict", helper], deadline)
+    app_architectures = set(package_command(["/usr/bin/lipo", "-archs", executable], deadline).split())
+    helper_architectures = set(package_command(["/usr/bin/lipo", "-archs", helper], deadline).split())
+    check(app_architectures and helper_architectures == app_architectures,
+          "Packaged MCP helper architectures do not match the app: helper=%s app=%s" %
+          (sorted(helper_architectures), sorted(app_architectures)))
+
+
+@contextlib.contextmanager
+def relocated_packaged_server(app, deadline):
+    """Move a signed copy, then deny the helper access to build/source paths."""
+    check(sys.platform == "darwin", "--app requires macOS package and code-signature validation")
+    for tool in ["/usr/bin/ditto", "/usr/bin/codesign", "/usr/bin/lipo", "/usr/bin/sandbox-exec"]:
+        check(os.access(tool, os.X_OK), "--app requires the macOS tool " + tool)
+    verify_packaged_signatures(app, deadline)
+    with tempfile.TemporaryDirectory(prefix="nmcp-relocated-package-") as directory:
+        root = Path(directory).resolve()
+        staging = root / "Downloaded package"
+        destination = root / "Applications with spaces"
+        staging.mkdir()
+        destination.mkdir()
+        staged_app = staging / "NETworkManager.app"
+        moved_app = destination / "NETworkManager.app"
+        package_command(["/usr/bin/ditto", app, staged_app], deadline)
+        staged_app.rename(moved_app)
+        verify_packaged_signatures(moved_app, deadline)
+
+        # Absolute resource-accessor fallbacks can otherwise find the original
+        # SwiftPM build even when the copied helper has no packaged resources.
+        # Keep the checkout in place for concurrent jobs but forbid this child
+        # from reading it, and prove that the profile actually blocks that read.
+        source_root = Path(__file__).resolve().parents[2]
+        blocked_paths = {str(source_root), str(app)}
+        profile = root / "deny-development-files.sb"
+        profile.write_text("(version 1)\n(allow default)\n" + "".join(
+            "(deny file-read* (subpath " + json.dumps(path) + "))\n" for path in sorted(blocked_paths)))
+        package_command(["/usr/bin/sandbox-exec", "-f", profile, "/usr/bin/true"], deadline)
+        blocked_read = subprocess.run(["/usr/bin/sandbox-exec", "-f", str(profile), "/bin/cat", str(Path(__file__).resolve())],
+                                      capture_output=True, timeout=deadline.remaining(2))
+        check(blocked_read.returncode != 0 and not blocked_read.stdout,
+              "Packaged MCP isolation did not block access to the source checkout")
+
+        working_directory = root / "Empty working directory"
+        guards = root / "Build tool guards"
+        working_directory.mkdir()
+        guards.mkdir()
+        invoked = root / "unexpected-build-tool.txt"
+        for name in ["swift", "swiftc", "xcrun", "xcodebuild"]:
+            stub = guards / name
+            stub.write_text("#!/bin/sh\nprintf '%s\\n' \"$0\" >> " + shlex.quote(str(invoked)) +
+                            "\nprintf '%s\\n' 'Installed MCP must not invoke developer build tools' >&2\nexit 91\n")
+            stub.chmod(0o755)
+        helper = moved_app / "Contents/Helpers/NMCP"
+        wrapper = root / "installed-mcp"
+        wrapper.write_text("#!/bin/sh\nPATH=" + shlex.quote(str(guards) + ":/usr/bin:/bin:/usr/sbin:/sbin") +
+                           "\nexport PATH\ncd " + shlex.quote(str(working_directory)) + " || exit 92\nexec " +
+                           shlex.join(["/usr/bin/sandbox-exec", "-f", str(profile), str(helper)]) + " \"$@\"\n")
+        wrapper.chmod(0o755)
+        yield wrapper
+        check(not invoked.exists(), "Installed MCP invoked a developer build tool: " +
+              (invoked.read_text().strip() if invoked.exists() else ""))
+        print("PASS: packaged helper, matching architectures, original and relocated signatures, moved app with spaces, "
+              "source/build reads denied, no developer tools")
+
+
+def check_server(server, deadline, launcher=None):
+    check_offline(server, deadline)
+    check_network(server, deadline)
+    check_corrupt_preferences(server, deadline)
+    check_versions_and_cli(server, deadline)
+    if launcher:
+        check_launcher(launcher, deadline)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--server", required=True, type=Path, help="Path to the prebuilt NMCP executable")
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--server", type=Path, help="Path to the prebuilt NMCP executable")
+    source.add_argument("--app", type=Path, help="Verify and relocate a signed app, then test Contents/Helpers/NMCP without source/build access")
     parser.add_argument("--launcher", type=Path, help="Optional run-mcp.sh entry point; its selected configuration must already be built")
     arguments = parser.parse_args()
-    server = arguments.server.expanduser().resolve()
-    if not server.is_file() or not os.access(server, os.X_OK):
+    server = arguments.server.expanduser().resolve() if arguments.server else None
+    app = arguments.app.expanduser().resolve() if arguments.app else None
+    if server and (not server.is_file() or not os.access(server, os.X_OK)):
         parser.error("--server must point to a built executable")
+    if app and (not app.is_dir() or app.suffix != ".app"):
+        parser.error("--app must point to a built .app bundle")
+    if app and arguments.launcher:
+        parser.error("--launcher is only supported with --server; --app tests its bundled helper directly")
     launcher = arguments.launcher.expanduser().resolve() if arguments.launcher else None
     if launcher and (not launcher.is_file() or not os.access(launcher, os.X_OK)):
         parser.error("--launcher must point to an executable launcher script")
     deadline = Deadline(30)
     try:
-        check_offline(server, deadline)
-        check_network(server, deadline)
-        check_corrupt_preferences(server, deadline)
-        check_versions_and_cli(server, deadline)
-        if launcher:
-            check_launcher(launcher, deadline)
+        if app:
+            with relocated_packaged_server(app, deadline) as installed_server:
+                check_server(installed_server, deadline)
+        else:
+            check_server(server, deadline, launcher)
     except (CheckFailure, OSError, subprocess.TimeoutExpired, ValueError, KeyError) as error:
         print("MCP integration FAILED: " + str(error), file=sys.stderr)
         return 1

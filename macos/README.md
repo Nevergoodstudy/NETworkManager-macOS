@@ -4,9 +4,19 @@ This directory contains the native macOS edition of NETworkManager. The
 Windows application in Source/ remains the Windows/WPF product; the macOS
 edition is a Swift Package built with SwiftUI and AppKit.
 
-The optional `NMCP` command-line product exposes local lookups and selected
-single-target diagnostics through MCP over stdio. See [MCP.md](MCP.md) for
-client configuration, tools, resources, and integration checks.
+The app includes `NMCP`, which exposes local lookups and selected single-target
+diagnostics through MCP over stdio. Install `NETworkManager.app` in Applications,
+open **Settings → MCP**, click **Connect Codex**, then start a new Codex chat.
+If Codex is not found automatically, **Choose Codex…** lets you select
+`Codex.app` or its executable. No terminal setup or Swift toolchain is required
+for this connection. See [MCP.md](MCP.md) for other clients, tools, resources,
+and developer checks.
+
+MCP is bundled by default; connecting Codex is a one-time user action. The
+**Include Ping, DNS, and TCP diagnostics** switch starts on. Changing it requires
+**Update Codex connection**; **Disconnect Codex** removes the registration.
+NETworkManager may close after connecting, and moving the app requires
+reconnecting so Codex can use its new path.
 
 The macOS target requires macOS 14 or later. It uses the existing OUI, ports,
 and WHOIS XML data from macos/Sources/NMCore/Resources/ and stores user data
@@ -45,7 +55,12 @@ To run the checks against optimized Release modules:
 `NMTest` uses `@testable import NMCore`, so Release builds must explicitly enable
 testability for the test invocation. The distributable app does not need that flag.
 
-Build the optional MCP executable before connecting a client:
+The app packaging scripts build and bundle `NMCP` at
+`NETworkManager.app/Contents/Helpers/NMCP`, together with its SwiftPM resource
+bundles. The GUI connection flow uses this bundled executable.
+
+For MCP development directly from a source checkout, build the standalone
+product before connecting a client:
 
     swift build --package-path macos --product NMCP
     ./macos/Scripts/run-mcp.sh --help
@@ -54,7 +69,7 @@ The launcher directly executes an existing binary, so rebuild after changing
 source or dependencies. It builds automatically only when the executable is
 absent; that first build can exceed a client's initialization timeout.
 `NMCP_CONFIGURATION` selects `debug` (default) or `release`; build the matching
-configuration before using it. See [MCP.md](MCP.md) for client setup.
+configuration before using it. See the developer sections of [MCP.md](MCP.md).
 
 ## Runtime model
 
@@ -64,11 +79,13 @@ short-lived macOS system commands when needed. Closing the last app window
 exits NETworkManager. macOS process tools will show the app while it is open;
 the app does not hide itself.
 
-An MCP client may separately start the optional `NMCP` stdio process using
-`Scripts/run-mcp.sh`. It does not require an open GUI and exits when the client
-closes its input. Only local queries are enabled by default;
-`--allow-network` adds single-target Ping, DNS, and TCP diagnostics. This
-client-owned process does not install a background service. See [MCP.md](MCP.md).
+An MCP client separately starts the bundled `Contents/Helpers/NMCP` stdio
+process. It does not require an open GUI and exits when the client closes its
+input. The GUI connects with single-target Ping, DNS, and TCP diagnostics
+enabled by default; turn the switch off and update the connection to expose
+only the four local tools. Direct command-line launches expose local queries
+unless `--allow-network` is passed. This client-owned process does not install
+a background service. See [MCP.md](MCP.md).
 
 The optional **Start with macOS** setting registers the visible app with
 macOS's system-managed `SMAppService.mainApp` login item. It is off by default,
@@ -193,7 +210,7 @@ The complete tool-by-tool implementation and limitation matrix is in
 | Connections/listeners/neighbors | Structured parsing of lsof and arp output |
 | DNS, WHOIS, SNTP | Native UDP/TCP clients |
 | Network interface | getifaddrs |
-| MCP client integration | Optional `NMCP` stdio executable; four local tools, three opt-in network diagnostics, and two static resources |
+| MCP client integration | Bundled `NMCP` stdio executable with Settings → MCP → Connect Codex; four local tools, three network diagnostics enabled by the GUI switch by default, and two static resources |
 | Hosts editor | /etc/hosts with an administrator authorization prompt |
 | PowerShell console | /bin/sh, Terminal.app, and user-selected command execution |
 | PuTTY | In-app SwiftTerm sessions using system OpenSSH for SSH; Terminal.app for Telnet |

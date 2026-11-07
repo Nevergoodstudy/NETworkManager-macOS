@@ -36,13 +36,22 @@ Windows 对应的公开 API，某些高级选项仍受平台限制。
 | Listeners | Native + system replacement | 从 `lsof` 结构化筛选 LISTEN socket。 |
 | Neighbor Table | Native + system replacement | `arp -an` 结构化解析地址、MAC、接口和状态。 |
 | Profiles | Native | Application Support JSON、分组、Windows JSON/XML 导入转换和 AES-GCM 加密导出；新导出使用带随机 salt 与 120,000 次 PBKDF2-HMAC-SHA256 的 macOS `NME2` 容器，旧 `NME1` 仍可导入，与 Windows 加密容器不保证二进制兼容。 |
-| MCP 客户端集成 | Native CLI | 可选 `NMCP` 使用官方 Swift SDK 0.12.1，通过 stdio 提供接口枚举、IPv4 子网、端口及 OUI 查询；`--allow-network` 额外启用单目标 Ping、DNS 和 TCP。另提供两项静态资源；不开放资产/配置写入、Keychain、SSH 或任意 shell。详见 [MCP.md](MCP.md)。 |
+| MCP 客户端集成 | Native + bundled CLI | 应用内置 `NMCP`，通过“设置 → MCP → 连接 Codex”注册。提供接口枚举、IPv4 子网、端口及 OUI 查询，GUI 网络诊断开关默认开启，额外提供单目标 Ping、DNS 和 TCP；另有两项静态资源。使用官方 Swift SDK 0.12.1 与 stdio；不开放资产/配置写入、Keychain、SSH 或任意 shell。详见 [MCP.md](MCP.md)。 |
 
 ## MCP 实现范围（2026-11-07）
 
-MCP 是客户端按需启动的独立命令行产品，GUI 无需运行，也不安装 daemon、
-helper 或 HTTP 服务。默认四项本地工具，网络诊断必须通过进程参数
-`--allow-network` 启用。参数校验、最多四个并发网络诊断、各阶段
+应用打包默认包含 `Contents/Helpers/NMCP` 与所需 SwiftPM 资源包。用户把应用
+安装到“应用程序”，在“设置 → MCP”点击“连接 Codex”，再新建 Codex 聊天即可
+使用；不需要终端命令或 Swift 工具链。应用自动寻找 Codex，找不到时可通过
+“选择 Codex…”选择 `Codex.app` 或可执行文件。网络诊断开关默认开启；改变后
+点击“更新 Codex 连接”，“断开 Codex 连接”可撤销注册。首次打开应用不会
+自动修改客户端配置。移动应用后需重新连接；从 DMG 或 App Translocation
+运行时会先提示安装到“应用程序”。本机已在安装后的应用设置页点击更新连接，
+界面确认配置完成；Codex 注册指向应用内 helper，网络诊断参数已启用。
+
+MCP 是客户端按需启动的独立命令行进程，GUI 无需保持运行，也不安装 daemon、
+特权 helper 或 HTTP 服务。GUI 根据网络诊断开关添加 `--allow-network`；直接
+启动命令行产品时默认仅四项本地工具。参数校验、最多四个并发网络诊断、各阶段
 `0.1...5` 秒超时和取消逻辑用于限制单次诊断；总请求时长可能包含多个阶段。
 结果通过文本 JSON 和等价 `structuredContent` 返回，不写入应用诊断历史。
 共享本地化会读取应用语言偏好，可能创建 Application Support 目录，但不为
@@ -66,8 +75,15 @@ stdio 集成套件通过，包含七项工具、资源、参数错误、loopback
 超时、取消、并发限制、在途请求 EOF、损坏 `settings.json` 原字节保留与
 无新增应用 JSON 的独立进程回归。预编译产物经启动脚本在四秒预算内完成
 握手、工具调用和 EOF 退出；存在其他 SwiftPM 构建时也验证通过。
-`NMTest`、`NMCheck` 与 GUI Debug 构建复验通过。这些是本机验证结果，
-不代表其他 macOS/CPU 或远端 CI 已通过。下方 2026-11-06 的历史记录不包含 MCP。
+`NMTest`、`NMCheck` 与 GUI Debug/Release 构建复验通过。新增 GUI 连接回归
+使用临时假客户端检查含空格及 shell 字符的参数、权限更新、错误反馈与删除
+前后核验；真实 Codex CLI 在临时配置中验证新增、更新、移除及其他注册保留。
+arm64 应用及 DMG 打包通过；完整 MCP 套件在应用复制、重命名到含空格目录、
+禁止读取源码及构建目录且禁止调用开发工具的条件下通过，验证随包 OUI/端口
+数据可用、helper 与 GUI 架构一致、原包和移动后的签名有效。DMG 挂载安装、
+替换升级、两次应用启动、两次随包 MCP 回归及卸载均通过。这些是本机验证
+结果；远端结果以本次提交的 Actions 检查为准。下方 2026-11-06 的历史记录
+不包含 MCP。
 
 ## 依赖与打包
 

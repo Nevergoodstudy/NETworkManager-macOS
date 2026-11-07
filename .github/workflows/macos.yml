@@ -74,7 +74,14 @@ jobs:
           plutil -lint "$app/Contents/Info.plist"
           hdiutil verify "$dmg"
 
+      - name: Test bundled MCP after app relocation
+        env:
+          LIBDISPATCH_COOPERATIVE_POOL_STRICT: "1"
+        run: python3 macos/Scripts/test-mcp.py --app dist/macos/NETworkManager.app
+
       - name: Test DMG install, upgrade, and uninstall
+        env:
+          LIBDISPATCH_COOPERATIVE_POOL_STRICT: "1"
         run: ./macos/Scripts/verify-dmg-lifecycle.sh "$(find dist/macos -maxdepth 1 -type f -name '*.dmg' -print -quit)"
 
       - name: Upload ad-hoc app and DMG
@@ -165,6 +172,11 @@ jobs:
 
       - name: Build, notarize, and validate
         run: ./macos/Scripts/release-dmg.sh
+
+      - name: Test notarized app MCP helper after relocation
+        env:
+          LIBDISPATCH_COOPERATIVE_POOL_STRICT: "1"
+        run: python3 macos/Scripts/test-mcp.py --app dist/macos/NETworkManager.app
 
       - name: Create or update draft GitHub Release
         shell: bash
