@@ -80,7 +80,10 @@ if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
   codesign --force --options runtime --timestamp \
     --sign "$CODESIGN_IDENTITY" "$APP_DIR/Contents/Helpers/NMCP"
   for bundle in "$APP_DIR/Contents/Resources/"*.bundle; do
-    [[ ! -e "$bundle" ]] || codesign --force --options runtime --timestamp --sign "$CODESIGN_IDENTITY" "$bundle"
+    # SwiftPM can emit a plain resource directory without an Info.plist.
+    # Its contents are sealed by the outer app; only real bundles need signing.
+    [[ -f "$bundle/Contents/Info.plist" || -f "$bundle/Info.plist" ]] || continue
+    codesign --force --options runtime --timestamp --sign "$CODESIGN_IDENTITY" "$bundle"
   done
   codesign --force --options runtime --timestamp \
     --sign "$CODESIGN_IDENTITY" "$APP_DIR"
@@ -90,7 +93,8 @@ else
   # `codesign --verify --deep` validate the copied SwiftPM resource bundle.
   # Release builds should set CODESIGN_IDENTITY for Developer ID signing.
   for bundle in "$APP_DIR/Contents/Resources/"*.bundle; do
-    [[ ! -e "$bundle" ]] || codesign --force --sign - "$bundle"
+    [[ -f "$bundle/Contents/Info.plist" || -f "$bundle/Info.plist" ]] || continue
+    codesign --force --sign - "$bundle"
   done
   codesign --force --sign - "$APP_DIR"
 fi
