@@ -15,17 +15,20 @@ public final class DataStore {
     private var whoisTable: [String: String]?
 
     private var resourceDirectory: URL? {
-        // A stdio helper under Contents/Helpers is not necessarily recognized as
-        // the outer app's main bundle. Resolve its resources before Bundle.module,
-        // whose generated accessor terminates the process when no bundle is found.
-        if let executable = Bundle.main.executableURL {
-            let contents = executable.deletingLastPathComponent().deletingLastPathComponent()
-            let app = contents.deletingLastPathComponent()
-            if contents.lastPathComponent == "Contents", app.pathExtension == "app" {
-                let resourceBundle = contents.appendingPathComponent("Resources/NETworkManagerMac_NMCore.bundle")
-                if let directory = Bundle(url: resourceBundle)?.resourceURL?.appendingPathComponent("Resources"),
-                   FileManager.default.fileExists(atPath: directory.path) { return directory }
+        // A stdio helper's main bundle can be Contents/Helpers with no
+        // executableURL. Locate the enclosing app before Bundle.module, whose
+        // generated accessor terminates the process when no bundle is found.
+        var directory = Bundle.main.bundleURL
+        for _ in 0..<3 {
+            if directory.pathExtension.lowercased() == "app" {
+                let resourceBundle = directory.appendingPathComponent("Contents/Resources/NETworkManagerMac_NMCore.bundle")
+                // Xcode emits a real bundle; native SwiftPM emits a plain
+                // directory. Neither needs Bundle initialization to read XML.
+                return ["Contents/Resources/Resources", "Resources"]
+                    .map { resourceBundle.appendingPathComponent($0) }
+                    .first { FileManager.default.fileExists(atPath: $0.path) }
             }
+            directory.deleteLastPathComponent()
         }
         #if SWIFT_PACKAGE
         return Bundle.module.resourceURL?.appendingPathComponent("Resources")
