@@ -55,6 +55,7 @@ jobs:
       - name: Test MCP over stdio
         env:
           NMCP_CONFIGURATION: release
+          LIBDISPATCH_COOPERATIVE_POOL_STRICT: "1"
         run: python3 macos/Scripts/test-mcp.py --server "$(swift build --package-path macos -c release --show-bin-path)/NMCP" --launcher macos/Scripts/run-mcp.sh
 
       - name: Package app and launch GUI smoke test

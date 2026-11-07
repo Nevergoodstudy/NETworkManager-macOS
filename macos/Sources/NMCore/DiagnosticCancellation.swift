@@ -36,3 +36,13 @@ public final class DiagnosticCancellation: @unchecked Sendable {
 func waitForSocketReadiness(fd: Int32, events: Int16, timeout: TimeInterval, cancellation: DiagnosticCancellation?) -> Int16? {
     (cancellation ?? DiagnosticCancellation()).waitForReadiness(fd: fd, events: events, timeout: timeout)
 }
+
+/// Socket polling must not occupy Swift's cooperative workers: callers need
+/// those workers to receive more requests and propagate cancellation.
+func runBlockingDiagnostic<Result: Sendable>(_ operation: @escaping @Sendable () -> Result) async -> Result {
+    await withCheckedContinuation { continuation in
+        DispatchQueue.global(qos: .userInitiated).async {
+            continuation.resume(returning: operation())
+        }
+    }
+}

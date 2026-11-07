@@ -160,6 +160,10 @@ NMCP_CONFIGURATION=release python3 ./macos/Scripts/test-mcp.py \
 开发时也应运行 `NMCheck` / `NMTest` 检查共享核心的回归，见
 [构建指南](README.md)。
 
+CI 还通过 `LIBDISPATCH_COOPERATIVE_POOL_STRICT=1` 限制 Swift cooperative
+工作线程，运行同一集成套件。同步 socket 等待使用后台 Dispatch 队列，避免
+并发 DNS、TCP 或 ICMP 诊断阻塞后续请求与取消通知。
+
 若连接时没有工具，先检查客户端日志、绝对路径和脚本执行权限；若只有四个
 工具，检查 `--allow-network`。移动构建产物时，应一并保留
 `NETworkManagerMac_NMCore.bundle` 等 SwiftPM 资源包；单独复制 `NMCP` 会
@@ -296,6 +300,11 @@ NMCP_CONFIGURATION=release python3 ./macos/Scripts/test-mcp.py \
 
 Run `NMCheck` and `NMTest` for shared-core regression checks as described in
 [README.md](README.md).
+
+CI also runs the suite with `LIBDISPATCH_COOPERATIVE_POOL_STRICT=1` to constrain
+Swift's cooperative workers. Synchronous socket waits use a background Dispatch
+queue so concurrent DNS, TCP, and ICMP diagnostics leave workers available for
+new requests and cancellation notifications.
 
 Check client logs, the absolute command path, and executable permissions if the
 server cannot connect. If only four tools appear, check `--allow-network`.

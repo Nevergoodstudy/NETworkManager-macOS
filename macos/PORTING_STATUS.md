@@ -50,6 +50,10 @@ MCP 调用保存诊断或修改配置；可用绝对路径环境变量
 `NETWORKMANAGER_SUPPORT_DIRECTORY` 隔离验证目录。
 设置初始化错误改为在初始化完成后按需本地化，避免损坏设置触发
 `SettingsStore.shared` 与 `Loc.shared` 的递归初始化。
+同步 DNS、TCP、SNTP、SNMP 及原生 ICMP 等待改由后台 Dispatch 队列执行，
+避免少量 Swift cooperative 工作线程被占满后，后续请求与取消无法及时运行。
+CI 为 MCP 集成套件设置 `LIBDISPATCH_COOPERATIVE_POOL_STRICT=1`，覆盖受限
+工作线程下的并发、取消及 EOF 退出。
 
 包的构建工具链要求 Swift 6.2+，最低运行目标仍为 macOS 14。stdio 集成脚本
 `Scripts/test-mcp.py` 使用本机 loopback TCP/DNS fixture 检查协议交互，验证

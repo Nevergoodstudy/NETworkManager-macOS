@@ -197,6 +197,31 @@ class MCPProcess:
         check(("result" in message) != ("error" in message), "Response must contain result or error")
         return message
 
+    def response_snapshot(self, identifiers):
+        """Describe replies already available when an integration check fails."""
+        transport = "open"
+        while True:
+            try:
+                kind, value = self.messages.get_nowait()
+            except queue.Empty:
+                break
+            if kind == "message" and "id" in value:
+                self.pending[value["id"]] = value
+            elif kind != "message":
+                transport = kind + (": " + str(value) if value is not None else "")
+        responses = {}
+        for identifier in identifiers:
+            message = self.pending.get(identifier)
+            if message is None:
+                responses[str(identifier)] = "pending"
+            elif "error" in message:
+                responses[str(identifier)] = {"rpcError": message["error"]}
+            else:
+                payload = message.get("result", {}).get("structuredContent", {})
+                responses[str(identifier)] = {"status": payload.get("status"), "error": payload.get("error")}
+        return json.dumps({"transport": transport, "processExitCode": self.process.poll(), "responses": responses},
+                          separators=(",", ":"))
+
     def request(self, method, params=None, timeout=4):
         return self.response(self.begin(method, params), timeout)
 
@@ -300,11 +325,12 @@ class DNSFixture:
 
     def wait_for_queries(self, count, deadline):
         end = time.monotonic() + deadline.remaining(2)
-        for _ in range(count):
+        for received in range(count):
             try:
                 self.queries.get(timeout=max(0.001, end - time.monotonic()))
             except queue.Empty:
-                raise CheckFailure("Concurrent DNS requests did not reach the loopback fixture")
+                raise CheckFailure("Concurrent DNS requests did not reach the loopback fixture: "
+                                   "received %d of %d UDP queries within two seconds" % (received, count))
 
 
 def check_offline(server, deadline):
@@ -444,7 +470,10 @@ def check_network(server, deadline):
                 "host": "busy-%d.test" % number, "server": "127.0.0.1",
                 "serverPort": fixture.port, "timeout": 5,
             }}) for number in range(4)]
-            fixture.wait_for_queries(4, deadline)
+            try:
+                fixture.wait_for_queries(4, deadline)
+            except CheckFailure as error:
+                raise CheckFailure(str(error) + "; MCP state: " + client.response_snapshot(identifiers)) from error
             busy = tool_data(client.call("tcp_probe", {"host": "127.0.0.1", "port": 1, "timeout": 0.1}, timeout=1), error=True)
             check(busy.get("error", {}).get("code") == "busy", "Fifth concurrent diagnostic was not rejected as busy")
             for identifier in identifiers:

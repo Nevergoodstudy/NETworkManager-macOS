@@ -377,14 +377,14 @@ public final class ICMPPinger {
 public enum Ping {
     /// Perform a single ping and return the reply.
     public static func once(host: String, timeout: TimeInterval = 2, cancellation: DiagnosticCancellation? = nil) async -> ICMPReply {
-        let raw = await Task.detached(priority: .userInitiated) {
+        let raw = await runBlockingDiagnostic {
             do {
                 let pinger = try ICMPPinger(host: host, timeout: timeout, cancellation: cancellation)
                 return pinger.ping(allowSystemFallback: false)
             } catch {
                 return ICMPReply(sequence: 0, outcome: .error(error.localizedDescription), rtt: nil, ttl: nil, source: nil)
             }
-        }.value
+        }
         guard cancellation?.isCancelled != true, case .timeout = raw.outcome else { return raw }
         return await systemPing(host: host, timeout: timeout, sequence: raw.sequence, cancellation: cancellation)
     }
