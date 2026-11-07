@@ -1,4 +1,4 @@
-// swift-tools-version:5.9
+// swift-tools-version:6.2
 import PackageDescription
 
 let package = Package(
@@ -7,16 +7,20 @@ let package = Package(
     products: [
         .executable(name: "NETworkManagerMac", targets: ["NMApp"]),
         .executable(name: "NMCheck", targets: ["SelfTest"]),
-        .executable(name: "NMTest", targets: ["TestRunner"])
+        .executable(name: "NMTest", targets: ["TestRunner"]),
+        .executable(name: "NMCP", targets: ["NMMCP"])
     ],
     dependencies: [
-        .package(url: "https://github.com/migueldeicaza/SwiftTerm.git", exact: "1.11.2")
+        .package(url: "https://github.com/migueldeicaza/SwiftTerm.git", exact: "1.11.2"),
+        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", exact: "0.12.1")
     ],
     targets: [
         .target(
             name: "NMCore",
             resources: [.copy("Resources")]
         ),
+        .target(name: "NMMCPTools", dependencies: ["NMCore", .product(name: "MCP", package: "swift-sdk")]),
+        .executableTarget(name: "NMMCP", dependencies: ["NMMCPTools", .product(name: "MCP", package: "swift-sdk")]),
         .target(name: "NMDashboard", dependencies: ["NMCore"]),
         .target(name: "NMNetworkInfo", dependencies: ["NMCore"]),
         .target(name: "NMScanners", dependencies: ["NMCore"]),
@@ -40,5 +44,6 @@ let package = Package(
             dependencies: ["NMCore", "NMScanners", "NMLookups", "NMCalculators"]
         ),
         .executableTarget(name: "TestRunner", dependencies: ["NMCore", "NMScanners", "NMCalculators", "NMAssets", "NMIntegrations", "NMRemote"])
-    ]
+    ],
+    swiftLanguageModes: [.v5]
 )

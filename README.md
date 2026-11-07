@@ -17,7 +17,8 @@ NETworkManager for macOS 是基于 [BornToBeRoot/NETworkManager](https://github.
 - **网络诊断**：提供 Ping、IP/端口扫描、DNS 查询、Traceroute、WHOIS、SNMP 等工具。网络扫描会显示目标范围并支持取消。
 - **远程操作**：在应用终端标签页中使用系统 OpenSSH；命令模板和确认流程帮助操作人员检查目标及命令。RDP、VNC 等使用 macOS URL 交接给已安装的客户端。
 - **凭据与配置**：秘密值保存在 macOS Keychain；凭据备份仅导出引用信息。配置文件支持 JSON 导入导出及 macOS 版本的加密导出。
-- **独立运行**：网络操作由可见的应用进程执行，不安装项目专属常驻守护进程或特权助手。
+- **MCP 接口**：可选 `NMCP` stdio 服务器向 AI 客户端提供本机接口、子网、端口和 OUI 查询；加上 `--allow-network` 可启用单目标 Ping、DNS 和 TCP 诊断。配置与参数见 [MCP 使用指南](macos/MCP.md)。
+- **独立运行**：GUI 网络操作由可见的应用进程执行；MCP 客户端按需启动独立命令行进程。不安装项目专属常驻守护进程或特权助手。
 
 具体实现范围和平台差异请参阅 [macOS 功能状态与平台映射](macos/PORTING_STATUS.md) 和 [macOS 使用及构建指南](macos/README.md)。
 
@@ -38,7 +39,7 @@ NETworkManager for macOS 是基于 [BornToBeRoot/NETworkManager](https://github.
 
 ### 构建
 
-需要安装 Xcode Command Line Tools。创建本机 `.app`：
+需要安装带 Swift 6.2 或更高版本的 Xcode Command Line Tools。创建本机 `.app`：
 
 ```bash
 ./macos/Scripts/build-app.sh
@@ -68,7 +69,8 @@ The app is designed for network engineers and administrators who need a focused 
 - **Network diagnostics**: Use Ping, IP and port scanning, DNS lookup, Traceroute, WHOIS, SNMP, and other tools. Scans preview their target ranges and can be cancelled.
 - **Remote operations**: Use system OpenSSH in the app's terminal tabs. Command templates and review prompts help operators check the target and command. RDP and VNC are handed off to installed macOS clients through their URL schemes.
 - **Credentials and profiles**: Secret values stay in the macOS Keychain; credential backups contain references only. Profiles support JSON import/export and a macOS-specific encrypted export format.
-- **Standalone runtime**: Network operations run in the visible app process. The project does not install a persistent project-specific daemon or privileged helper.
+- **MCP interface**: The optional `NMCP` stdio server exposes local interfaces, subnet calculations, port lookups, and OUI lookups to AI clients. Add `--allow-network` for single-target Ping, DNS, and TCP diagnostics. See the [MCP guide](macos/MCP.md) for setup and parameters.
+- **Standalone runtime**: GUI network operations run in the visible app process; an MCP client starts a separate command-line process on demand. The project does not install a persistent project-specific daemon or privileged helper.
 
 See the [macOS feature and platform status](macos/PORTING_STATUS.md) and the [macOS usage and build guide](macos/README.md) for implementation details and platform-specific limits.
 
@@ -89,7 +91,7 @@ These images were generated with the **gpt-image-2.5-flare** AI image model to i
 
 ### Build
 
-Install the Xcode Command Line Tools, then create a local `.app` bundle:
+Install Xcode Command Line Tools with Swift 6.2 or later, then create a local `.app` bundle:
 
 ```bash
 ./macos/Scripts/build-app.sh

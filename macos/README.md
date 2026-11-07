@@ -4,6 +4,10 @@ This directory contains the native macOS edition of NETworkManager. The
 Windows application in Source/ remains the Windows/WPF product; the macOS
 edition is a Swift Package built with SwiftUI and AppKit.
 
+The optional `NMCP` command-line product exposes local lookups and selected
+single-target diagnostics through MCP over stdio. See [MCP.md](MCP.md) for
+client configuration, tools, resources, and integration checks.
+
 The macOS target requires macOS 14 or later. It uses the existing OUI, ports,
 and WHOIS XML data from macos/Sources/NMCore/Resources/ and stores user data
 under ~/Library/Application Support/NETworkManager/.
@@ -13,6 +17,9 @@ and a numeric-only path for IP literals. Address resolution runs inside the
 visible app process and does not add a project-specific resolver service.
 
 ## Build and run
+
+The package requires Swift 6.2 or later to build the pinned MCP dependency graph.
+The deployment target remains macOS 14.
 
 Use the project run script for the GUI application. It stages a real `.app`
 bundle, signs it locally, and launches it through Launch Services so Dock
@@ -38,6 +45,17 @@ To run the checks against optimized Release modules:
 `NMTest` uses `@testable import NMCore`, so Release builds must explicitly enable
 testability for the test invocation. The distributable app does not need that flag.
 
+Build the optional MCP executable before connecting a client:
+
+    swift build --package-path macos --product NMCP
+    ./macos/Scripts/run-mcp.sh --help
+
+The launcher directly executes an existing binary, so rebuild after changing
+source or dependencies. It builds automatically only when the executable is
+absent; that first build can exceed a client's initialization timeout.
+`NMCP_CONFIGURATION` selects `debug` (default) or `release`; build the matching
+configuration before using it. See [MCP.md](MCP.md) for client setup.
+
 ## Runtime model
 
 The macOS app does not install a separate network daemon or privileged helper.
@@ -45,6 +63,12 @@ Network operations run in the visible NETworkManager app process or use
 short-lived macOS system commands when needed. Closing the last app window
 exits NETworkManager. macOS process tools will show the app while it is open;
 the app does not hide itself.
+
+An MCP client may separately start the optional `NMCP` stdio process using
+`Scripts/run-mcp.sh`. It does not require an open GUI and exits when the client
+closes its input. Only local queries are enabled by default;
+`--allow-network` adds single-target Ping, DNS, and TCP diagnostics. This
+client-owned process does not install a background service. See [MCP.md](MCP.md).
 
 The optional **Start with macOS** setting registers the visible app with
 macOS's system-managed `SMAppService.mainApp` login item. It is off by default,
@@ -169,6 +193,7 @@ The complete tool-by-tool implementation and limitation matrix is in
 | Connections/listeners/neighbors | Structured parsing of lsof and arp output |
 | DNS, WHOIS, SNTP | Native UDP/TCP clients |
 | Network interface | getifaddrs |
+| MCP client integration | Optional `NMCP` stdio executable; four local tools, three opt-in network diagnostics, and two static resources |
 | Hosts editor | /etc/hosts with an administrator authorization prompt |
 | PowerShell console | /bin/sh, Terminal.app, and user-selected command execution |
 | PuTTY | In-app SwiftTerm sessions using system OpenSSH for SSH; Terminal.app for Telnet |
@@ -191,6 +216,7 @@ therefore remain optional system dependencies. See `PORTING_STATUS.md` for the
 specific feature boundary instead of assuming that a Windows-only API has been
 silently emulated.
 
-The app bundle includes the SwiftTerm MIT notice at
-`Contents/Resources/ThirdPartyNotices.md`; its version is pinned in
-`Package.resolved`.
+The app bundle includes third-party notices at
+`Contents/Resources/ThirdPartyNotices.md`. [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
+also identifies the MCP command-line dependencies; dependency versions are
+pinned in `Package.resolved`.

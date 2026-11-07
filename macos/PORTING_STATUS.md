@@ -36,6 +36,34 @@ Windows 对应的公开 API，某些高级选项仍受平台限制。
 | Listeners | Native + system replacement | 从 `lsof` 结构化筛选 LISTEN socket。 |
 | Neighbor Table | Native + system replacement | `arp -an` 结构化解析地址、MAC、接口和状态。 |
 | Profiles | Native | Application Support JSON、分组、Windows JSON/XML 导入转换和 AES-GCM 加密导出；新导出使用带随机 salt 与 120,000 次 PBKDF2-HMAC-SHA256 的 macOS `NME2` 容器，旧 `NME1` 仍可导入，与 Windows 加密容器不保证二进制兼容。 |
+| MCP 客户端集成 | Native CLI | 可选 `NMCP` 使用官方 Swift SDK 0.12.1，通过 stdio 提供接口枚举、IPv4 子网、端口及 OUI 查询；`--allow-network` 额外启用单目标 Ping、DNS 和 TCP。另提供两项静态资源；不开放资产/配置写入、Keychain、SSH 或任意 shell。详见 [MCP.md](MCP.md)。 |
+
+## MCP 实现范围（2026-11-07）
+
+MCP 是客户端按需启动的独立命令行产品，GUI 无需运行，也不安装 daemon、
+helper 或 HTTP 服务。默认四项本地工具，网络诊断必须通过进程参数
+`--allow-network` 启用。参数校验、最多四个并发网络诊断、各阶段
+`0.1...5` 秒超时和取消逻辑用于限制单次诊断；总请求时长可能包含多个阶段。
+结果通过文本 JSON 和等价 `structuredContent` 返回，不写入应用诊断历史。
+共享本地化会读取应用语言偏好，可能创建 Application Support 目录，但不为
+MCP 调用保存诊断或修改配置；可用绝对路径环境变量
+`NETWORKMANAGER_SUPPORT_DIRECTORY` 隔离验证目录。
+设置初始化错误改为在初始化完成后按需本地化，避免损坏设置触发
+`SettingsStore.shared` 与 `Loc.shared` 的递归初始化。
+
+包的构建工具链要求 Swift 6.2+，最低运行目标仍为 macOS 14。stdio 集成脚本
+`Scripts/test-mcp.py` 使用本机 loopback TCP/DNS fixture 检查协议交互，验证
+命令及客户端配置见 [MCP 使用指南](MCP.md)。启动脚本优先直接执行已有
+Debug/Release 产物；更新源码后需显式重建，首次缺少二进制时的自动构建可能
+超过客户端握手超时。
+
+2026-11-07 本机（arm64、Swift 6.4.2）Debug/Release `NMCP` 构建及真实
+stdio 集成套件通过，包含七项工具、资源、参数错误、loopback ICMP/TCP/DNS、
+超时、取消、并发限制、在途请求 EOF、损坏 `settings.json` 原字节保留与
+无新增应用 JSON 的独立进程回归。预编译产物经启动脚本在四秒预算内完成
+握手、工具调用和 EOF 退出；存在其他 SwiftPM 构建时也验证通过。
+`NMTest`、`NMCheck` 与 GUI Debug 构建复验通过。这些是本机验证结果，
+不代表其他 macOS/CPU 或远端 CI 已通过。下方 2026-11-06 的历史记录不包含 MCP。
 
 ## 依赖与打包
 

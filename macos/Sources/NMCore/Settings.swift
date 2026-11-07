@@ -44,9 +44,27 @@ public final class SettingsStore: ObservableObject {
     private let managesLoginItem: Bool
     private var isLoading = true
 
-    @Published public private(set) var recoveryError: String?
+    private enum RecoveryFailure {
+        case readFailed(String)
+        case invalidData
+    }
+
+    @Published private var recoveryFailure: RecoveryFailure?
     @Published public private(set) var persistenceError: String?
     @Published public private(set) var preservedCorruptFileURL: URL?
+
+    /// Defer localization until after initialization: Loc.shared itself loads
+    /// SettingsStore.shared to obtain the selected language.
+    public var recoveryError: String? {
+        switch recoveryFailure {
+        case .readFailed(let message):
+            return tf("Settings could not be read. The original file was preserved. Reset settings to recover. (%@)", message)
+        case .invalidData:
+            return t("Settings data is damaged or from an unsupported format. The original file was preserved. Reset settings to recover.")
+        case nil:
+            return nil
+        }
+    }
 
     // MARK: Core values
 
@@ -103,11 +121,11 @@ public final class SettingsStore: ObservableObject {
         do {
             data = try Data(contentsOf: storageURL)
         } catch {
-            recoveryError = tf("Settings could not be read. The original file was preserved. Reset settings to recover. (%@)", error.localizedDescription)
+            recoveryFailure = .readFailed(error.localizedDescription)
             return
         }
         guard let payload = try? JSONDecoder().decode(Payload.self, from: data) else {
-            recoveryError = t("Settings data is damaged or from an unsupported format. The original file was preserved. Reset settings to recover.")
+            recoveryFailure = .invalidData
             return
         }
         language = payload.language.flatMap(AppLanguage.init(rawValue:))
@@ -127,7 +145,7 @@ public final class SettingsStore: ObservableObject {
     }
 
     public func persist() {
-        guard recoveryError == nil else { return }
+        guard recoveryFailure == nil else { return }
         let payload = Payload(
             language: language?.rawValue,
             appearance: appearance?.rawValue,
@@ -151,7 +169,7 @@ public final class SettingsStore: ObservableObject {
     /// Reset user preferences while leaving profile data intact, matching the
     /// Windows `--reset-settings` behaviour.
     public func reset() {
-        if recoveryError != nil, FileManager.default.fileExists(atPath: storageURL.path) {
+        if recoveryFailure != nil, FileManager.default.fileExists(atPath: storageURL.path) {
             let timestamp = ISO8601DateFormatter().string(from: Date()).replacingOccurrences(of: ":", with: "-")
             let preservedURL = storageURL.deletingLastPathComponent()
                 .appendingPathComponent("\(storageURL.lastPathComponent).corrupt-\(timestamp)")
@@ -164,7 +182,7 @@ public final class SettingsStore: ObservableObject {
             }
         }
         isLoading = true
-        recoveryError = nil
+        recoveryFailure = nil
         language = nil
         appearance = nil
         accent = nil
@@ -183,7 +201,7 @@ public final class SettingsStore: ObservableObject {
     /// file requires the user to review and confirm recovery in Settings.
     @discardableResult
     public func resetFromCommandLine() -> Bool {
-        guard recoveryError == nil else { return false }
+        guard recoveryFailure == nil else { return false }
         reset()
         return true
     }

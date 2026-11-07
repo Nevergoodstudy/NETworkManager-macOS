@@ -35,6 +35,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Select current stable Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
       - name: Build Swift package
         run: swift build --package-path macos --product NETworkManagerMac -c release
 
@@ -43,6 +48,14 @@ jobs:
 
       - name: Run protocol self-checks
         run: swift run --package-path macos NMCheck
+
+      - name: Build MCP server
+        run: swift build --package-path macos --product NMCP -c release
+
+      - name: Test MCP over stdio
+        env:
+          NMCP_CONFIGURATION: release
+        run: python3 macos/Scripts/test-mcp.py --server "$(swift build --package-path macos -c release --show-bin-path)/NMCP" --launcher macos/Scripts/run-mcp.sh
 
       - name: Package app and launch GUI smoke test
         env:
