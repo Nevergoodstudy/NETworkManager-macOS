@@ -138,4 +138,5 @@ Apple Developer 签名身份；发布签名与公证需由发布者通过 `CODES
 - 2026-11-05 安全扫描封存后修复四项风险：SNMP 诊断结果在进入历史前精确脱敏 community 与 SNMPv3 密码；NetBox/Zabbix 响应体受 8 MiB 上限保护；profile 新导出升级为 `NME2`/PBKDF2-SHA256（120,000 次）且保留 `NME1` 导入兼容；SSH 命令审阅拒绝 Unicode format/bidi 控制字符并在确认文本中转义不可见字符。`NMTest` 覆盖这些回归路径。
 - 2026-11-05 独立 SNMP 页面 GET/WALK/SET 现写入统一诊断历史，记录目标、版本、OID、端口及成功/失败/超时/取消状态；varbind 与历史详情使用同一秘密脱敏器。GUI 在本机 `127.0.0.1:161` 无代理时实测运行态、超时提示和历史回写均正确。
 - 2026-11-05 文档收尾后重新生成最终交付包：`dist/macos-delivery-2026-11-05-zabbix-ping-final/NETworkManager.app` 与 Universal DMG 保留 `arm64`/`x86_64`，`codesign --verify --deep --strict`、Info.plist、`hdiutil verify` 和 DMG 安装/替换/启动/卸载生命周期均通过。当前 DMG SHA-256 为 `bceff533c8e582bd95957cc359bba62d8ad7f001b4ab0b747348e437c9ad12c2`。旧 `dist/macos/NETworkManager.app`、隔离 GUI 数据、Zabbix fixture、测试日志和 SwiftPM 构建缓存已清理；最终 `.app`/DMG 与源代码保留。正式 Developer ID 签名、公证和 Gatekeeper 仍未验证。
+- 2026-11-07 清理 GitHub Actions 构建提示：checkout 与 artifact 上传升级到 Node.js 24 运行时的官方 Action 主版本；CI 架构矩阵改为 macOS 15 Intel 与 macOS 26 Apple Silicon，覆盖 x86_64/arm64 并减少一个 ARM 托管 runner 的容量提示。macOS 26 ARM runner 仍会显示 GitHub 服务端容量 notice；保留 Apple Silicon 验证时无法由仓库配置消除此提示。
 

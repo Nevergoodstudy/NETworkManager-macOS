@@ -28,12 +28,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        macos: [macos-15, macos-26]
+        macos: [macos-15-intel, macos-26]
     runs-on: ${{ matrix.macos }}
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Select current stable Xcode
         uses: maxim-lobanov/setup-xcode@v1
@@ -85,7 +85,7 @@ jobs:
         run: ./macos/Scripts/verify-dmg-lifecycle.sh "$(find dist/macos -maxdepth 1 -type f -name '*.dmg' -print -quit)"
 
       - name: Upload ad-hoc app and DMG
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: NETworkManager-macOS-ad-hoc-${{ matrix.macos }}
           path: |
@@ -110,7 +110,7 @@ jobs:
       MACOS_NOTARY_ISSUER_ID: ${{ secrets.MACOS_NOTARY_ISSUER_ID }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Import Developer ID certificate
         shell: bash
@@ -202,7 +202,7 @@ jobs:
           fi
 
       - name: Upload notarized DMG
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: NETworkManager-macOS-${{ github.ref_name }}-notarized
           path: dist/macos/NETworkManager-macOS-*.dmg
@@ -210,7 +210,7 @@ jobs:
 
       - name: Upload notarization diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: NETworkManager-macOS-${{ github.ref_name }}-notarization-diagnostics
           path: |
