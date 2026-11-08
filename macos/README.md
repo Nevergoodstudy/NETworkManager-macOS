@@ -18,6 +18,15 @@ MCP is bundled by default; connecting Codex is a one-time user action. The
 NETworkManager may close after connecting, and moving the app requires
 reconnecting so Codex can use its new path.
 
+## Interface preview / 界面预览
+
+The following dashboard mockup illustrates the refreshed macOS window and uses
+documentation-only example addresses. It is a design preview, not a capture of a
+real network. / 以下总览示意图展示了更新后的 macOS 窗口，并使用仅供文档示例
+的地址；它是设计预览，不是实际网络截图。
+
+![NETworkManager macOS dashboard mockup](docs/ui-dashboard-mockup.png)
+
 The macOS target requires macOS 14 or later. It uses the existing OUI, ports,
 and WHOIS XML data from macos/Sources/NMCore/Resources/ and stores user data
 under ~/Library/Application Support/NETworkManager/.

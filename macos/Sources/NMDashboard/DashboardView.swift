@@ -41,9 +41,14 @@ public struct DashboardView: View {
         GeometryReader { geometry in
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    header
+                    DashboardHeader(
+                        hostName: Host.current().localizedName ?? t("This Mac"),
+                        refreshedAt: refreshedAt,
+                        isRefreshing: isRefreshing,
+                        refresh: refresh
+                    )
                     routeStatus
-                    metrics
+                    metrics(columns: geometry.size.width >= 720 ? 3 : geometry.size.width >= 470 ? 2 : 1)
                     if geometry.size.width >= 880 {
                         HStack(alignment: .top, spacing: 14) {
                             leftColumn.frame(maxWidth: .infinity, alignment: .top)
@@ -56,8 +61,9 @@ public struct DashboardView: View {
                         }
                     }
                 }
-                .padding(22)
-                .frame(maxWidth: 1440, alignment: .leading)
+                .padding(.horizontal, 26)
+                .padding(.vertical, 22)
+                .frame(maxWidth: 1480, alignment: .leading)
                 .frame(maxWidth: .infinity, alignment: .topLeading)
             }
             .background(palette.background)
@@ -66,53 +72,43 @@ public struct DashboardView: View {
         .onDisappear { cancelDiscovery() }
     }
 
-    private var header: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(t("Operations overview")).font(.largeTitle.bold())
-                Text(Host.current().localizedName ?? t("This Mac"))
-                    .font(.subheadline).foregroundStyle(palette.textSecondary)
-            }
-            Spacer(minLength: 8)
-            if let refreshedAt {
-                VStack(alignment: .trailing, spacing: 3) {
-                    Text(t("Last collection")).font(.caption).foregroundStyle(palette.textSecondary)
-                    Text(Fmt.dateTime(refreshedAt)).font(.caption.monospaced())
-                }
-            }
-            Button { refresh() } label: {
-                Label(isRefreshing ? t("Collecting…") : t("Refresh"), systemImage: "arrow.clockwise")
-            }
-            .buttonStyle(.bordered)
-            .disabled(isRefreshing)
-            .accessibilityIdentifier("refreshOperationsOverview")
-        }
-    }
-
     private var routeStatus: some View {
-        HStack(spacing: 11) {
-            Image(systemName: statusIcon).font(.title2).foregroundStyle(statusColor)
+        HStack(spacing: 14) {
+            Image(systemName: statusIcon)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(statusColor)
+                .frame(width: 42, height: 42)
+                .background(statusColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
             VStack(alignment: .leading, spacing: 3) {
                 Text(statusTitle).font(.headline)
                 Text(statusDetail).font(.subheadline).foregroundStyle(palette.textSecondary)
             }
             Spacer(minLength: 8)
             if !gateway.isEmpty {
-                Text(gateway).font(.callout.monospaced()).textSelection(.enabled)
+                Rectangle()
+                    .fill(palette.border)
+                    .frame(width: 1, height: 38)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(t("Gateway")).font(.caption).foregroundStyle(palette.textSecondary)
+                    Text(gateway)
+                        .font(.callout.monospaced().weight(.medium))
+                        .textSelection(.enabled)
+                }
                 Button { openTool("traceroute") } label: {
                     Label(t("Trace route"), systemImage: "point.3.connected.trianglepath.dotted")
                 }
                 .buttonStyle(.bordered)
             }
         }
-        .padding(13)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(palette.card, in: RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(palette.border))
     }
 
-    private var metrics: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 190), spacing: 10)], alignment: .leading, spacing: 10) {
+    private func metrics(columns: Int) -> some View {
+        let gridColumns = Array(repeating: GridItem(.flexible(), spacing: 12), count: columns)
+        return LazyVGrid(columns: gridColumns, alignment: .leading, spacing: 12) {
             metric(title: "Primary IPv4", value: primaryIPv4, detail: routeInterface.isEmpty ? t("No default interface") : routeInterface, icon: "network")
             metric(title: "Active sockets", value: "\(sockets.count)", detail: t("Connections and listeners"), icon: "arrow.left.arrow.right")
             metric(title: "Known neighbors", value: neighbors.isEmpty ? "—" : "\(neighbors.count)", detail: neighbors.isEmpty ? t("No ARP data returned") : t("macOS ARP cache"), icon: "point.3.connected.trianglepath.dotted")
@@ -372,34 +368,31 @@ public struct DashboardView: View {
     }
 
     private func metric(title: String, value: String, detail: String, icon: String) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon).font(.title3).foregroundStyle(palette.accent).frame(width: 24)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(value).font(.title2.bold()).lineLimit(1).minimumScaleFactor(0.75)
-                Text(t(title)).font(.caption).foregroundStyle(palette.textSecondary)
-            }
-            Spacer(minLength: 2)
-            Text(detail).font(.caption2).foregroundStyle(palette.textSecondary).lineLimit(2).multilineTextAlignment(.trailing)
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
-        .background(palette.card, in: RoundedRectangle(cornerRadius: 8))
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(palette.border))
+        DashboardMetricTile(title: title, value: value, detail: detail, icon: icon, palette: palette)
     }
 
     private func panel<Content: View>(title: String, icon: String, trailing: String? = nil,
                                       @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack(spacing: 8) {
-                Image(systemName: icon).foregroundStyle(palette.accent)
+                Image(systemName: icon)
+                    .foregroundStyle(palette.accent)
+                    .frame(width: 20)
                 Text(title).font(.headline)
                 Spacer(minLength: 6)
-                if let trailing { Text(trailing).font(.caption.monospaced()).foregroundStyle(palette.textSecondary) }
+                if let trailing {
+                    Text(trailing)
+                        .font(.caption.monospaced().weight(.medium))
+                        .foregroundStyle(palette.textSecondary)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(palette.cardAlt, in: RoundedRectangle(cornerRadius: 5))
+                }
             }
-            Divider()
+            Rectangle().fill(palette.border).frame(height: 1)
             content()
         }
-        .padding(13)
+        .padding(15)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(palette.card, in: RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(palette.border))
@@ -637,4 +630,74 @@ private struct DiscoveredHost: Identifiable, Hashable, Sendable {
     let host: String
     let latency: TimeInterval
     let ttl: Int?
+}
+
+private struct DashboardHeader: View {
+    let hostName: String
+    let refreshedAt: Date?
+    let isRefreshing: Bool
+    let refresh: () -> Void
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(t("Operations overview"))
+                    .font(.system(size: 25, weight: .semibold))
+                Text(hostName)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 12)
+            if let refreshedAt {
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text(t("Last collection"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(Fmt.dateTime(refreshedAt))
+                        .font(.caption.monospaced())
+                }
+            }
+            Button(action: refresh) {
+                Label(isRefreshing ? t("Collecting…") : t("Refresh"), systemImage: "arrow.clockwise")
+            }
+            .buttonStyle(.bordered)
+            .disabled(isRefreshing)
+            .accessibilityIdentifier("refreshOperationsOverview")
+        }
+    }
+}
+
+private struct DashboardMetricTile: View {
+    let title: String
+    let value: String
+    let detail: String
+    let icon: String
+    let palette: NMPalette
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(palette.accent)
+                .frame(width: 30, height: 30)
+                .background(palette.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 7))
+            Text(value)
+                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+                .textSelection(.enabled)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(t(title))
+                    .font(.caption.weight(.semibold))
+                Text(detail)
+                    .font(.caption2)
+                    .foregroundStyle(palette.textSecondary)
+                    .lineLimit(1)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 122, alignment: .leading)
+        .background(palette.card, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(palette.border))
+    }
 }

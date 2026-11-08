@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1000" viewBox="0 0 1440 1000">
+  <defs>
+    <filter id="window-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="9" stdDeviation="16" flood-color="#17212d" flood-opacity=".16"/>
+    </filter>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; fill: #202630; }
+      .muted { fill: #707985; }
+      .small { font-size: 11px; }
+      .tiny { font-size: 9px; }
+      .label { font-size: 12px; font-weight: 600; }
+      .surface { fill: #fff; stroke: #e2e6eb; stroke-width: 1; }
+      .line { stroke: #e6e9ed; stroke-width: 1; }
+    </style>
+  </defs>
+
+  <rect width="1440" height="1000" fill="#e9edf1"/>
+  <rect x="12" y="12" width="1416" height="976" rx="13" fill="#f8f9fb" stroke="#cbd1d8" filter="url(#window-shadow)"/>
+  <path d="M25 12h1390a13 13 0 0 1 13 13v37H12V25a13 13 0 0 1 13-13z" fill="#f6f7f8"/>
+  <circle cx="35" cy="37" r="6" fill="#ff6058"/><circle cx="55" cy="37" r="6" fill="#ffbd2e"/><circle cx="75" cy="37" r="6" fill="#28c840"/>
+  <text x="720" y="41" text-anchor="middle" font-size="13" font-weight="600">NETworkManager</text>
+  <line x1="12" y1="62" x2="1428" y2="62" class="line"/>
+
+  <rect x="13" y="63" width="246" height="924" fill="#f1f3f5"/>
+  <line x1="259" y1="62" x2="259" y2="987" class="line"/>
+  <g transform="translate(30 82)">
+    <rect width="30" height="30" rx="8" fill="#2676db"/>
+    <path d="M8 15h14M15 8v14M9 9l12 12M21 9 9 21" stroke="#fff" stroke-width="1.5" opacity=".9"/>
+    <circle cx="8" cy="15" r="2.3" fill="#fff"/><circle cx="22" cy="15" r="2.3" fill="#fff"/>
+  </g>
+  <text x="70" y="95" font-size="14" font-weight="700">NETworkManager</text>
+  <text x="70" y="110" class="tiny muted">NETWORK OPERATIONS</text>
+
+  <text x="30" y="143" class="tiny muted" font-weight="700">监控</text>
+  <rect x="22" y="153" width="226" height="27" rx="6" fill="#dceaff"/>
+  <rect x="31" y="160" width="13" height="13" rx="3" fill="#2676db"/>
+  <path d="M34 168v-3m3 3v-6m3 6v-4" stroke="#fff" stroke-width="1.2"/>
+  <text x="53" y="171" font-size="12" font-weight="600" fill="#1558a8">仪表板</text>
+  <g font-size="12" class="muted">
+    <text x="53" y="199">Zabbix 告警</text><text x="53" y="222">资产</text><text x="53" y="245">网络接口</text>
+    <text x="53" y="268">Ping 监视器</text><text x="53" y="291">连接</text><text x="53" y="314">监听端口</text><text x="53" y="337">WiFi</text>
+  </g>
+  <g stroke="#89939e" stroke-width="1.25" fill="none">
+    <path d="M33 193h10m-8-3v6m4-8v10m4-7v4M32 216h12m-10-3v6m7-6v6"/>
+    <rect x="32" y="235" width="11" height="9" rx="1"/><path d="M33 232h9M33 240h9"/>
+    <path d="M32 261c3-5 7 5 11 0M32 284l5 5 6-7M32 308h12m-10-3v6m4-6v6"/>
+    <path d="M32 330q6-8 12 0m-9 3q3-4 6 0"/>
+  </g>
+
+  <text x="30" y="367" class="tiny muted" font-weight="700">发现</text>
+  <g font-size="12" class="muted">
+    <text x="53" y="390">IP 扫描器</text><text x="53" y="413">端口扫描器</text><text x="53" y="436">发现协议</text><text x="53" y="459">邻居表</text>
+  </g>
+  <g stroke="#89939e" stroke-width="1.25" fill="none"><circle cx="37" cy="386" r="5"/><path d="M37 378v16m-8-8h16M32 408h10m-8-3v6M31 431l6 5 6-7M31 454h12v10H31z"/></g>
+
+  <text x="30" y="489" class="tiny muted" font-weight="700">诊断</text>
+  <g font-size="12" class="muted">
+    <text x="53" y="512">诊断历史</text><text x="53" y="535">DNS 查询</text><text x="53" y="558">路由追踪</text><text x="53" y="581">SNMP</text><text x="53" y="604">WHOIS</text><text x="53" y="627">IP 地理位置</text><text x="53" y="650">SNTP 查询</text><text x="53" y="673">子网计算器</text><text x="53" y="696">比特计算器</text><text x="53" y="719">防火墙</text>
+  </g>
+  <g stroke="#89939e" stroke-width="1.2" fill="none"><circle cx="37" cy="508" r="5"/><path d="M37 505v4l3 2M31 531h12m-6-6v12M31 554l6 5 6-8M31 576l6 8 6-8M32 600h10l-5 6zM31 623h12m-6-6v12M31 646h12m-8-4 8 4-8 4M31 669h12m-6-5v10M31 692h12m-6-5v10M31 715l6-10 6 10z"/></g>
+
+  <text x="30" y="749" class="tiny muted" font-weight="700">运维操作</text>
+  <g font-size="12" class="muted"><text x="53" y="773">远程访问</text><text x="53" y="796">Web 控制台</text><text x="53" y="819">AWS 会话管理器</text><text x="53" y="842">终端</text><text x="53" y="865">网络唤醒</text><text x="53" y="888">Hosts 文件编辑器</text></g>
+  <g stroke="#89939e" stroke-width="1.2" fill="none"><rect x="31" y="764" width="12" height="9" rx="1"/><path d="M34 776h6m-3-3v3M31 790h12v9H31zM33 792l4 3 4-3M31 813h12m-6-5v10M31 837h12m-10-3v7m4-7v7M33 859l-2 5h12l-2-5M31 884h12v9H31z"/></g>
+
+  <text x="30" y="918" class="tiny muted" font-weight="700">资源库</text>
+  <g font-size="12" class="muted"><text x="53" y="941">NetBox</text><text x="53" y="964">凭据与配置文件</text></g>
+  <g stroke="#89939e" stroke-width="1.2" fill="none"><path d="M31 934h12l-2 9h-8zM32 958h11v8H32zM34 955h5"/></g>
+
+  <rect x="260" y="63" width="1167" height="55" fill="#fafbfc"/>
+  <line x1="260" y1="118" x2="1428" y2="118" class="line"/>
+  <text x="288" y="97" font-size="15" font-weight="650">仪表板</text>
+  <rect x="633" y="74" width="360" height="33" rx="7" fill="#f0f2f5" stroke="#e0e4e9"/>
+  <circle cx="651" cy="90" r="5" fill="none" stroke="#75808c" stroke-width="1.4"/><path d="m655 94 4 4" stroke="#75808c" stroke-width="1.4"/>
+  <text x="667" y="94" class="small muted">查找工具或工作流</text>
+  <text x="973" y="94" class="tiny muted" text-anchor="end">⌘K</text>
+  <circle cx="1364" cy="90" r="13" fill="#eef1f4"/><path d="M1364 83v2m0 10v2m-7-7h2m10 0h2m-12-5 1.4 1.4m7.2 7.2 1.4 1.4m0-10-1.4 1.4m-7.2 7.2-1.4 1.4" stroke="#606a75" stroke-width="1.25"/>
+  <path d="M1395 86a6 6 0 1 0 0 8m-2-9h5v5" fill="none" stroke="#606a75" stroke-width="1.3"/>
+
+  <rect x="260" y="119" width="1167" height="868" fill="#f6f8fa"/>
+  <text x="292" y="159" font-size="24" font-weight="650">运维总览</text>
+  <text x="292" y="181" class="small muted">NETworkManager · 本机网络状态</text>
+  <rect x="444" y="141" width="64" height="19" rx="5" fill="#fff2df"/>
+  <text x="476" y="154" text-anchor="middle" class="tiny" fill="#9b5c0a">示意数据</text>
+  <text x="1160" y="155" text-anchor="end" class="tiny muted">最后采集</text>
+  <text x="1160" y="174" text-anchor="end" font-size="11" font-family="monospace" fill="#4e5965">10:42:18</text>
+  <rect x="1288" y="139" width="112" height="34" rx="7" fill="#fff" stroke="#dce1e7"/>
+  <path d="M1305 151a6 6 0 1 1-1 7m1-11v4h-4" fill="none" stroke="#3b4652" stroke-width="1.3"/>
+  <text x="1318" y="160" font-size="11" font-weight="600">刷新</text>
+
+  <rect x="292" y="198" width="1108" height="88" rx="8" class="surface"/>
+  <rect x="309" y="219" width="42" height="42" rx="8" fill="#e4f5e8"/>
+  <circle cx="330" cy="240" r="10" fill="#2d9a50"/>
+  <path d="m325 240 3 3 7-7" fill="none" stroke="#fff" stroke-width="1.7"/>
+  <text x="365" y="235" font-size="14" font-weight="650">默认网关可达</text>
+  <text x="365" y="256" class="small muted">默认路由通过 en0 · 延迟 1.8 ms</text>
+  <line x1="1010" y1="218" x2="1010" y2="264" class="line"/>
+  <text x="1031" y="230" class="tiny muted">网关</text>
+  <text x="1031" y="252" font-size="12" font-family="monospace" font-weight="600">192.0.2.1</text>
+  <rect x="1206" y="222" width="175" height="38" rx="7" fill="#fff" stroke="#dce1e7"/>
+  <path d="M1222 240h8m-4-5v10m-3-6 3-4 3 4" fill="none" stroke="#4b5a69" stroke-width="1.2"/>
+  <text x="1239" y="245" font-size="11" font-weight="600">路由追踪</text>
+
+  <g>
+    <rect x="292" y="302" width="352" height="111" rx="8" class="surface"/>
+    <rect x="310" y="318" width="30" height="30" rx="7" fill="#e6f0ff"/><path d="M317 333h16m-8-8v16" stroke="#2676db" stroke-width="1.4"/>
+    <text x="310" y="379" font-size="21" font-weight="650" font-family="monospace">192.0.2.24</text>
+    <text x="310" y="398" class="label">主要 IPv4</text><text x="625" y="398" text-anchor="end" class="tiny muted">en0</text>
+    <rect x="668" y="302" width="352" height="111" rx="8" class="surface"/>
+    <rect x="686" y="318" width="30" height="30" rx="7" fill="#e7f5f3"/><path d="M691 333h20m-15-5 5 5-5 5m10-10-5 5 5 5" fill="none" stroke="#16877f" stroke-width="1.25"/>
+    <text x="686" y="379" font-size="24" font-weight="650">23</text>
+    <text x="686" y="398" class="label">活动套接字</text><text x="1001" y="398" text-anchor="end" class="tiny muted">连接与监听</text>
+    <rect x="1044" y="302" width="356" height="111" rx="8" class="surface"/>
+    <rect x="1062" y="318" width="30" height="30" rx="7" fill="#fff2df"/><circle cx="1077" cy="333" r="7" fill="none" stroke="#cc7a11" stroke-width="1.3"/><circle cx="1077" cy="333" r="2" fill="#cc7a11"/>
+    <text x="1062" y="379" font-size="24" font-weight="650">18</text>
+    <text x="1062" y="398" class="label">已知邻居</text><text x="1380" y="398" text-anchor="end" class="tiny muted">macOS ARP 缓存</text>
+  </g>
+
+  <rect x="292" y="429" width="540" height="262" rx="8" class="surface"/>
+  <circle cx="314" cy="452" r="8" fill="#e6f0ff"/><circle cx="314" cy="452" r="4" fill="none" stroke="#2676db" stroke-width="1.2"/>
+  <text x="331" y="457" font-size="13" font-weight="650">子网发现</text>
+  <text x="808" y="456" text-anchor="end" class="tiny muted">254</text>
+  <line x1="307" y1="469" x2="817" y2="469" class="line"/>
+  <text x="310" y="492" class="small muted">探测本地 IPv4 范围，并列出响应 ICMP 的主机。</text>
+  <rect x="310" y="507" width="354" height="34" rx="6" fill="#fff" stroke="#dce1e7"/>
+  <text x="322" y="529" font-size="11" font-family="monospace">192.0.2.0/24</text>
+  <rect x="674" y="507" width="126" height="34" rx="6" fill="#2676db"/><circle cx="691" cy="524" r="5" fill="none" stroke="#fff"/><path d="M691 516v16m-8-8h16" stroke="#fff" stroke-width="1"/>
+  <text x="705" y="528" font-size="11" font-weight="600" fill="#fff">开始发现</text>
+  <text x="310" y="560" class="tiny muted">254 个目标：192.0.2.1 至 192.0.2.254</text>
+  <rect x="310" y="575" width="490" height="25" fill="#f5f7f9"/>
+  <text x="322" y="592" class="tiny muted" font-weight="600">主机</text><text x="580" y="592" class="tiny muted" font-weight="600">延迟</text><text x="685" y="592" class="tiny muted" font-weight="600">TTL</text>
+  <line x1="310" y1="601" x2="800" y2="601" class="line"/>
+  <text x="322" y="619" font-size="10" font-family="monospace">192.0.2.1</text><text x="580" y="619" font-size="10" font-family="monospace">1.8 ms</text><text x="685" y="619" class="small">64</text>
+  <line x1="310" y1="629" x2="800" y2="629" class="line"/>
+  <text x="322" y="647" font-size="10" font-family="monospace">192.0.2.17</text><text x="580" y="647" font-size="10" font-family="monospace">2.4 ms</text><text x="685" y="647" class="small">64</text>
+  <line x1="310" y1="657" x2="800" y2="657" class="line"/>
+  <text x="322" y="675" font-size="10" font-family="monospace">192.0.2.42</text><text x="580" y="675" font-size="10" font-family="monospace">3.1 ms</text><text x="685" y="675" class="small">128</text>
+
+  <rect x="292" y="707" width="540" height="164" rx="8" class="surface"/>
+  <circle cx="314" cy="730" r="8" fill="#e7f5f3"/><path d="M310 730h8m-4-4v8" stroke="#16877f" stroke-width="1.2"/>
+  <text x="331" y="735" font-size="13" font-weight="650">诊断工具</text>
+  <line x1="307" y1="747" x2="817" y2="747" class="line"/>
+  <g>
+    <rect x="310" y="765" width="151" height="42" rx="7" fill="#fff" stroke="#dce1e7"/><path d="M326 786c3-8 8 8 12 0" fill="none" stroke="#2676db" stroke-width="1.4"/><text x="347" y="790" class="small">Ping 监视器</text>
+    <rect x="470" y="765" width="151" height="42" rx="7" fill="#fff" stroke="#dce1e7"/><rect x="486" y="779" width="13" height="13" rx="2" fill="none" stroke="#16877f"/><path d="M489 786h7" stroke="#16877f"/><text x="507" y="790" class="small">端口扫描器</text>
+    <rect x="630" y="765" width="170" height="42" rx="7" fill="#fff" stroke="#dce1e7"/><circle cx="647" cy="784" r="5" fill="none" stroke="#cc7a11"/><path d="m651 788 4 4" stroke="#cc7a11"/><text x="663" y="790" class="small">DNS 查询</text>
+    <rect x="310" y="819" width="151" height="42" rx="7" fill="#fff" stroke="#dce1e7"/><path d="M325 840h14m-5-5 5 5-5 5" fill="none" stroke="#b55454" stroke-width="1.2"/><text x="347" y="844" class="small">路由追踪</text>
+    <rect x="470" y="819" width="151" height="42" rx="7" fill="#fff" stroke="#dce1e7"/><path d="M493 826v16m-6-11q6-7 12 0m-10 4q4-4 8 0" fill="none" stroke="#2676db" stroke-width="1.2"/><text x="507" y="844" class="small">SNMP</text>
+    <rect x="630" y="819" width="170" height="42" rx="7" fill="#fff" stroke="#dce1e7"/><rect x="645" y="829" width="15" height="12" rx="1" fill="none" stroke="#16877f"/><path d="M648 844h9" stroke="#16877f"/><text x="663" y="844" class="small">远程访问</text>
+  </g>
+  <rect x="848" y="429" width="552" height="194" rx="8" class="surface"/>
+  <path d="M866 452h16m-8-8v16" fill="none" stroke="#2676db" stroke-width="1.2"/><text x="890" y="457" font-size="13" font-weight="650">网络接口</text>
+  <rect x="1360" y="440" width="24" height="22" rx="6" fill="#f1f3f5"/><text x="1372" y="455" text-anchor="middle" class="tiny muted">3</text>
+  <line x1="863" y1="469" x2="1385" y2="469" class="line"/>
+  <circle cx="871" cy="491" r="4" fill="#2d9a50"/><text x="886" y="495" font-size="11" font-family="monospace" font-weight="600">en0</text><text x="934" y="495" class="tiny muted">IPv4</text><text x="1040" y="495" font-size="10" font-family="monospace">192.0.2.24</text><path d="M1360 486h12v11h-12zM1363 483h6" fill="none" stroke="#8a949f" stroke-width="1.1"/>
+  <line x1="865" y1="506" x2="1382" y2="506" class="line"/>
+  <circle cx="871" cy="528" r="4" fill="#2d9a50"/><text x="886" y="532" font-size="11" font-family="monospace" font-weight="600">en0</text><text x="934" y="532" class="tiny muted">IPv6</text><text x="1040" y="532" font-size="10" font-family="monospace">2001:db8::24</text><path d="M1360 523h12v11h-12zM1363 520h6" fill="none" stroke="#8a949f" stroke-width="1.1"/>
+  <line x1="865" y1="543" x2="1382" y2="543" class="line"/>
+  <circle cx="871" cy="565" r="4" fill="#a0a8b1"/><text x="886" y="569" font-size="11" font-family="monospace" font-weight="600">lo0</text><text x="934" y="569" class="tiny muted">IPv4</text><text x="1040" y="569" font-size="10" font-family="monospace">127.0.0.1</text><path d="M1360 560h12v11h-12zM1363 557h6" fill="none" stroke="#8a949f" stroke-width="1.1"/>
+  <text x="866" y="603" class="small" fill="#2676db">查看全部接口　↗</text>
+
+  <rect x="848" y="639" width="552" height="137" rx="8" class="surface"/>
+  <circle cx="870" cy="662" r="8" fill="#fff2df"/><circle cx="870" cy="662" r="4" fill="none" stroke="#cc7a11" stroke-width="1.2"/><text x="890" y="667" font-size="13" font-weight="650">本地邻居</text>
+  <rect x="1360" y="650" width="24" height="22" rx="6" fill="#f1f3f5"/><text x="1372" y="665" text-anchor="middle" class="tiny muted">18</text>
+  <line x1="863" y1="679" x2="1385" y2="679" class="line"/>
+  <circle cx="871" cy="700" r="4" fill="#2d9a50"/><text x="886" y="704" font-size="10" font-family="monospace">192.0.2.1</text><text x="1065" y="704" font-size="10" font-family="monospace" class="muted">02:00:00:00:00:01</text><text x="1357" y="704" text-anchor="end" class="tiny muted">en0</text>
+  <line x1="865" y1="715" x2="1382" y2="715" class="line"/>
+  <circle cx="871" cy="737" r="4" fill="#2d9a50"/><text x="886" y="741" font-size="10" font-family="monospace">192.0.2.17</text><text x="1065" y="741" font-size="10" font-family="monospace" class="muted">02:00:00:00:00:11</text><text x="1357" y="741" text-anchor="end" class="tiny muted">en0</text>
+  <text x="866" y="765" class="tiny" fill="#2676db">打开邻居表　↗</text>
+
+  <rect x="848" y="792" width="552" height="159" rx="8" class="surface"/>
+  <path d="M862 815h16m-13-4 4 4-4 4m10-8-4 4 4 4" fill="none" stroke="#16877f" stroke-width="1.2"/><text x="890" y="820" font-size="13" font-weight="650">实时套接字</text>
+  <rect x="1360" y="803" width="24" height="22" rx="6" fill="#f1f3f5"/><text x="1372" y="818" text-anchor="middle" class="tiny muted">23</text>
+  <line x1="863" y1="832" x2="1385" y2="832" class="line"/>
+  <text x="866" y="854" font-size="10" font-weight="600">Safari</text><text x="918" y="854" class="tiny muted">PID 412</text><text x="1358" y="854" text-anchor="end" class="tiny" fill="#2676db">ESTABLISHED</text>
+  <text x="866" y="870" font-size="9" font-family="monospace" class="muted">192.0.2.24:51820 → 198.51.100.8:443</text>
+  <line x1="865" y1="879" x2="1382" y2="879" class="line"/>
+  <text x="866" y="900" font-size="10" font-weight="600">ssh</text><text x="918" y="900" class="tiny muted">PID 506</text><text x="1358" y="900" text-anchor="end" class="tiny" fill="#2676db">ESTABLISHED</text>
+  <text x="866" y="916" font-size="9" font-family="monospace" class="muted">192.0.2.24:22 → 203.0.113.10:52240</text>
+  <text x="866" y="940" class="tiny" fill="#2676db">检查全部连接　↗</text>
+</svg>
