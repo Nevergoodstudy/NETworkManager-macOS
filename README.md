@@ -26,6 +26,8 @@ NETworkManager for macOS 是基于 [BornToBeRoot/NETworkManager](https://github.
 
 将新构建的 `NETworkManager.app` 安装到“应用程序”后，打开应用的“设置 → MCP”，点击“连接 Codex”，再新建一个 Codex 聊天即可使用。应用会自动寻找 Codex；如未找到，可点击“选择 Codex…”选择 `Codex.app`。此流程无需终端命令、Swift 工具链或服务器 API key。MCP 已包含在应用中，但首次启动不会自动改写 Codex 配置；连接完成后可以退出 NETworkManager。调整网络诊断开关后点击“更新 Codex 连接”，移动应用后也需重新连接。
 
+下一阶段的架构方案、实施任务与验收条件见 [macOS 改进计划（中英文）](macos/docs/README.md)。该计划为待实施提案。
+
 ### macOS 界面概念图
 
 以下图片由 **gpt-image-2.5-flare** AI 图像生成模型制作，用于展示本项目设想的运维工作流与视觉方向。它们是**设计概念图，不是当前应用的实测截图**；图片中的文字和数据仅作视觉示意，实际功能以代码和功能状态文档为准。
@@ -81,6 +83,8 @@ See the [macOS feature and platform status](macos/PORTING_STATUS.md) and the [ma
 ### Use MCP in Codex
 
 Install the newly built `NETworkManager.app` in Applications, open **Settings → MCP**, click **Connect Codex**, and start a new Codex chat. The app finds Codex automatically; if needed, click **Choose Codex…** and select `Codex.app`. This flow requires no terminal commands, Swift toolchain, or server API key. MCP is bundled with the app, and the first launch waits for you to connect before changing Codex configuration. NETworkManager can close after connection. Click **Update Codex connection** after changing the network diagnostics switch, and reconnect if you move the app.
+
+See the [macOS improvement plan (Chinese and English)](macos/docs/README.md) for the proposed architecture, implementation tasks, and acceptance criteria. The plan describes future work.
 
 ### macOS UI concepts
 

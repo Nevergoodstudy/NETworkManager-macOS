@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NETworkManager macOS · 路线图 / Roadmap</title>
+<style>
+:root { color-scheme:light dark; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+body { margin:0; padding:28px; background:Canvas; color:CanvasText; line-height:1.5; }
+header,main,footer { max-width:1320px; margin:auto; }
+h1 { font-size:26px; margin:0 0 8px; } h2 { font-size:18px; margin:0 0 16px; }
+p { margin:8px 0 16px; } a { color:LinkText; }
+.controls { display:flex; gap:16px; flex-wrap:wrap; align-items:center; margin:22px 0; }
+button,select { font:inherit; padding:8px 10px; color:CanvasText; background:Canvas; border:1px solid GrayText; border-radius:6px; }
+main { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; }
+section { border-top:3px solid #4b83d4; padding-top:12px; } section[data-priority="P1"] { border-color:#c38b14; } section[data-priority="P2"] { border-color:#629b73; }
+article { border:1px solid GrayText; border-radius:8px; padding:16px; margin:0 0 12px; }
+article h3 { font-size:16px; margin:7px 0; } article p { margin:8px 0 0; } .meta { font-size:13px; }
+code { font-family:ui-monospace,SFMono-Regular,monospace; } [hidden] { display:none!important; }
+html[lang="zh-CN"] .en,html[lang="en"] .zh { display:none; }
+footer { margin-top:26px; font-size:14px; } label { display:inline-flex; gap:8px; align-items:center; }
+@media(max-width:900px) { main { grid-template-columns:1fr 1fr; } }
+@media(max-width:580px) { body { padding:16px; } main { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<header>
+<h1><span class="zh" lang="zh-CN">NETworkManager macOS 下一代路线图</span><span class="en" lang="en">NETworkManager macOS next-generation roadmap</span></h1>
+<p><span class="zh" lang="zh-CN">待实施提案 · 研究日期 2026-11-09 · 修订 2026-11-10。优先级不代表固定日历阶段。</span><span class="en" lang="en">Proposed work · Research 2026-11-09 · Revised 2026-11-10. Priorities do not set calendar dates.</span></p>
+<p><span class="zh" lang="zh-CN">先完成错误语义、DNS、执行与存储底座，再实现完整故障流程。T15 的实机验证贯穿各阶段。</span><span class="en" lang="en">Start with failure semantics, DNS, execution and storage; then deliver a complete incident workflow. T15 interoperability checks run throughout.</span></p>
+<p><a href="NEXT_GENERATION_RESEARCH_2026-11-09.zh-CN.md">中文方案</a> · <a href="NEXT_GENERATION_RESEARCH_2026-11-09.en.md">English proposal</a> · <a href="NEXT_GENERATION_BACKLOG_2026-11-09.md"><span class="zh" lang="zh-CN">任务清单</span><span class="en" lang="en">Backlog</span></a></p>
+<div class="controls"><label for="language"><span class="zh" lang="zh-CN">语言</span><span class="en" lang="en">Language</span><select id="language"><option value="zh-CN">简体中文</option><option value="en">English</option></select></label>
+<label for="priority"><span class="zh" lang="zh-CN">优先级</span><span class="en" lang="en">Priority</span><select id="priority"><option value="all">全部 / All</option><option value="P0">P0</option><option value="P1">P1</option><option value="P2">P2</option></select></label>
+<button id="reset" type="button"><span class="zh" lang="zh-CN">显示全部</span><span class="en" lang="en">Show all</span></button></div>
+<p id="count" role="status" aria-live="polite"></p>
+<noscript><p>JavaScript 已关闭：完整任务仍可阅读。 / JavaScript is disabled; all tasks remain readable.</p></noscript>
+</header>
+<main>
+<section data-priority="P0"><h2>P0 · <span class="zh" lang="zh-CN">可信的基础能力</span><span class="en" lang="en">Reliable foundations</span></h2>
+<article id="T01" data-priority="P0" data-days="3-5" data-dependencies="—">
+<code>T01</code><h3><span class="zh" lang="zh-CN">类型化 TCP/权限/依赖错误</span><span class="en" lang="en">Typed TCP, permission and dependency failures</span></h3>
+<p class="meta"><span class="zh" lang="zh-CN">3-5 人日 · 依赖：—</span><span class="en" lang="en">3-5 person-days · Dependencies: —</span></p>
+<p><span class="zh" lang="zh-CN">拒绝、超时、无路由、取消分别返回；权限不足不显示空成功</span><span class="en" lang="en">Return distinct refusal, timeout, unreachable and cancellation reasons; never present a permission failure as an empty success.</span></p>
+<p><a href="https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/14"><span class="zh" lang="zh-CN">跟踪议题</span><span class="en" lang="en">Tracking issue</span></a></p>
+</article>
+<article id="T02" data-priority="P0" data-days="4-7" data-dependencies="T01">
+<code>T02</code><h3><span class="zh" lang="zh-CN">系统 resolver 与显式 DNS 分离</span><span class="en" lang="en">System resolution and explicit DNS queries</span></h3>
+<p class="meta"><span class="zh" lang="zh-CN">4-7 人日 · 依赖：T01</span><span class="en" lang="en">4-7 person-days · Dependencies: T01</span></p>
+<p><span class="zh" lang="zh-CN">VPN split DNS、IPv6 nameserver、.local、多网卡 fixture 与实机矩阵</span><span class="en" lang="en">Cover VPN split DNS, IPv6 name servers, .local and multiple interfaces with fixtures and a real-Mac matrix.</span></p>
+<p><a href="https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/15"><span class="zh" lang="zh-CN">跟踪议题</span><span class="en" lang="en">Tracking issue</span></a></p>
+</article>
+<article id="T03" data-priority="P0" data-days="8-12" data-dependencies="T01">
+<code>T03</code><h3><span class="zh" lang="zh-CN">Job runtime 与有界进程适配器</span><span class="en" lang="en">Job runtime and bounded process adapter</span></h3>
+<p class="meta"><span class="zh" lang="zh-CN">8-12 人日 · 依赖：T01</span><span class="en" lang="en">8-12 person-days · Dependencies: T01</span></p>
+<p><span class="zh" lang="zh-CN">总 deadline、进程预算、取消、输出截断、退出清理贯通 GUI/MCP</span><span class="en" lang="en">Enforce total deadlines, per-process budgets, cancellation, output truncation and exit cleanup with consistent GUI/MCP semantics.</span></p>
+<p><a href="https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/16"><span class="zh" lang="zh-CN">跟踪议题</span><span class="en" lang="en">Tracking issue</span></a></p>
+</article>
+<article id="T04" data-priority="P0" data-days="8-12" data-dependencies="—">
+<code>T04</code><h3><span class="zh" lang="zh-CN">Repository 与 SQLite 迁移</span><span class="en" lang="en">Repository abstraction and SQLite migration</span></h3>
+<p class="meta"><span class="zh" lang="zh-CN">8-12 人日 · 依赖：—</span><span class="en" lang="en">8-12 person-days · Dependencies: —</span></p>
+<p><span class="zh" lang="zh-CN">旧 JSON 可验证迁移；磁盘失败/中断不破坏原数据；分页可基准测试</span><span class="en" lang="en">Verify migration from old JSON; preserve originals on disk failure or interruption; benchmark indexed pagination.</span></p>
+<p><a href="https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/17"><span class="zh" lang="zh-CN">跟踪议题</span><span class="en" lang="en">Tracking issue</span></a></p>
+</article>
+<article id="T15" data-priority="P0" data-days="6-10" data-dependencies="—">
+<code>T15</code><h3><span class="zh" lang="zh-CN">实机互操作与正式发布 gate</span><span class="en" lang="en">Real interoperability and formal release gates</span></h3>
+<p class="meta"><span class="zh" lang="zh-CN">6-10 人日 · 依赖：—</span><span class="en" lang="en">6-10 person-days · Dependencies: —</span></p>
+<p><span class="zh" lang="zh-CN">实际平台/设备、支持 OS/CPU、升级、签名、公证、Gatekeeper 有证据</span><span class="en" lang="en">Record real platforms/devices, supported OS/CPU pairs, upgrades, signing, notarization and Gatekeeper results.</span></p>
+</article>
+</section>
+<section data-priority="P1"><h2>P1 · <span class="zh" lang="zh-CN">资产、证据与工作流</span><span class="en" lang="en">Assets, evidence and workflows</span></h2>
+<article id="T05" data-priority="P1" data-days="5-8" data-dependencies="T04">
+<code>T05</code><h3><span class="zh" lang="zh-CN">稳定外部身份与接口双栈模型</span><span class="en" lang="en">Stable external identity, interfaces and dual stack</span></h3>
+<p class="meta"><span class="zh" lang="zh-CN">5-8 人日 · 依赖：T04</span><span class="en" lang="en">5-8 person-days · Dependencies: T04</span></p>
+<p><span class="zh" lang="zh-CN">同 remoteID 换 IP 保留历史；多 VRF/重复 IP 不误合并</span><span class="en" lang="en">Retain history when a remoteID changes IP; avoid incorrect merges across VRFs or duplicate IPs.</span></p>
+</article>
+<article id="T06" data-priority="P1" data-days="8-12" data-dependencies="T02, T03, T04, T05">
+<code>T06</code><h3><span class="zh" lang="zh-CN">Case/Observation 与服务诊断链</span><span class="en" lang="en">Case/Observation and service diagnostic chain</span></h3>
+<p class="meta"><span class="zh" lang="zh-CN">8-12 人日 · 依赖：T02, T03, T04, T05</span><span class="en" lang="en">8-12 person-days · Dependencies: T02, T03, T04, T05</span></p>
+<p><span class="zh" lang="zh-CN">DNS 到 TCP 到 TLS/HTTP 结构化证据可恢复并导出</span><span class="en" lang="en">Persist and export structured DNS to TCP to TLS/HTTP evidence; reopen a Case and rerun its checks.</span></p>
+</article>
+<article id="T07" data-priority="P1" data-days="4-7" data-dependencies="T05, T06">
+<code>T07</code><h3><span class="zh" lang="zh-CN">Zabbix 指标时间窗与事件关联</span><span class="en" lang="en">Zabbix metric windows and incident correlation</span></h3>
+<p class="meta"><span class="zh" lang="zh-CN">4-7 人日 · 依赖：T05, T06</span><span class="en" lang="en">4-7 person-days · Dependencies: T05, T06</span></p>
+<p><span class="zh" lang="zh-CN">告警前后窗口、单位、来源、采样间隔、空数据、权限、时差均可解释</span><span class="en" lang="en">Explain before/after windows, units, sources, sampling intervals, empty data, permission failures and clock differences.</span></p>
+</article>
+<article id="T08" data-priority="P1" data-days="5-8" data-dependencies="T03, T05">
+<code>T08</code><h3><span class="zh" lang="zh-CN">ConnectionProfile/LaunchPlan/跳板</span><span class="en" lang="en">ConnectionProfile, LaunchPlan and jump hosts</span></h3>
+<p class="meta"><span class="zh" lang="zh-CN">5-8 人日 · 依赖：T03, T05</span><span class="en" lang="en">5-8 person-days · Dependencies: T03, T05</span></p>
+<p><span class="zh" lang="zh-CN">ProxyJump、转发启停、主机密钥变化、恢复布局不执行命令</span><span class="en" lang="en">Verify ProxyJump, forwarding start/stop and changed host keys; restoring the layout sends no commands.</span></p>
+</article>
+<article id="T09" data-priority="P1" data-days="7-10" data-dependencies="T03, T06">
+<code>T09</code><h3><span class="zh" lang="zh-CN">ToolProvider 与 iperf3 纵向切片</span><span class="en" lang="en">ToolProvider and an iperf3 workflow</span></h3>
+<p class="meta"><span class="zh" lang="zh-CN">7-10 人日 · 依赖：T03, T06</span><span class="en" lang="en">7-10 person-days · Dependencies: T03, T06</span></p>
+<p><span class="zh" lang="zh-CN">缺工具、版本差异、两端正反向、时长预算、取消可验证</span><span class="en" lang="en">Verify missing tools, version differences, forward/reverse endpoint measurements, duration budgets and cancellation.</span></p>
+</article>
+<article id="T10" data-priority="P1" data-days="5-8" data-dependencies="T03, T06">
+<code>T10</code><h3><span class="zh" lang="zh-CN">MCP Case 快照与排障计划</span><span class="en" lang="en">MCP Case snapshots and diagnostic plans</span></h3>
+<p class="meta"><span class="zh" lang="zh-CN">5-8 人日 · 依赖：T03, T06</span><span class="en" lang="en">5-8 person-days · Dependencies: T03, T06</span></p>
+<p><span class="zh" lang="zh-CN">作用域、预算、过期计划由执行层拒绝；schema 与 GUI 一致</span><span class="en" lang="en">Reject out-of-scope, over-budget or expired plans in the execution layer; keep result schemas consistent with the GUI.</span></p>
+</article>
+<article id="T16" data-priority="P1" data-days="4-7" data-dependencies="T03, T04">
+<code>T16</code><h3><span class="zh" lang="zh-CN">严格并发检查与 MainActor/actor</span><span class="en" lang="en">Strict concurrency and MainActor/actor boundaries</span></h3>
+<p class="meta"><span class="zh" lang="zh-CN">4-7 人日 · 依赖：T03, T04</span><span class="en" lang="en">4-7 person-days · Dependencies: T03, T04</span></p>
+<p><span class="zh" lang="zh-CN">共享可变状态风险收敛；取消和并行 fixture 通过</span><span class="en" lang="en">Resolve shared mutable-state risks module by module; pass cancellation and concurrent execution fixtures.</span></p>
+</article>
+</section>
+<section data-priority="P2"><h2>P2 · <span class="zh" lang="zh-CN">可选深度能力</span><span class="en" lang="en">Optional deeper capabilities</span></h2>
+<article id="T11" data-priority="P2" data-days="6-10" data-dependencies="T05, T06">
+<code>T11</code><h3><span class="zh" lang="zh-CN">LibreNMS/NetBox 只读拓扑</span><span class="en" lang="en">Read-only LibreNMS/NetBox topology</span></h3>
+<p class="meta"><span class="zh" lang="zh-CN">6-10 人日 · 依赖：T05, T06</span><span class="en" lang="en">6-10 person-days · Dependencies: T05, T06</span></p>
+<p><span class="zh" lang="zh-CN">邻居、端口、来源、时间、冲突、陈旧边可解释</span><span class="en" lang="en">Explain neighbors, endpoint ports, sources, timestamps, conflicts and stale edges.</span></p>
+</article>
+<article id="T12" data-priority="P2" data-days="4-7" data-dependencies="T03, T06">
+<code>T12</code><h3><span class="zh" lang="zh-CN">pcapng 离线证据摘要</span><span class="en" lang="en">Offline pcapng evidence summaries</span></h3>
+<p class="meta"><span class="zh" lang="zh-CN">4-7 人日 · 依赖：T03, T06</span><span class="en" lang="en">4-7 person-days · Dependencies: T03, T06</span></p>
+<p><span class="zh" lang="zh-CN">大/损坏文件、分析取消、hash、敏感附件、保留规则可验证</span><span class="en" lang="en">Verify large/corrupt files, cancellation, hashes, sensitive attachments and retention rules.</span></p>
+</article>
+<article id="T13" data-priority="P2" data-days="6-10" data-dependencies="T03, T05, T06">
+<code>T13</code><h3><span class="zh" lang="zh-CN">gNMI 只读试点</span><span class="en" lang="en">Read-only gNMI pilot</span></h3>
+<p class="meta"><span class="zh" lang="zh-CN">6-10 人日 · 依赖：T03, T05, T06</span><span class="en" lang="en">6-10 person-days · Dependencies: T03, T05, T06</span></p>
+<p><span class="zh" lang="zh-CN">两类实际设备的 Capabilities/Get、TLS、断线、不支持模型可验证</span><span class="en" lang="en">Verify Capabilities/Get, TLS, disconnects and unsupported models on two real device families.</span></p>
+</article>
+<article id="T14" data-priority="P2" data-days="6-10" data-dependencies="T06, T08">
+<code>T14</code><h3><span class="zh" lang="zh-CN">配置备份/diff 与只读设备驱动</span><span class="en" lang="en">Configuration backups, diffs and read-only drivers</span></h3>
+<p class="meta"><span class="zh" lang="zh-CN">6-10 人日 · 依赖：T06, T08</span><span class="en" lang="en">6-10 person-days · Dependencies: T06, T08</span></p>
+<p><span class="zh" lang="zh-CN">两类 OS 配置可比；完整性和脱敏通过；默认不写配置</span><span class="en" lang="en">Compare configurations on two OS families; verify completeness and redaction; configuration writes stay outside this task.</span></p>
+</article>
+</section>
+</main>
+<footer><p><span class="zh" lang="zh-CN">估算假设两名工程师及共享 QA/实验环境，完整清单不构成 90 天交付承诺。JSON 是任务数据源。看板不执行网络操作。</span><span class="en" lang="en">Estimates assume two engineers with shared QA and lab access. The complete backlog is not a 90-day commitment. JSON is the task data source. This board performs no network operations.</span></p></footer>
+<script>
+const language = document.querySelector('#language');
+const priority = document.querySelector('#priority');
+const cards = Array.from(document.querySelectorAll('article'));
+function render() {
+  const current = priority.value;
+  document.documentElement.lang = language.value;
+  cards.forEach(card => { card.hidden = current !== 'all' && card.dataset.priority !== current; });
+  document.querySelectorAll('main section').forEach(section => { section.hidden = current !== 'all' && section.dataset.priority !== current; });
+  const visible = cards.filter(card => !card.hidden).length;
+  document.querySelector('#count').textContent = language.value === 'en' ? visible + ' of 16 tasks shown' : '显示 ' + visible + ' / 16 项任务';
+}
+language.addEventListener('change', render);
+priority.addEventListener('change', render);
+document.querySelector('#reset').addEventListener('click', () => { priority.value = 'all'; render(); });
+render();
+</script>
+</body>
+</html>

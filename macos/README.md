@@ -35,6 +35,12 @@ Network clients share a cancellable system DNS-SD address resolver for hostnames
 and a numeric-only path for IP literals. Address resolution runs inside the
 visible app process and does not add a project-specific resolver service.
 
+## 改进计划 / Improvement plan
+
+下一阶段方案聚焦诊断结果、任务执行、资产身份、历史存储和故障证据。中英文设计、16 项任务和验收条件见 [改进计划索引](docs/README.md)。方案为待实施提案，源码基准为 2026-11-10 经 PR #12 合并的提交。
+
+The next-stage proposal covers diagnostic results, job execution, asset identity, history storage and incident evidence. The [plan index](docs/README.md) links the Chinese/English design, 16 tasks and acceptance criteria. This is proposed work based on the source commit merged through PR #12 on 2026-11-10.
+
 ## Build and run
 
 The package requires Swift 6.2 or later to build the pinned MCP dependency graph.
