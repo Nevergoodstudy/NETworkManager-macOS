@@ -5,7 +5,7 @@
 研究基准：2026-11-09（Asia/Shanghai）；文档修订：2026-11-10。
 源码基准：[0944345d73df](https://github.com/Nevergoodstudy/NETworkManager-macOS/tree/0944345d73df0eafb2e7353aecca48d924398de8)，分支 codex/mcp-server。
 
-**状态：待实施的工程提案。** 本文审阅的功能分支包含尚待合并的 [PR #12](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/12)，包括 MCP 与界面改动。“当前代码具备”指该提交中的实现，不表示这些能力均已进入 main、完成设备互操作或正式发布。本提案独立提交，不合并功能分支。
+**状态：待实施的工程提案。** 本文审阅的源码基准是功能分支提交 [0944345d73df](https://github.com/Nevergoodstudy/NETworkManager-macOS/tree/0944345d73df0eafb2e7353aecca48d924398de8)，该提交随后通过 [PR #12](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/12) 于 2026-11-10 合并进 `main`。“当前代码具备”指该源码基准中的实现，不代表所有功能均已完成真实设备互操作或正式签名公证发布。本提案只记录后续工程建议。
 
 **建议的产品目标：在 Mac 上打开一个故障，即可把资产、告警、不同观测点的测量、远程会话和操作证据连起来，并能复现检查、比较前后变化、交接给同事。**
 

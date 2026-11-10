@@ -4,6 +4,29 @@ This directory contains the native macOS edition of NETworkManager. The
 Windows application in Source/ remains the Windows/WPF product; the macOS
 edition is a Swift Package built with SwiftUI and AppKit.
 
+The app includes `NMCP`, which exposes local lookups and selected single-target
+diagnostics through MCP over stdio. Install `NETworkManager.app` in Applications,
+open **Settings → MCP**, click **Connect Codex**, then start a new Codex chat.
+If Codex is not found automatically, **Choose Codex…** lets you select
+`Codex.app` or its executable. No terminal setup or Swift toolchain is required
+for this connection. See [MCP.md](MCP.md) for other clients, tools, resources,
+and developer checks.
+
+MCP is bundled by default; connecting Codex is a one-time user action. The
+**Include Ping, DNS, and TCP diagnostics** switch starts on. Changing it requires
+**Update Codex connection**; **Disconnect Codex** removes the registration.
+NETworkManager may close after connecting, and moving the app requires
+reconnecting so Codex can use its new path.
+
+## Interface preview / 界面预览
+
+The following dashboard mockup illustrates the refreshed macOS window and uses
+documentation-only example addresses. It is a design preview, not a capture of a
+real network. / 以下总览示意图展示了更新后的 macOS 窗口，并使用仅供文档示例
+的地址；它是设计预览，不是实际网络截图。
+
+![NETworkManager macOS dashboard mockup](docs/ui-dashboard-mockup.png)
+
 The macOS target requires macOS 14 or later. It uses the existing OUI, ports,
 and WHOIS XML data from macos/Sources/NMCore/Resources/ and stores user data
 under ~/Library/Application Support/NETworkManager/.
@@ -14,11 +37,14 @@ visible app process and does not add a project-specific resolver service.
 
 ## 改进计划 / Improvement plan
 
-下一阶段方案聚焦诊断结果、任务执行、资产身份、历史存储和故障证据。中英文设计、16 项任务和验收条件见 [改进计划索引](docs/README.md)。方案为待实施提案，源码基准包含 PR #12 中尚待合并的能力。
+下一阶段方案聚焦诊断结果、任务执行、资产身份、历史存储和故障证据。中英文设计、16 项任务和验收条件见 [改进计划索引](docs/README.md)。方案为待实施提案，源码基准为 2026-11-10 经 PR #12 合并的提交。
 
-The next-stage proposal covers diagnostic results, job execution, asset identity, history storage and incident evidence. The [plan index](docs/README.md) links the Chinese/English design, 16 tasks and acceptance criteria. This is proposed work; its reviewed source includes capabilities awaiting merge in PR #12.
+The next-stage proposal covers diagnostic results, job execution, asset identity, history storage and incident evidence. The [plan index](docs/README.md) links the Chinese/English design, 16 tasks and acceptance criteria. This is proposed work based on the source commit merged through PR #12 on 2026-11-10.
 
 ## Build and run
+
+The package requires Swift 6.2 or later to build the pinned MCP dependency graph.
+The deployment target remains macOS 14.
 
 Use the project run script for the GUI application. It stages a real `.app`
 bundle, signs it locally, and launches it through Launch Services so Dock
@@ -44,6 +70,22 @@ To run the checks against optimized Release modules:
 `NMTest` uses `@testable import NMCore`, so Release builds must explicitly enable
 testability for the test invocation. The distributable app does not need that flag.
 
+The app packaging scripts build and bundle `NMCP` at
+`NETworkManager.app/Contents/Helpers/NMCP`, together with its SwiftPM resource
+bundles. The GUI connection flow uses this bundled executable.
+
+For MCP development directly from a source checkout, build the standalone
+product before connecting a client:
+
+    swift build --package-path macos --product NMCP
+    ./macos/Scripts/run-mcp.sh --help
+
+The launcher directly executes an existing binary, so rebuild after changing
+source or dependencies. It builds automatically only when the executable is
+absent; that first build can exceed a client's initialization timeout.
+`NMCP_CONFIGURATION` selects `debug` (default) or `release`; build the matching
+configuration before using it. See the developer sections of [MCP.md](MCP.md).
+
 ## Runtime model
 
 The macOS app does not install a separate network daemon or privileged helper.
@@ -51,6 +93,14 @@ Network operations run in the visible NETworkManager app process or use
 short-lived macOS system commands when needed. Closing the last app window
 exits NETworkManager. macOS process tools will show the app while it is open;
 the app does not hide itself.
+
+An MCP client separately starts the bundled `Contents/Helpers/NMCP` stdio
+process. It does not require an open GUI and exits when the client closes its
+input. The GUI connects with single-target Ping, DNS, and TCP diagnostics
+enabled by default; turn the switch off and update the connection to expose
+only the four local tools. Direct command-line launches expose local queries
+unless `--allow-network` is passed. This client-owned process does not install
+a background service. See [MCP.md](MCP.md).
 
 The optional **Start with macOS** setting registers the visible app with
 macOS's system-managed `SMAppService.mainApp` login item. It is off by default,
@@ -175,6 +225,7 @@ The complete tool-by-tool implementation and limitation matrix is in
 | Connections/listeners/neighbors | Structured parsing of lsof and arp output |
 | DNS, WHOIS, SNTP | Native UDP/TCP clients |
 | Network interface | getifaddrs |
+| MCP client integration | Bundled `NMCP` stdio executable with Settings → MCP → Connect Codex; four local tools, three network diagnostics enabled by the GUI switch by default, and two static resources |
 | Hosts editor | /etc/hosts with an administrator authorization prompt |
 | PowerShell console | /bin/sh, Terminal.app, and user-selected command execution |
 | PuTTY | In-app SwiftTerm sessions using system OpenSSH for SSH; Terminal.app for Telnet |
@@ -197,6 +248,7 @@ therefore remain optional system dependencies. See `PORTING_STATUS.md` for the
 specific feature boundary instead of assuming that a Windows-only API has been
 silently emulated.
 
-The app bundle includes the SwiftTerm MIT notice at
-`Contents/Resources/ThirdPartyNotices.md`; its version is pinned in
-`Package.resolved`.
+The app bundle includes third-party notices at
+`Contents/Resources/ThirdPartyNotices.md`. [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
+also identifies the MCP command-line dependencies; dependency versions are
+pinned in `Package.resolved`.

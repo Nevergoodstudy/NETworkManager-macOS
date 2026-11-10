@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import NMCore
 
 public struct SettingsView: View {
@@ -6,6 +7,7 @@ public struct SettingsView: View {
     @ObservedObject private var settings = SettingsStore.shared
     @ObservedObject private var loginItem = LoginItemManager.shared
     @ObservedObject private var localization = Loc.shared
+    @StateObject private var mcp = MCPClientConnection()
     @NMStateCompat private var language: AppLanguage
     @NMStateCompat private var showingResetConfirmation = false
 
@@ -76,6 +78,34 @@ public struct SettingsView: View {
                 Toggle(t("Show status bar"), isOn: $settings.showStatusBar)
                     .disabled(settings.recoveryError != nil)
             }
+            Section("MCP") {
+                Label(mcp.availabilityMessage, systemImage: mcp.helperURL == nil || mcp.requiresInstallation ? "exclamationmark.triangle" : "checkmark.circle.fill")
+                    .foregroundStyle(mcp.helperURL == nil || mcp.requiresInstallation ? Color.orange : Color.green)
+                Text(t("Use network tools from Codex with natural language. No Terminal commands or API key are needed."))
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                Toggle(t("Include Ping, DNS, and TCP diagnostics"), isOn: $mcp.allowNetwork)
+                    .disabled(mcp.isBusy)
+                Text(mcp.connectionMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                HStack {
+                    Button(t(mcp.hasRegistration ? "Update Codex connection" : "Connect Codex")) {
+                        Task { await mcp.connect() }
+                    }
+                    .disabled(!mcp.canConnect || mcp.isConnected)
+                    Button(t("Disconnect Codex")) { Task { await mcp.disconnect() } }
+                        .disabled(!mcp.canDisconnect)
+                    Spacer()
+                    Button(t("Choose Codex…")) { chooseCodex() }
+                        .disabled(mcp.isBusy)
+                    Button(t("Refresh")) { Task { await mcp.refresh() } }
+                        .disabled(mcp.isBusy)
+                }
+                if let error = mcp.lastError {
+                    Text(error).font(.caption).foregroundStyle(.red).textSelection(.enabled)
+                }
+            }
             Section(t("About")) {
                 LabeledContent(t("Version"), value: "macOS preview")
                 LabeledContent(t("Platform"), value: "macOS 14+")
@@ -86,11 +116,25 @@ public struct SettingsView: View {
         .formStyle(.grouped)
         .padding(24)
         .frame(maxWidth: 680)
+        .task { await mcp.refresh() }
         .alert(t("Reset settings and recover?"), isPresented: $showingResetConfirmation) {
             Button(t("Cancel"), role: .cancel) {}
             Button(t("Reset settings and recover"), role: .destructive) { settings.reset() }
         } message: {
             Text(t("This restores default preferences and keeps a copy of the damaged settings file."))
+        }
+    }
+
+    private func chooseCodex() {
+        let panel = NSOpenPanel()
+        panel.title = t("Choose Codex…")
+        panel.message = t("Choose the Codex app or its executable. No command or path needs to be typed.")
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.treatsFilePackagesAsDirectories = false
+        if panel.runModal() == .OK, let url = panel.url {
+            Task { await mcp.selectCodex(url) }
         }
     }
 

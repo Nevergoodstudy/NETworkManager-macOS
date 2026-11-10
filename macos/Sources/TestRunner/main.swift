@@ -780,6 +780,7 @@ do {
     } else {
         throw CheckFailure(description: "a cancelled ICMP probe should not fall back or report a timeout")
     }
+    try await MCPClientConnectionChecks.run()
     print("NMTest: all checks passed")
 } catch {
     fputs("NMTest: FAILED: \(error)\n", stderr)

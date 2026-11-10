@@ -2,9 +2,9 @@
 
 研究日期 / Research date: **2026-11-09** · 文档修订 / Documentation revision: **2026-11-10**
 
-**待实施提案。** 方案审阅的源码是 [0944345d73df](https://github.com/Nevergoodstudy/NETworkManager-macOS/tree/0944345d73df0eafb2e7353aecca48d924398de8)，包含 [PR #12](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/12) 中待合并的 MCP 与界面改动。方案文档独立提交；其中列出的已有能力应对照该提交阅读，不能视为 main 或正式发行版的功能承诺。
+**待实施提案。** 方案审阅的源码是 [0944345d73df](https://github.com/Nevergoodstudy/NETworkManager-macOS/tree/0944345d73df0eafb2e7353aecca48d924398de8)，该功能提交于 2026-11-10 通过 [PR #12](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/12) 合并进 `main`。文中所列已有能力以该源码基准为准，不代表已完成真实设备互操作或正式签名公证发布。
 
-**Proposed work.** The reviewed source is [0944345d73df](https://github.com/Nevergoodstudy/NETworkManager-macOS/tree/0944345d73df0eafb2e7353aecca48d924398de8), including MCP and UI changes awaiting review in [PR #12](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/12). This documentation is submitted separately. Existing capabilities described in the proposal refer to that commit; they are not a statement that the same features have reached main or a release.
+**Proposed work.** The reviewed source is [0944345d73df](https://github.com/Nevergoodstudy/NETworkManager-macOS/tree/0944345d73df0eafb2e7353aecca48d924398de8), merged into `main` through [PR #12](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/12) on 2026-11-10. Existing capabilities in the proposal refer to that baseline; they do not establish live-device interoperability or a formally signed and notarized release.
 
 | 内容 / Material | 入口 / Entry |
 |---|---|
