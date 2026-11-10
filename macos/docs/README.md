@@ -27,4 +27,13 @@ JSON 保存任务 ID、优先级、估算、依赖、中英文标题与验收条
 
 JSON records task IDs, priorities, estimates, dependencies, and Chinese/English titles and acceptance criteria. Markdown, CSV and HTML stay aligned with it. The proposed status records the plan; implementation links and acceptance evidence in tracking issues establish progress. The full backlog is not a 90-day commitment.
 
-<!-- tracking-links -->
+## 跟踪议题 / Tracking issues
+
+总跟踪 / Overall tracker: [macOS 下一阶段改进计划 / Next-stage macOS improvement plan](https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/13)
+
+| 任务 / Task | 议题 / Issue |
+|---|---|
+| T01 · 类型化 TCP/权限/依赖错误 / Typed TCP, permission and dependency failures | [#14](https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/14) |
+| T02 · 系统 resolver 与显式 DNS 分离 / System resolution and explicit DNS queries | [#15](https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/15) |
+| T03 · Job runtime 与有界进程适配器 / Job runtime and bounded process adapter | [#16](https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/16) |
+| T04 · Repository 与 SQLite 迁移 / Repository abstraction and SQLite migration | [#17](https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/17) |

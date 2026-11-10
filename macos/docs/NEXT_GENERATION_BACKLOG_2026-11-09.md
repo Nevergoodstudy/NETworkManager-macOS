@@ -18,10 +18,10 @@ The full backlog is not a 90-day commitment. Phase estimates assume two engineer
 
 | ID | 优先级 | 工作项 | 人日 | 依赖 | 验收条件 | 跟踪 |
 |---|---|---|---|---|---|---|
-| T01 | P0 | 类型化 TCP/权限/依赖错误 | 3-5 | — | 拒绝、超时、无路由、取消分别返回；权限不足不显示空成功 | — |
-| T02 | P0 | 系统 resolver 与显式 DNS 分离 | 4-7 | T01 | VPN split DNS、IPv6 nameserver、.local、多网卡 fixture 与实机矩阵 | — |
-| T03 | P0 | Job runtime 与有界进程适配器 | 8-12 | T01 | 总 deadline、进程预算、取消、输出截断、退出清理贯通 GUI/MCP | — |
-| T04 | P0 | Repository 与 SQLite 迁移 | 8-12 | — | 旧 JSON 可验证迁移；磁盘失败/中断不破坏原数据；分页可基准测试 | — |
+| T01 | P0 | 类型化 TCP/权限/依赖错误 | 3-5 | — | 拒绝、超时、无路由、取消分别返回；权限不足不显示空成功 | [Issue](https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/14) |
+| T02 | P0 | 系统 resolver 与显式 DNS 分离 | 4-7 | T01 | VPN split DNS、IPv6 nameserver、.local、多网卡 fixture 与实机矩阵 | [Issue](https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/15) |
+| T03 | P0 | Job runtime 与有界进程适配器 | 8-12 | T01 | 总 deadline、进程预算、取消、输出截断、退出清理贯通 GUI/MCP | [Issue](https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/16) |
+| T04 | P0 | Repository 与 SQLite 迁移 | 8-12 | — | 旧 JSON 可验证迁移；磁盘失败/中断不破坏原数据；分页可基准测试 | [Issue](https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/17) |
 | T05 | P1 | 稳定外部身份与接口双栈模型 | 5-8 | T04 | 同 remoteID 换 IP 保留历史；多 VRF/重复 IP 不误合并 | — |
 | T06 | P1 | Case/Observation 与服务诊断链 | 8-12 | T02, T03, T04, T05 | DNS 到 TCP 到 TLS/HTTP 结构化证据可恢复并导出 | — |
 | T07 | P1 | Zabbix 指标时间窗与事件关联 | 4-7 | T05, T06 | 告警前后窗口、单位、来源、采样间隔、空数据、权限、时差均可解释 | — |
@@ -39,10 +39,10 @@ The full backlog is not a 90-day commitment. Phase estimates assume two engineer
 
 | ID | Priority | Work item | Days | Dependencies | Acceptance | Tracking |
 |---|---|---|---|---|---|---|
-| T01 | P0 | Typed TCP, permission and dependency failures | 3-5 | — | Return distinct refusal, timeout, unreachable and cancellation reasons; never present a permission failure as an empty success. | — |
-| T02 | P0 | System resolution and explicit DNS queries | 4-7 | T01 | Cover VPN split DNS, IPv6 name servers, .local and multiple interfaces with fixtures and a real-Mac matrix. | — |
-| T03 | P0 | Job runtime and bounded process adapter | 8-12 | T01 | Enforce total deadlines, per-process budgets, cancellation, output truncation and exit cleanup with consistent GUI/MCP semantics. | — |
-| T04 | P0 | Repository abstraction and SQLite migration | 8-12 | — | Verify migration from old JSON; preserve originals on disk failure or interruption; benchmark indexed pagination. | — |
+| T01 | P0 | Typed TCP, permission and dependency failures | 3-5 | — | Return distinct refusal, timeout, unreachable and cancellation reasons; never present a permission failure as an empty success. | [Issue](https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/14) |
+| T02 | P0 | System resolution and explicit DNS queries | 4-7 | T01 | Cover VPN split DNS, IPv6 name servers, .local and multiple interfaces with fixtures and a real-Mac matrix. | [Issue](https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/15) |
+| T03 | P0 | Job runtime and bounded process adapter | 8-12 | T01 | Enforce total deadlines, per-process budgets, cancellation, output truncation and exit cleanup with consistent GUI/MCP semantics. | [Issue](https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/16) |
+| T04 | P0 | Repository abstraction and SQLite migration | 8-12 | — | Verify migration from old JSON; preserve originals on disk failure or interruption; benchmark indexed pagination. | [Issue](https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/17) |
 | T05 | P1 | Stable external identity, interfaces and dual stack | 5-8 | T04 | Retain history when a remoteID changes IP; avoid incorrect merges across VRFs or duplicate IPs. | — |
 | T06 | P1 | Case/Observation and service diagnostic chain | 8-12 | T02, T03, T04, T05 | Persist and export structured DNS to TCP to TLS/HTTP evidence; reopen a Case and rerun its checks. | — |
 | T07 | P1 | Zabbix metric windows and incident correlation | 4-7 | T05, T06 | Explain before/after windows, units, sources, sampling intervals, empty data, permission failures and clock differences. | — |
