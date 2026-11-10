@@ -200,6 +200,17 @@ final class LoopbackWhoisFixture: @unchecked Sendable {
     }
 }
 
+if CommandLine.arguments.contains("--socket-inventory-only") {
+    do {
+        try await SocketInventoryChecks.run()
+        print("NMTest: socket inventory checks passed")
+        exit(0)
+    } catch {
+        fputs("NMTest: FAILED: \(error)\n", stderr)
+        exit(1)
+    }
+}
+
 do {
     let subnet = IPv4Subnet("192.168.1.0/24")
     try check(subnet?.network.description == "192.168.1.0", "subnet network")
@@ -804,6 +815,7 @@ do {
     try await DiagnosticRuntimeEvidenceChecks.run()
     try TCPProbeChecks.run()
     try await ProcessRuntimeChecks.run()
+    try await SocketInventoryChecks.run()
     try await MCPClientConnectionChecks.run()
     print("NMTest: all checks passed")
 } catch {

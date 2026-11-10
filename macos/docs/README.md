@@ -8,6 +8,7 @@
 
 | 内容 / Material | 入口 / Entry |
 |---|---|
+| T01 连接与监听端口的本地实施 / Local connections and listeners implementation | [双语结果契约与验证记录 / Result contract and validation](T01_SOCKET_INVENTORY_2026-11-10.md) |
 | T01 TCP 与 T03 进程适配器实施记录 / TCP and process adapter implementation | [双语实施与验证记录 / Implementation and validation](T01_T03_IMPLEMENTATION_2026-11-10.md) |
 | 中文架构与实施方案 | [阅读全文](NEXT_GENERATION_RESEARCH_2026-11-09.zh-CN.md) |
 | English architecture and implementation proposal | [Read the proposal](NEXT_GENERATION_RESEARCH_2026-11-09.en.md) |
@@ -19,6 +20,10 @@
 2026-11-10 开始实施 T01 的 TCP 结果语义和 T03 的进程适配器切片，代码、兼容性和本机验证见上表实施记录；两项完整验收继续由 #14 与 #16 跟踪。
 
 Implementation began on 2026-11-10 with typed TCP outcomes and the bounded process adapter. The implementation record above describes the code, compatibility and local verification; #14 and #16 continue to track full acceptance.
+
+后续本地批次已为连接和监听端口页面加入显式采集结果与部分数据状态，实施记录见上表。该批次尚未上传。
+
+A subsequent local batch adds explicit collection results and partial-data states to Connections and Listeners. Its implementation record is linked above; this batch has not been uploaded.
 
 先处理 TCP/权限/依赖失败分类、系统解析与显式 DNS、Job 执行边界、Repository 与 SQLite 迁移，再交付一条 DNS → TCP → TLS/HTTP 的故障处理流程。真实设备互操作、数据升级、最低系统和正式公证作为持续验收项。
 
