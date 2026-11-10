@@ -102,6 +102,7 @@ private struct ToolGroup: Identifiable {
 }
 
 private struct ContentView: View {
+    @Environment(\.palette) private var palette
     @Binding var selectedTool: String?
     @NMStateCompat private var searchText = ""
     @NMStateCompat private var dashboardTarget: String?
@@ -169,8 +170,9 @@ private struct ContentView: View {
                     }
                 }
                 Section(t("Application")) {
-                    if "settings".localizedCaseInsensitiveContains(searchText) || t("Settings").localizedCaseInsensitiveContains(searchText) {
-                        Label(t("Settings"), systemImage: "gear").tag(Optional("settings"))
+                    if searchText.isEmpty || "settings".localizedCaseInsensitiveContains(searchText)
+                        || t("Settings").localizedCaseInsensitiveContains(searchText) {
+                        Label(t("Settings"), systemImage: "gearshape").tag(Optional("settings"))
                     }
                 }
             }
@@ -178,50 +180,64 @@ private struct ContentView: View {
             .listStyle(.sidebar)
             .navigationSplitViewColumnWidth(min: 210, ideal: 248, max: 300)
         } detail: {
-            VStack(spacing: 0) {
-                HStack(spacing: 10) {
-                    Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                    TextField(t("Find a tool or workflow"), text: $searchText)
-                        .textFieldStyle(.plain)
-                        .focused($searchFocused)
-                        .onSubmit(openFirstSearchResult)
-                        .accessibilityIdentifier("operationsSearch")
-                        .accessibilityLabel(t("Find a tool or workflow"))
-                    if !searchText.isEmpty {
-                        Button { searchText = "" } label: {
-                            Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+            detailView
+                .navigationTitle(selectedToolTitle)
+                .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundStyle(palette.textSecondary)
+                            TextField(t("Find a tool or workflow"), text: $searchText)
+                                .textFieldStyle(.plain)
+                                .focused($searchFocused)
+                                .onSubmit(openFirstSearchResult)
+                                .accessibilityIdentifier("operationsSearch")
+                                .accessibilityLabel(t("Find a tool or workflow"))
+                            if !searchText.isEmpty {
+                                Button { searchText = "" } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(palette.textSecondary)
+                                }
+                                .buttonStyle(.plain)
+                                .help(t("Clear search"))
+                            }
+                            Text("⌘K")
+                                .font(.caption.monospaced())
+                                .foregroundStyle(palette.textSecondary)
                         }
-                        .buttonStyle(.plain)
-                        .help(t("Clear search"))
+                        .padding(.horizontal, 10)
+                        .frame(width: 330, height: 32)
+                        .background(palette.cardAlt, in: RoundedRectangle(cornerRadius: 8))
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(palette.border))
                     }
-                    Spacer(minLength: 4)
-                    Text("⌘K").font(.caption.monospaced()).foregroundStyle(.secondary)
-                    Button { searchFocused = true } label: {
-                        Image(systemName: "magnifyingglass")
-                    }
-                    .buttonStyle(.borderless)
-                    .help(t("Find tools"))
-                    .accessibilityLabel(t("Find tools"))
-                    .keyboardShortcut("k", modifiers: .command)
-                    if !searchText.isEmpty {
-                        Button { openFirstSearchResult() } label: {
-                            Label(t("Open tool"), systemImage: "arrow.turn.down.left")
+                    ToolbarItem(placement: .automatic) {
+                        Button { searchFocused = true } label: {
+                            Image(systemName: "magnifyingglass")
                         }
-                        .buttonStyle(.borderedProminent)
+                        .help(t("Find tools"))
+                        .accessibilityLabel(t("Find tools"))
+                        .keyboardShortcut("k", modifiers: .command)
+                    }
+                    ToolbarItem(placement: .automatic) {
+                        Button { selectedTool = "settings" } label: {
+                            Image(systemName: "gearshape")
+                        }
+                        .help(t("Settings"))
+                        .accessibilityLabel(t("Settings"))
                     }
                 }
-                .padding(.horizontal, 20)
-                .frame(height: 48)
-                .background(.bar)
-                Divider()
-                detailView
-            }
         }
         .onChange(of: selectedTool) { oldValue, newValue in
             if oldValue == "diagnosticHistory" && newValue != "diagnosticHistory" {
                 diagnosticHistorySearch = ""
             }
         }
+    }
+
+    private var selectedToolTitle: String {
+        if selectedTool == "settings" { return t("Settings") }
+        return groups.flatMap(\.items).first { $0.id == (selectedTool ?? "dashboard") }.map { t($0.title) }
+            ?? t("Dashboard")
     }
 
     private func matchesSearch(_ item: ToolItem) -> Bool {

@@ -55,7 +55,7 @@ public enum DiagnosticService {
     }
 
     public static func runDNS(host: String, recordType: DNSRecordType = .a, server: String? = nil, serverPort: UInt16 = 53, timeout: TimeInterval = 3) async -> DiagnosticExecutionResult {
-        await execute { cancellation in
+        await executeBlocking { cancellation in
             do {
                 let result = try DNSClient.query(name: host, type: recordType, server: server, serverPort: serverPort, timeout: timeout, cancellation: cancellation)
                 let values = result.records.map(\.value).joined(separator: ", ")
@@ -70,7 +70,7 @@ public enum DiagnosticService {
     }
 
     public static func runTCP(host: String, port: Int, timeout: TimeInterval = 2) async -> DiagnosticExecutionResult {
-        await execute { cancellation in
+        await executeBlocking { cancellation in
             let result = TCPProbe.probe(host: host, port: port, timeout: timeout, cancellation: cancellation)
             switch result.status {
             case .open:
@@ -99,7 +99,7 @@ public enum DiagnosticService {
     }
 
     public static func runSNTP(host: String, timeout: TimeInterval = 3, port: UInt16 = 123) async -> DiagnosticExecutionResult {
-        await execute { cancellation in
+        await executeBlocking { cancellation in
             do {
                 let result = try SNTPClient.query(server: host, timeout: timeout, port: port, cancellation: cancellation)
                 return DiagnosticExecutionResult(
@@ -144,7 +144,7 @@ public enum DiagnosticService {
     public static func runSNMP(host: String, community: String = "public", port: Int = 161, timeout: TimeInterval = 2,
                                oid: String = "1.3.6.1.2.1.1.1.0", version: String = "v2c", authProtocol: String = "SHA-256",
                                securityLevel: String? = nil, credential: CredentialSecret? = nil) async -> DiagnosticExecutionResult {
-        await execute { cancellation in
+        await executeBlocking { cancellation in
             do {
                 var value: String
                 let elapsed: TimeInterval
@@ -178,6 +178,12 @@ public enum DiagnosticService {
             } catch {
                 return DiagnosticExecutionResult(status: classify(error), summary: error.localizedDescription, source: "SNMP \(version)")
             }
+        }
+    }
+
+    private static func executeBlocking(_ operation: @escaping @Sendable (DiagnosticCancellation) -> DiagnosticExecutionResult) async -> DiagnosticExecutionResult {
+        await execute { cancellation in
+            await runBlockingDiagnostic { operation(cancellation) }
         }
     }
 

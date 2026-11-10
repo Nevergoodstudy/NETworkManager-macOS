@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 if [[ $# -ne 1 || "$1" == "--help" || "$1" == "-h" ]]; then
   echo "Usage: $0 <NETworkManager DMG>" >&2
   exit $(( $# == 1 ? 0 : 2 ))
@@ -91,13 +93,21 @@ MOUNT_ATTACHED=1
 verify_app() {
   local app="$1"
   /usr/bin/codesign --verify --deep --strict "$app"
+  /usr/bin/codesign --verify --strict "$app/Contents/Helpers/NMCP"
   /usr/bin/plutil -lint "$app/Contents/Info.plist"
   [[ -x "$app/Contents/MacOS/NETworkManagerMac" ]]
+  [[ -x "$app/Contents/Helpers/NMCP" ]]
+}
+
+verify_mcp() {
+  local app="$1"
+  python3 "$SCRIPT_DIR/test-mcp.py" --app "$app"
 }
 
 echo "Testing install from mounted DMG..."
 /usr/bin/ditto "$SOURCE_APP" "$INSTALL_APP"
 verify_app "$INSTALL_APP"
+verify_mcp "$INSTALL_APP"
 launch_app "$INSTALL_EXECUTABLE"
 wait_for_app "$INSTALL_EXECUTABLE"
 stop_app "$INSTALL_EXECUTABLE"
@@ -109,6 +119,7 @@ OLD_APP="$TEMP_ROOT/NETworkManager.previous.app"
 /bin/mv "$INSTALL_APP" "$OLD_APP"
 /bin/mv "$UPGRADE_APP" "$INSTALL_APP"
 verify_app "$INSTALL_APP"
+verify_mcp "$INSTALL_APP"
 /bin/rm -rf "$OLD_APP"
 launch_app "$INSTALL_EXECUTABLE"
 wait_for_app "$INSTALL_EXECUTABLE"
@@ -118,4 +129,4 @@ echo "Testing uninstall..."
 /bin/rm -rf "$INSTALL_APP"
 [[ ! -e "$INSTALL_APP" ]]
 [[ -z "$(app_pids "$INSTALL_EXECUTABLE")" ]]
-echo "DMG install, replacement upgrade, launch, and uninstall checks passed."
+echo "DMG install, replacement upgrade, bundled MCP, launch, and uninstall checks passed."
