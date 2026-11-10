@@ -21,6 +21,8 @@ NETworkManager for macOS 是基于 [BornToBeRoot/NETworkManager](https://github.
 
 具体实现范围和平台差异请参阅 [macOS 功能状态与平台映射](macos/PORTING_STATUS.md) 和 [macOS 使用及构建指南](macos/README.md)。
 
+下一阶段的架构方案、实施任务与验收条件见 [macOS 改进计划（中英文）](macos/docs/README.md)。该计划为待实施提案。
+
 ### macOS 界面概念图
 
 以下图片由 **gpt-image-2.5-flare** AI 图像生成模型制作，用于展示本项目设想的运维工作流与视觉方向。它们是**设计概念图，不是当前应用的实测截图**；图片中的文字和数据仅作视觉示意，实际功能以代码和功能状态文档为准。
@@ -71,6 +73,8 @@ The app is designed for network engineers and administrators who need a focused 
 - **Standalone runtime**: Network operations run in the visible app process. The project does not install a persistent project-specific daemon or privileged helper.
 
 See the [macOS feature and platform status](macos/PORTING_STATUS.md) and the [macOS usage and build guide](macos/README.md) for implementation details and platform-specific limits.
+
+See the [macOS improvement plan (Chinese and English)](macos/docs/README.md) for the proposed architecture, implementation tasks, and acceptance criteria. The plan describes future work.
 
 ### macOS UI concepts
 

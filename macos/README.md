@@ -12,6 +12,12 @@ Network clients share a cancellable system DNS-SD address resolver for hostnames
 and a numeric-only path for IP literals. Address resolution runs inside the
 visible app process and does not add a project-specific resolver service.
 
+## 改进计划 / Improvement plan
+
+下一阶段方案聚焦诊断结果、任务执行、资产身份、历史存储和故障证据。中英文设计、16 项任务和验收条件见 [改进计划索引](docs/README.md)。方案为待实施提案，源码基准包含 PR #12 中尚待合并的能力。
+
+The next-stage proposal covers diagnostic results, job execution, asset identity, history storage and incident evidence. The [plan index](docs/README.md) links the Chinese/English design, 16 tasks and acceptance criteria. This is proposed work; its reviewed source includes capabilities awaiting merge in PR #12.
+
 ## Build and run
 
 Use the project run script for the GUI application. It stages a real `.app`
