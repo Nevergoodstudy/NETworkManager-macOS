@@ -8,6 +8,7 @@
 
 | 内容 / Material | 入口 / Entry |
 |---|---|
+| T01/T03 实施前置设计、迁移步骤与测试矩阵 / T01/T03 implementation prep, migration steps and test matrix | [双语准备包 / Bilingual preparation](NEXT_GENERATION_T01_T03_PREPARATION_2026-11-10.md) |
 | 中文架构与实施方案 | [阅读全文](NEXT_GENERATION_RESEARCH_2026-11-09.zh-CN.md) |
 | English architecture and implementation proposal | [Read the proposal](NEXT_GENERATION_RESEARCH_2026-11-09.en.md) |
 | 16 项任务、依赖、估算与验收 / 16 tasks, dependencies, estimates and acceptance | [双语任务清单 / Bilingual backlog](NEXT_GENERATION_BACKLOG_2026-11-09.md) |
