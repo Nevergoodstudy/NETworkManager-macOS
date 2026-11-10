@@ -108,6 +108,13 @@ MCP 客户端会构造协议请求。可让客户端执行以下参数示例：
 值时为 `null`）。DNS 结果包含 `dnsRecords`，每条记录为 `name`、`type`、
 `ttl`、`value`。端口和 OUI 结果是当前随包参考数据，不代表实时服务识别。
 
+TCP 的 `timeout` 现在覆盖系统地址解析和全部地址尝试，共用一个总预算。
+TCP 响应新增可选 `evidence`：`tcpAttempts` 保存地址、地址族、阶段、耗时及
+socket 证据；失败时 `tcpFailure` 保存稳定 `code`、`stage` 和已尝试地址。
+`errno` 表示失败系统调用的错误，`soError` 表示成功读取的 `SO_ERROR`，两者
+分别保存。只有明确拒绝连接才归类为 `refused`，超时不会被解释为端口关闭
+或本地网络权限拒绝。原有顶层字段继续保留，客户端应允许新增可选字段。
+
 参数错误返回 `isError: true`、`status: "failed"` 和
 `error: {"code":"invalid_arguments","message":"..."}`；并发超限使用
 `error.code: "busy"`。未知或未启用的工具返回 JSON-RPC `invalidParams`。
@@ -304,6 +311,15 @@ Network results add `summary`, `detail`, and `latencySeconds` in seconds, or
 `null` when no timing is available. DNS adds `dnsRecords` containing `name`,
 `type`, `ttl`, and `value`. Reference lookups reflect the bundled dataset rather
 than live service or vendor discovery.
+
+For TCP, `timeout` is one total budget covering system address resolution and
+all address attempts. TCP responses add optional `evidence`: `tcpAttempts`
+records address, family, stage, elapsed time and socket facts; `tcpFailure`
+adds a stable `code`, `stage` and the attempted addresses on failure. `errno`
+comes from a failing system call; `soError` is a successfully read `SO_ERROR`.
+Only explicit connection refusal produces `refused`. A timeout establishes
+neither a closed port nor a Local Network privacy denial. Existing top-level
+fields are retained; clients should accept additional optional fields.
 
 Invalid arguments return a tool error with `isError: true`, `status: "failed"`,
 and an `error` object containing `code: "invalid_arguments"` and `message`.

@@ -429,8 +429,18 @@ def check_network(server, deadline):
             port = listener.getsockname()[1]
             result = tool_data(client.call("tcp_probe", {"host": "127.0.0.1", "port": port, "timeout": 0.5}))
             check(result["status"] == "succeeded", "TCP loopback probe failed")
+            attempts = result.get("evidence", {}).get("tcpAttempts", [])
+            check(len(attempts) == 1 and attempts[0]["address"] == "127.0.0.1"
+                  and attempts[0].get("code") is None and attempts[0]["elapsed"] >= 0,
+                  "TCP success lost its structured per-address evidence")
         closed = tool_data(client.call("tcp_probe", {"host": "127.0.0.1", "port": port, "timeout": 0.5}), error=True)
         check(closed["status"] == "failed", "Closed TCP port was not reported as a failed probe")
+        failure = closed.get("evidence", {}).get("tcpFailure", {})
+        check(failure.get("code") == "refused" and failure.get("stage") in {"connect", "socketError"}
+              and failure.get("address") == "127.0.0.1" and failure.get("attempts"),
+              "TCP refusal lost its stable reason, stage or address attempts")
+        check(failure.get("errno") is not None or failure.get("soError") is not None,
+              "TCP refusal must preserve the syscall errno or socket SO_ERROR")
 
         with DNSFixture() as fixture:
             result = tool_data(client.call("dns_lookup", {

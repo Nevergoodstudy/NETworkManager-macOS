@@ -18,17 +18,17 @@ public final class DiagnosticCancellation: @unchecked Sendable {
     }
 
     public func waitForReadiness(fd: Int32, events: Int16, timeout: TimeInterval) -> Int16? {
-        let deadline = Date().addingTimeInterval(max(0, timeout))
+        let deadline = ProcessInfo.processInfo.systemUptime + max(0, timeout)
         repeat {
             if isCancelled { return nil }
-            let remaining = deadline.timeIntervalSinceNow
+            let remaining = deadline - ProcessInfo.processInfo.systemUptime
             if remaining <= 0 { return nil }
             var descriptor = pollfd(fd: fd, events: events, revents: 0)
             let milliseconds = Int32(max(1, min(50, ceil(remaining * 1_000))))
             let result = poll(&descriptor, 1, milliseconds)
             if result > 0 { return descriptor.revents }
             if result < 0 && errno != EINTR { return descriptor.revents }
-        } while Date() < deadline
+        } while ProcessInfo.processInfo.systemUptime < deadline
         return nil
     }
 }

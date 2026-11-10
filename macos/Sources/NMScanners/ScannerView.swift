@@ -192,8 +192,8 @@ public struct ScannerView: View {
         scanTask = Task {
             let scanned = await TCPProbe.scan(host: target, ports: ports, timeout: timeout,
                                               concurrency: concurrency, cancellation: cancellation)
-            results = scanned.filter { includeClosed || $0.status == .open }.map {
-                ScanRow(host: target, port: $0.port, status: $0.status.rawValue,
+            results = scanned.filter { includeClosed || $0.status != .closed }.map {
+                ScanRow(host: target, port: $0.port, status: $0.failure?.code.displayName ?? t($0.status.rawValue.capitalized),
                         latency: $0.latency, details: $0.message ?? "", success: $0.status == .open)
             }
             completedTargets = scanned.count

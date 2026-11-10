@@ -1,4 +1,64 @@
 import Foundation
+import Darwin
+
+public enum CommandFailureCode: String, Codable, Hashable, Sendable {
+    case missingExecutable
+    case launch
+    case permissionDenied
+    case busy
+}
+
+public enum ProcessJobOperation: String, Codable, Hashable, Sendable {
+    case command
+    case traceroute
+}
+
+public enum ProcessJobState: String, Codable, Hashable, Sendable {
+    case queued
+    case running
+    case succeeded
+    case failed
+    case timedOut
+    case cancelled
+
+    public var isTerminal: Bool {
+        switch self {
+        case .succeeded, .failed, .timedOut, .cancelled: return true
+        case .queued, .running: return false
+        }
+    }
+}
+
+public struct ProcessJobSpec: Sendable, Identifiable {
+    public let id: UUID
+    public let operation: ProcessJobOperation
+    public let targetScope: String
+    public let deadline: Date
+    // This adapter executes exactly one command for one target per job.
+    public let maximumTargetCount = 1
+    public let concurrency = 1
+    public let maximumOutputBytesPerStream: Int
+    public let terminationGrace: TimeInterval
+    public let cancellation: DiagnosticCancellation?
+    let createdUptime: TimeInterval
+    let monotonicDeadline: TimeInterval
+
+    public init(id: UUID = UUID(), operation: ProcessJobOperation, targetScope: String,
+                deadline: Date,
+                maximumOutputBytesPerStream: Int = 1_048_576, terminationGrace: TimeInterval = 0.5,
+                cancellation: DiagnosticCancellation? = nil) {
+        self.id = id
+        self.operation = operation
+        self.targetScope = targetScope
+        self.deadline = deadline
+        let created = ProcessInfo.processInfo.systemUptime
+        self.createdUptime = created
+        self.monotonicDeadline = created + max(0, deadline.timeIntervalSinceNow)
+        self.maximumOutputBytesPerStream = max(0, min(maximumOutputBytesPerStream, 16_777_216))
+        self.terminationGrace = max(0, min(terminationGrace, 2))
+        self.cancellation = cancellation
+    }
+}
 
 /// Result of running a child process.
 public struct CommandResult: Sendable {
@@ -7,125 +67,100 @@ public struct CommandResult: Sendable {
     public let stderr: String
     public let timedOut: Bool
     public let cancelled: Bool
+    public let failureCode: CommandFailureCode?
+    public let stdoutBytesObserved: Int
+    public let stderrBytesObserved: Int
+    public let stdoutTruncated: Bool
+    public let stderrTruncated: Bool
+    public let forcedTermination: Bool
+    public let cleanupCompleted: Bool
+    public let jobID: UUID?
+    public let jobState: ProcessJobState
+    public let processEvidence: ProcessExecutionEvidence?
 
-    public init(status: Int32, stdout: String, stderr: String, timedOut: Bool = false, cancelled: Bool = false) {
+    public init(status: Int32, stdout: String, stderr: String, timedOut: Bool = false, cancelled: Bool = false,
+                failureCode: CommandFailureCode? = nil, stdoutBytesObserved: Int? = nil,
+                stderrBytesObserved: Int? = nil, stdoutTruncated: Bool = false,
+                stderrTruncated: Bool = false, forcedTermination: Bool = false,
+                cleanupCompleted: Bool = true, jobID: UUID? = nil,
+                jobState: ProcessJobState? = nil, processEvidence: ProcessExecutionEvidence? = nil) {
         self.status = status
         self.stdout = stdout
         self.stderr = stderr
         self.timedOut = timedOut
         self.cancelled = cancelled
+        self.failureCode = failureCode
+        self.stdoutBytesObserved = stdoutBytesObserved ?? stdout.utf8.count
+        self.stderrBytesObserved = stderrBytesObserved ?? stderr.utf8.count
+        self.stdoutTruncated = stdoutTruncated
+        self.stderrTruncated = stderrTruncated
+        self.forcedTermination = forcedTermination
+        self.cleanupCompleted = cleanupCompleted
+        self.jobID = jobID
+        self.processEvidence = processEvidence
+        self.jobState = jobState ?? (cancelled ? .cancelled : (timedOut ? .timedOut : (failureCode != nil || status != 0 ? .failed : .succeeded)))
     }
 
-    public var succeeded: Bool { status == 0 && !timedOut && !cancelled }
+    public var succeeded: Bool { status == 0 && !timedOut && !cancelled && failureCode == nil && cleanupCompleted }
 
     public var output: String {
         stdout.isEmpty ? stderr : stdout
     }
 }
 
-/// Process execution helpers.
+/// Process execution helpers. Collected commands share one bounded runtime.
 public enum Shell {
-    // MARK: Paths
-
     public static func which(_ tool: String) -> String? {
         let candidates = ["/usr/bin/\(tool)", "/bin/\(tool)", "/usr/sbin/\(tool)", "/sbin/\(tool)", "/opt/homebrew/bin/\(tool)", "/usr/local/bin/\(tool)"]
-        for path in candidates where FileManager.default.isExecutableFile(atPath: path) {
-            return path
-        }
-        return nil
+        return candidates.first { FileManager.default.isExecutableFile(atPath: $0) }
     }
 
-    // MARK: Async API
+    public static func run(_ path: String, _ arguments: [String] = [], timeout: TimeInterval = 30,
+                           environment: [String: String]? = nil, cancellation: DiagnosticCancellation? = nil,
+                           maximumOutputBytesPerStream: Int = 1_048_576,
+                           terminationGrace: TimeInterval = 0.5) async -> CommandResult {
+        let job = ProcessJobSpec(operation: .command, targetScope: path,
+                                 deadline: Date().addingTimeInterval(max(0, timeout)),
+                                 maximumOutputBytesPerStream: maximumOutputBytesPerStream,
+                                 terminationGrace: terminationGrace, cancellation: cancellation)
+        return await run(path, arguments, job: job, environment: environment)
+    }
 
-    /// Run an executable and wait for it to finish (or time out).
-    public static func run(_ path: String,
-                           _ arguments: [String] = [],
-                           timeout: TimeInterval = 30,
-                           environment: [String: String]? = nil,
-                           cancellation: DiagnosticCancellation? = nil) async -> CommandResult {
-        let processCancellation = ProcessCancellation()
+    public static func run(_ path: String, _ arguments: [String] = [], job: ProcessJobSpec,
+                           environment: [String: String]? = nil) async -> CommandResult {
+        let taskCancellation = DiagnosticCancellation()
         return await withTaskCancellationHandler {
-        await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: path)
-                process.arguments = arguments
-                if let environment {
-                    process.environment = ProcessInfo.processInfo.environment.merging(environment) { _, new in new }
-                }
-                let outPipe = Pipe()
-                let errPipe = Pipe()
-                process.standardOutput = outPipe
-                process.standardError = errPipe
-                process.standardInput = FileHandle.nullDevice
-                guard processCancellation.prepare(process) else {
-                    continuation.resume(returning: CommandResult(status: -1, stdout: "", stderr: "Cancelled", cancelled: true))
-                    return
-                }
-                do { try process.run() }
-                catch {
-                    processCancellation.clear(process)
-                    continuation.resume(returning: CommandResult(status: -1, stdout: "", stderr: error.localizedDescription))
-                    return
-                }
-                processCancellation.terminateIfCancelled(process)
-
-                final class Buffers: @unchecked Sendable { var out = Data(); var err = Data() }
-                let buffers = Buffers()
-                let group = DispatchGroup()
-                group.enter()
+            await withCheckedContinuation { continuation in
                 DispatchQueue.global(qos: .userInitiated).async {
-                    buffers.out = outPipe.fileHandleForReading.readDataToEndOfFile()
-                    group.leave()
+                    continuation.resume(returning: ProcessRuntime.run(path, arguments, job: job,
+                        environment: environment, taskCancellation: taskCancellation))
                 }
-                group.enter()
-                DispatchQueue.global(qos: .userInitiated).async {
-                    buffers.err = errPipe.fileHandleForReading.readDataToEndOfFile()
-                    group.leave()
-                }
-
-                let deadline = Date().addingTimeInterval(timeout)
-                var timedOut = false
-                while process.isRunning && Date() < deadline && !processCancellation.isCancelled && cancellation?.isCancelled != true { usleep(15_000) }
-                if process.isRunning {
-                    timedOut = !processCancellation.isCancelled && cancellation?.isCancelled != true
-                    process.terminate()
-                    usleep(120_000)
-                    if process.isRunning { kill(process.processIdentifier, SIGKILL) }
-                }
-                process.waitUntilExit()
-                group.wait()
-                processCancellation.clear(process)
-                continuation.resume(returning: CommandResult(
-                    status: process.terminationStatus,
-                    stdout: String(decoding: buffers.out, as: UTF8.self),
-                    stderr: String(decoding: buffers.err, as: UTF8.self),
-                    timedOut: timedOut,
-                    cancelled: processCancellation.isCancelled || cancellation?.isCancelled == true
-                ))
             }
-        }
         } onCancel: {
-            processCancellation.cancel()
+            taskCancellation.cancel()
         }
     }
 
-    /// Run a `sh -c` command line.
     public static func runShell(_ command: String, timeout: TimeInterval = 30) async -> CommandResult {
         await run("/bin/sh", ["-c", command], timeout: timeout)
     }
 
-    /// Find a tool and run it; returns a failing result when the tool is missing.
-    public static func runTool(_ tool: String, _ arguments: [String] = [], timeout: TimeInterval = 30, cancellation: DiagnosticCancellation? = nil) async -> CommandResult {
-        let path = tool.hasPrefix("/") ? tool : which(tool)
-        guard let path else {
-            return CommandResult(status: 127, stdout: "", stderr: "\(tool): command not found")
-        }
-        return await run(path, arguments, timeout: timeout, cancellation: cancellation)
+    public static func runTool(_ tool: String, _ arguments: [String] = [], timeout: TimeInterval = 30,
+                               cancellation: DiagnosticCancellation? = nil,
+                               maximumOutputBytesPerStream: Int = 1_048_576) async -> CommandResult {
+        let job = ProcessJobSpec(operation: .command, targetScope: tool,
+                                 deadline: Date().addingTimeInterval(max(0, timeout)),
+                                 maximumOutputBytesPerStream: maximumOutputBytesPerStream, cancellation: cancellation)
+        return await runTool(tool, arguments, job: job)
     }
 
-    /// Ask Terminal.app to open a command. The command is passed as an
-    /// osascript argument instead of being interpolated into AppleScript.
+    public static func runTool(_ tool: String, _ arguments: [String] = [], job: ProcessJobSpec) async -> CommandResult {
+        // Let spawn report ENOENT/EACCES for a concrete path. Search failure has a
+        // separate explanation and does not infer permission denial.
+        let path = tool.hasPrefix("/") ? tool : (which(tool) ?? "/usr/bin/\(tool)")
+        return await run(path, arguments, job: job)
+    }
+
     public static func openTerminal(command: String) async -> CommandResult {
         let script = "on run argv\n" +
             "tell application \"Terminal\" to do script (item 1 of argv)\n" +
@@ -133,74 +168,14 @@ public enum Shell {
         return await run("/usr/bin/osascript", ["-e", script, command], timeout: 30)
     }
 
-    // MARK: Sync API
-
     @discardableResult
-    public static func runSync(_ path: String,
-                               _ arguments: [String] = [],
-                               timeout: TimeInterval = 30,
-                               environment: [String: String]? = nil,
-                               cancellation: DiagnosticCancellation? = nil) -> CommandResult {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: path)
-        process.arguments = arguments
-        if let environment {
-            process.environment = ProcessInfo.processInfo.environment.merging(environment) { _, new in new }
-        }
-
-        let outPipe = Pipe()
-        let errPipe = Pipe()
-        process.standardOutput = outPipe
-        process.standardError = errPipe
-        process.standardInput = FileHandle.nullDevice
-
-        final class Buffers: @unchecked Sendable {
-            var out = Data()
-            var err = Data()
-        }
-        let buffers = Buffers()
-
-        do {
-            try process.run()
-        } catch {
-            return CommandResult(status: -1, stdout: "", stderr: error.localizedDescription)
-        }
-
-        let group = DispatchGroup()
-        group.enter()
-        DispatchQueue.global(qos: .userInitiated).async {
-            buffers.out = outPipe.fileHandleForReading.readDataToEndOfFile()
-            group.leave()
-        }
-        group.enter()
-        DispatchQueue.global(qos: .userInitiated).async {
-            buffers.err = errPipe.fileHandleForReading.readDataToEndOfFile()
-            group.leave()
-        }
-
-        let deadline = Date().addingTimeInterval(timeout)
-        while process.isRunning && Date() < deadline && cancellation?.isCancelled != true {
-            usleep(15_000)
-        }
-        var timedOut = false
-        if process.isRunning {
-            timedOut = cancellation?.isCancelled != true
-            process.terminate()
-            usleep(120_000)
-            if process.isRunning {
-                kill(process.processIdentifier, SIGKILL)
-            }
-        }
-        process.waitUntilExit()
-        group.wait()
-
-        return CommandResult(
-            status: process.terminationStatus,
-            stdout: String(decoding: buffers.out, as: UTF8.self),
-            stderr: String(decoding: buffers.err, as: UTF8.self),
-            timedOut: timedOut,
-            cancelled: cancellation?.isCancelled == true
-        )
+    public static func runSync(_ path: String, _ arguments: [String] = [], timeout: TimeInterval = 30,
+                               environment: [String: String]? = nil, cancellation: DiagnosticCancellation? = nil,
+                               maximumOutputBytesPerStream: Int = 1_048_576) -> CommandResult {
+        let job = ProcessJobSpec(operation: .command, targetScope: path,
+                                 deadline: Date().addingTimeInterval(max(0, timeout)),
+                                 maximumOutputBytesPerStream: maximumOutputBytesPerStream, cancellation: cancellation)
+        return ProcessRuntime.run(path, arguments, job: job, environment: environment)
     }
 
     // MARK: Streaming
@@ -274,41 +249,5 @@ public enum Shell {
             return CommandResult(status: 1, stdout: "", stderr: t("Authorization was cancelled."))
         }
         return result
-    }
-}
-
-private final class ProcessCancellation: @unchecked Sendable {
-    private let lock = NSLock()
-    private var cancelled = false
-    private weak var process: Process?
-
-    var isCancelled: Bool {
-        lock.lock(); defer { lock.unlock() }
-        return cancelled
-    }
-
-    func prepare(_ process: Process) -> Bool {
-        lock.lock(); defer { lock.unlock() }
-        guard !cancelled else { return false }
-        self.process = process
-        return true
-    }
-
-    func cancel() {
-        lock.lock()
-        cancelled = true
-        let current = process
-        lock.unlock()
-        terminateIfCancelled(current)
-    }
-
-    func terminateIfCancelled(_ process: Process?) {
-        guard isCancelled, let process, process.isRunning else { return }
-        process.terminate()
-    }
-
-    func clear(_ process: Process) {
-        lock.lock(); defer { lock.unlock() }
-        if self.process === process { self.process = nil }
     }
 }

@@ -38,8 +38,8 @@ public struct MCPToolService: Sendable {
                 tool("dns_lookup", "Query a DNS record. Uses this Mac's configured resolvers when server is omitted; the shared client falls back to public resolvers when none are configured. Responses may contain untrusted remote text. The timeout is per phase, including UDP/TCP fallback.",
                      properties: ["host": host, "recordType": ["type": "string", "enum": .array(DNSRecordType.allCases.map { .string($0.displayName) }), "default": "A"],
                                   "server": host, "serverPort": port, "timeout": timeout], required: ["host"], network: true),
-                tool("tcp_probe", "Attempt a single TCP connection to an authorized host and port. Does not send application commands. Timeout applies to address resolution and each connection attempt separately.",
-                     properties: ["host": host, "port": port, "timeout": timeout], required: ["host", "port"], network: true)
+                tool("tcp_probe", "Attempt a single TCP connection to an authorized host and port. Does not send application commands. The timeout is one total budget for address resolution and all connection attempts.",
+                     properties: ["host": host, "port": port, "timeout": ["type": "number", "minimum": 0.1, "maximum": 5, "default": 2, "description": "Total timeout in seconds, including resolution and all addresses."]], required: ["host", "port"], network: true)
             ]
         }
         return result
@@ -143,9 +143,14 @@ public struct MCPToolService: Sendable {
     }
 
     private func diagnosticValue(_ result: DiagnosticExecutionResult, target: String) -> [String: Value] {
-        ["status": .string(result.status.rawValue), "target": .string(target), "source": .string(result.source),
+        var value: [String: Value] = ["status": .string(result.status.rawValue), "target": .string(target), "source": .string(result.source),
          "summary": .string(result.summary), "detail": .string(result.detail),
          "latencySeconds": result.latency.map(Value.double) ?? .null]
+        if let evidence = result.evidence, let encoded = try? JSONEncoder().encode(evidence),
+           let metadata = try? JSONDecoder().decode(Value.self, from: encoded) {
+            value["evidence"] = metadata
+        }
+        return value
     }
 
     private func response(_ payload: [String: Value], tool: String, isError: Bool = false) throws -> CallTool.Result {

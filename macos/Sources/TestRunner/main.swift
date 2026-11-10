@@ -103,7 +103,7 @@ private func checkAddressResolutionCancellation() throws {
 }
 
 final class LoopbackTCPListener {
-    let fileDescriptor: Int32
+    private(set) var fileDescriptor: Int32
     let port: Int
 
     init() throws {
@@ -140,6 +140,12 @@ final class LoopbackTCPListener {
     }
 
     deinit { close(fileDescriptor) }
+
+    func closeListener() {
+        guard fileDescriptor >= 0 else { return }
+        close(fileDescriptor)
+        fileDescriptor = -1
+    }
 }
 
 final class LoopbackWhoisFixture: @unchecked Sendable {
@@ -263,6 +269,21 @@ do {
         await DiagnosticService.runTCP(host: "localhost", port: tcpFixture.port, timeout: 1)
     }
     try check(resolvedTCP.status == .succeeded, "TCP diagnostic connects through the cancellable localhost resolver")
+    let refusedPort = try LoopbackTCPListener()
+    let refusedNumber = refusedPort.port
+    refusedPort.closeListener()
+    let refused = TCPProbe.probe(host: "127.0.0.1", port: refusedNumber, timeout: 0.5)
+    try check(refused.failure?.code == .refused && refused.status == .closed && (refused.failure?.errno == Int32(ECONNREFUSED) || refused.failure?.soError == Int32(ECONNREFUSED)),
+              "TCP refusal preserves ECONNREFUSED instead of treating every failure as closed")
+    let missingTool = await Shell.runTool("__networkmanager_missing_test_tool__", timeout: 1)
+    try check(missingTool.failureCode == .missingExecutable && !missingTool.succeeded,
+              "missing process dependencies have a stable launch failure")
+    let boundedOutput = await Shell.run("/bin/sh", ["-c", "i=0; while [ $i -lt 20000 ]; do printf x; printf y >&2; i=$((i+1)); done"],
+                                        timeout: 5, maximumOutputBytesPerStream: 256)
+    try check(boundedOutput.stdoutTruncated && boundedOutput.stderrTruncated &&
+              boundedOutput.stdoutBytesObserved > boundedOutput.stdout.utf8.count &&
+              boundedOutput.stderrBytesObserved > boundedOutput.stderr.utf8.count,
+              "bounded process capture drains both noisy output streams")
     let cancelledPortScan = DiagnosticCancellation()
     cancelledPortScan.cancel()
     let skippedPorts = await TCPProbe.scan(host: "127.0.0.1", ports: [1, 2, 3], timeout: 10, cancellation: cancelledPortScan)
@@ -780,6 +801,9 @@ do {
     } else {
         throw CheckFailure(description: "a cancelled ICMP probe should not fall back or report a timeout")
     }
+    try await DiagnosticRuntimeEvidenceChecks.run()
+    try TCPProbeChecks.run()
+    try await ProcessRuntimeChecks.run()
     try await MCPClientConnectionChecks.run()
     print("NMTest: all checks passed")
 } catch {
