@@ -191,7 +191,9 @@ public struct ScannerView: View {
         let cancellation = beginScan(total: ports.count)
         scanTask = Task {
             let scanned = await TCPProbe.scan(host: target, ports: ports, timeout: timeout,
-                                              concurrency: concurrency, cancellation: cancellation)
+                                              concurrency: concurrency, cancellation: cancellation) { _ in
+                completedTargets += 1
+            }
             results = scanned.filter { includeClosed || $0.status != .closed }.map {
                 ScanRow(host: target, port: $0.port, status: $0.failure?.code.displayName ?? t($0.status.rawValue.capitalized),
                         latency: $0.latency, details: $0.message ?? "", success: $0.status == .open)
@@ -237,30 +239,16 @@ public struct ScannerView: View {
             let cancellation = beginScan(total: hosts.count)
             let concurrency = min(32, hosts.count)
             scanTask = Task {
-                var nextIndex = 0
-                await withTaskGroup(of: ScanRow?.self) { group in
-                    while nextIndex < concurrency, !cancellation.isCancelled {
-                        let target = hosts[nextIndex]
-                        group.addTask { await Self.scanIPTarget(target, timeout: timeout, attempts: attempts, cancellation: cancellation) }
-                        nextIndex += 1
-                    }
-                    while let row = await group.next() {
-                        if Task.isCancelled || cancellation.isCancelled {
-                            group.cancelAll()
-                            break
-                        }
-                        if let row { results.append(row) }
-                        completedTargets += 1
-                        if nextIndex < hosts.count {
-                            let target = hosts[nextIndex]
-                            group.addTask { await Self.scanIPTarget(target, timeout: timeout, attempts: attempts, cancellation: cancellation) }
-                            nextIndex += 1
-                        }
-                    }
+                let finishedTargets = await Self.scanIPTargets(
+                    hosts, concurrency: concurrency, timeout: timeout, attempts: attempts,
+                    cancellation: cancellation
+                ) { completed, row in
+                    if let row { results.append(row) }
+                    completedTargets = completed
                 }
                 let wasCancelled = cancellation.isCancelled || Task.isCancelled
                 finishScan(wasCancelled
-                    ? tf("Stopped after %d of %d targets.", completedTargets, totalTargets)
+                    ? tf("Stopped after %d of %d targets.", finishedTargets, totalTargets)
                     : tf("Completed: %d host(s)", hosts.count))
             }
         } catch {
@@ -268,23 +256,99 @@ public struct ScannerView: View {
         }
     }
 
-    private nonisolated static func scanIPTarget(_ target: String, timeout: TimeInterval, attempts: Int,
-                                                 cancellation: DiagnosticCancellation) async -> ScanRow? {
+    nonisolated static func scanIPTargets(
+        _ targets: [String], concurrency: Int, timeout: TimeInterval, attempts: Int,
+        cancellation: DiagnosticCancellation,
+        probe: @escaping @Sendable (String, TimeInterval, DiagnosticCancellation) throws -> ICMPReply? = { host, timeout, cancellation in
+            let pinger = try ICMPPinger(host: host, timeout: timeout, cancellation: cancellation)
+            return pinger.ping()
+        },
+        progress: @escaping @MainActor @Sendable (Int, ScanRow?) -> Void
+    ) async -> Int {
+        await withTaskCancellationHandler {
+            await withTaskGroup(of: ScanRow?.self) { group in
+                var completed = 0
+                var nextIndex = 0
+                let width = max(1, min(concurrency, targets.count))
+
+                while nextIndex < width, nextIndex < targets.count, !cancellation.isCancelled {
+                    let target = targets[nextIndex]
+                    group.addTask {
+                        await scanIPTarget(target, timeout: timeout, attempts: attempts,
+                                           cancellation: cancellation, probe: probe)
+                    }
+                    nextIndex += 1
+                }
+
+                while let row = await group.next() {
+                    if let row {
+                        completed += 1
+                        await progress(completed, row)
+                    }
+                    if Task.isCancelled || cancellation.isCancelled {
+                        group.cancelAll()
+                        break
+                    }
+                    guard row != nil, nextIndex < targets.count else { continue }
+                    let target = targets[nextIndex]
+                    group.addTask {
+                        await scanIPTarget(target, timeout: timeout, attempts: attempts,
+                                           cancellation: cancellation, probe: probe)
+                    }
+                    nextIndex += 1
+                }
+                return completed
+            }
+        } onCancel: {
+            cancellation.cancel()
+        }
+    }
+
+    nonisolated static func scanIPTarget(_ target: String, timeout: TimeInterval, attempts: Int,
+                                         cancellation: DiagnosticCancellation,
+                                         probe: @escaping @Sendable (String, TimeInterval, DiagnosticCancellation) throws -> ICMPReply? = { host, timeout, cancellation in
+                                             let pinger = try ICMPPinger(host: host, timeout: timeout, cancellation: cancellation)
+                                             return pinger.ping()
+                                         }) async -> ScanRow? {
         var reply: ICMPReply?
         for _ in 0..<attempts {
-            guard !Task.isCancelled, !cancellation.isCancelled else { return nil }
-            let attempt = await Task.detached(priority: .utility) { () -> ICMPReply? in
-                guard !cancellation.isCancelled,
-                      let pinger = try? ICMPPinger(host: target, timeout: timeout, cancellation: cancellation) else { return nil }
-                return pinger.ping()
-            }.value
-            guard !Task.isCancelled, !cancellation.isCancelled else { return nil }
+            if Task.isCancelled || cancellation.isCancelled {
+                guard let reply, !Self.isCancellationReply(reply) else { return nil }
+                break
+            }
+            let attempt: ICMPReply?
+            do {
+                attempt = try await withTaskCancellationHandler {
+                    try await Task.detached(priority: .utility) { () throws -> ICMPReply? in
+                        guard !cancellation.isCancelled else { return nil }
+                        return try probe(target, timeout, cancellation)
+                    }.value
+                } onCancel: {
+                    cancellation.cancel()
+                }
+            } catch {
+                guard !Task.isCancelled, !cancellation.isCancelled else { return nil }
+                return ScanRow(host: target, port: nil, status: t("Error"), latency: reply?.rtt,
+                               details: error.localizedDescription, success: false)
+            }
             reply = attempt
+            if Task.isCancelled || cancellation.isCancelled {
+                guard let attempt, !Self.isCancellationReply(attempt) else { return nil }
+                break
+            }
             if attempt?.outcome.isSuccess == true { break }
         }
-        guard !Task.isCancelled, !cancellation.isCancelled else { return nil }
+        if Task.isCancelled || cancellation.isCancelled {
+            guard let reply, !Self.isCancellationReply(reply) else { return nil }
+        }
+        if let reply, Self.isCancellationReply(reply) { return nil }
         return ScanRow(host: target, port: nil, status: reply?.outcome.displayName ?? t("Error"),
                        latency: reply?.rtt, details: reply?.source ?? "", success: reply?.outcome.isSuccess == true)
+    }
+
+    nonisolated private static func isCancellationReply(_ reply: ICMPReply) -> Bool {
+        if case .error(let message) = reply.outcome { return message == t("Diagnostic cancelled") }
+        return false
     }
 
     private func startPing() {
@@ -321,7 +385,7 @@ public struct ScannerView: View {
     }
 }
 
-private struct ScanRow: Identifiable, Sendable {
+struct ScanRow: Identifiable, Sendable {
     let id = UUID()
     let host: String
     let port: Int?

@@ -35,9 +35,12 @@ public struct MCPToolService: Sendable {
             result += [
                 tool("ping", "Send one ICMP echo probe to an authorized host. Address resolution and system-ping fallback can add time beyond the per-phase timeout.",
                      properties: ["host": host, "timeout": timeout], required: ["host"], network: true),
-                tool("dns_lookup", "Query a DNS record. Uses this Mac's configured resolvers when server is omitted; the shared client falls back to public resolvers when none are configured. Responses may contain untrusted remote text. The timeout is per phase, including UDP/TCP fallback.",
-                     properties: ["host": host, "recordType": ["type": "string", "enum": .array(DNSRecordType.allCases.map { .string($0.displayName) }), "default": "A"],
-                                  "server": host, "serverPort": port, "timeout": timeout], required: ["host"], network: true),
+                tool("dns_lookup", "Resolve A/AAAA records with macOS resolver policy, including scoped resolvers, or set mode=server and provide a DNS server for a direct record query. No public resolver is selected implicitly. Responses may contain untrusted remote text. The timeout is per phase, including UDP/TCP fallback.",
+                     properties: ["host": host,
+                                  "mode": ["type": "string", "enum": .array([.string("system"), .string("server")]), "description": "system uses macOS name-resolution policy for A/AAAA; server sends a direct DNS query to the supplied server."],
+                                  "recordType": ["type": "string", "enum": .array(DNSRecordType.allCases.map { .string($0.displayName) }), "default": "A"],
+                                  "server": ["type": "string", "minLength": 1, "maxLength": 253, "description": "Required in server mode and must be omitted in system mode."],
+                                  "serverPort": port, "timeout": timeout], required: ["host"], network: true),
                 tool("tcp_probe", "Attempt a single TCP connection to an authorized host and port. Does not send application commands. The timeout is one total budget for address resolution and all connection attempts.",
                      properties: ["host": host, "port": port, "timeout": ["type": "number", "minimum": 0.1, "maximum": 5, "default": 2, "description": "Total timeout in seconds, including resolution and all addresses."]], required: ["host", "port"], network: true)
             ]
@@ -102,22 +105,36 @@ public struct MCPToolService: Sendable {
             let result = try await diagnostic { await DiagnosticService.runPing(host: host, timeout: timeout) }
             return diagnosticValue(result, target: host)
         case "dns_lookup":
-            let args = try Arguments(params.arguments, allowed: ["host", "recordType", "server", "serverPort", "timeout"])
+            let args = try Arguments(params.arguments, allowed: ["host", "mode", "recordType", "server", "serverPort", "timeout"])
             let host = try validatedHost(args.string("host"), dnsName: true)
+            let server = try args.optionalString("server").map { try validatedHost($0) }
+            let modeName = try args.optionalString("mode", maximum: 6) ?? (server == nil ? "system" : "server")
+            guard let mode = DNSLookupMode(rawValue: modeName) else {
+                throw ToolArgumentError("mode must be system or server.")
+            }
+            guard (mode == .server) == (server != nil) else {
+                throw ToolArgumentError("system mode does not take server; server mode requires a DNS server.")
+            }
             let typeName = try args.optionalString("recordType", maximum: 5) ?? "A"
             guard let type = DNSRecordType.allCases.first(where: { $0.displayName == typeName }) else {
                 throw ToolArgumentError("recordType must be one of A, AAAA, NS, CNAME, SOA, PTR, MX, TXT, SRV, CAA.")
             }
-            let server = try args.optionalString("server").map { try validatedHost($0) }
+            guard mode == .server || type == .a || type == .aaaa else {
+                throw ToolArgumentError("system mode supports only A and AAAA records.")
+            }
             let serverPort = try args.integer("serverPort", range: 1...65_535, default: 53)
             let timeout = try args.timeout()
             let result = try await diagnostic {
-                await DiagnosticService.runDNS(host: host, recordType: type, server: server, serverPort: UInt16(serverPort), timeout: timeout)
+                await DiagnosticService.runDNS(host: host, recordType: type, server: server,
+                                               serverPort: UInt16(serverPort), timeout: timeout, mode: mode)
             }
             var value = diagnosticValue(result, target: host)
+            value["mode"] = .string(mode.rawValue)
+            value["server"] = server.map(Value.string) ?? .null
             value["recordType"] = .string(typeName)
             value["dnsRecords"] = .array(result.dnsRecords.map {
-                ["name": .string($0.name), "type": .string($0.type.displayName), "ttl": .int(Int($0.ttl)), "value": .string($0.value)]
+                ["name": .string($0.name), "type": .string($0.type.displayName),
+                 "ttl": $0.ttl.map { .int(Int($0)) } ?? .null, "value": .string($0.value)]
             })
             return value
         case "tcp_probe":

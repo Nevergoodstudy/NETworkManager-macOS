@@ -192,14 +192,9 @@ enum ProcessRuntime {
 
         func signalGroup(_ signal: Int32) {
             guard ownsLeader else { return }
-            if kill(-pid, signal) != 0 {
-                let error = errno
-                // A live member can exit between the snapshot and this signal.
-                // Do not mistake an empty zombie-only group for denied cleanup.
-                if error != ESRCH && liveGroupMembers(pid) != false {
-                    cleanupErrors.append("kill(\(signal)) errno=\(error)")
-                }
-            }
+            // Signal errors can race with the last member exiting. Final group,
+            // pipe and reap checks below decide whether cleanup failed.
+            _ = kill(-pid, signal)
         }
         func drain(_ fd: Int32, capture: inout OutputCapture, eof: inout Bool) {
             guard !eof else { return }

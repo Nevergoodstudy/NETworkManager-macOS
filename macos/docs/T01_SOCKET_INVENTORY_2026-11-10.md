@@ -9,7 +9,7 @@
 
 ## 中文
 
-本批次只在本地实施和验证，未推送分支、创建或更新 PR，也未改动 GitHub 议题。
+本批代码和测试已纳入 PR #20 的实现更新；权限、部分结果及受控 UI 验收仍待完成。
 
 连接与监听端口页面原先调用返回数组的接口。只要 `lsof` 非零退出，接口就返回空数组，页面无法区分没有数据和采集失败。本次新增保留运行结果的接口，迁移这两个页面，并保留仪表板等旧调用者的兼容入口。
 
@@ -69,7 +69,7 @@ T01 还需逐项迁移其他命令采集入口。T03 的批量扫描任务与进
 
 ## English
 
-This batch was implemented and checked locally. No branch was pushed, no pull request was created or updated, and no GitHub issue was changed.
+This implementation and its tests are included in the PR #20 update. Permission handling, partial-result acceptance and controlled UI checks remain open.
 
 Connections and Listeners previously consumed array-returning APIs. A nonzero `lsof` exit became an empty array, making collection failure look like a successful query with no rows. The new result APIs retain command evidence, and both pages now consume them. Existing array callers retain compatibility.
 

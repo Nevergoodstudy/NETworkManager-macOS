@@ -444,10 +444,18 @@ def check_network(server, deadline):
 
         with DNSFixture() as fixture:
             result = tool_data(client.call("dns_lookup", {
-                "host": "fixture.test", "recordType": "A", "server": "127.0.0.1",
+                "host": "fixture.test", "mode": "server", "recordType": "A", "server": "127.0.0.1",
                 "serverPort": fixture.port, "timeout": 0.5,
             }))
-            check(result["status"] == "succeeded" and "127.0.0.1" in json.dumps(result), "Loopback DNS fixture failed")
+            check(result["status"] == "succeeded" and result["mode"] == "server"
+                  and "127.0.0.1" in json.dumps(result), "Loopback explicit-server DNS fixture failed")
+        system_result = tool_data(client.call("dns_lookup", {
+            "host": "localhost", "mode": "system", "recordType": "A",
+        }))
+        check(system_result["status"] == "succeeded" and system_result["mode"] == "system"
+              and any(record["value"] == "127.0.0.1" and record["ttl"] is None
+                      for record in system_result["dnsRecords"]),
+              "macOS system-resolver DNS mode did not return the localhost address without a fabricated TTL")
         with DNSFixture(answer=False) as fixture:
             started = time.monotonic()
             result = tool_data(client.call("dns_lookup", {
@@ -461,6 +469,10 @@ def check_network(server, deadline):
             ("tcp_probe", {"host": "127.0.0.1", "port": 0}),
             ("tcp_probe", {"host": "127.0.0.1", "port": 22, "timeout": 6}),
             ("dns_lookup", {"host": "fixture.test", "recordType": "INVALID"}),
+            ("dns_lookup", {"host": "localhost", "mode": "invalid"}),
+            ("dns_lookup", {"host": "localhost", "mode": "system", "server": "127.0.0.1"}),
+            ("dns_lookup", {"host": "localhost", "mode": "server"}),
+            ("dns_lookup", {"host": "localhost", "mode": "system", "recordType": "MX"}),
         ]:
             invalid = tool_data(client.call(name, arguments), error=True)
             check(invalid.get("error", {}).get("code") == "invalid_arguments", "Invalid input omitted its error code")

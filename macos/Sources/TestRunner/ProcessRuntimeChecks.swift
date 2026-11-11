@@ -279,7 +279,9 @@ enum ProcessRuntimeChecks {
             cancellation.cancel()
             let result = await execution.value
             try check(result.jobID == spec.id && result.jobState.isTerminal && result.cleanupCompleted,
-                      "An exit/deadline/cancellation race returns one terminal result with cleanup")
+                      "An exit/deadline/cancellation race returns one terminal result with cleanup " +
+                      "(state=\(result.jobState), cleanup=\(result.cleanupCompleted), " +
+                      "errors=\(result.processEvidence?.cleanupErrors ?? []))")
             try check(!(result.timedOut && result.cancelled) && result.failureCode == nil,
                       "An exit/deadline/cancellation race cannot report two terminal reasons")
             switch result.jobState {

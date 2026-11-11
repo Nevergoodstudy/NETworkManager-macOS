@@ -32,14 +32,28 @@ public enum DNSRecordType: UInt16, CaseIterable, Identifiable, Sendable {
     }
 }
 
+public enum DNSLookupMode: String, CaseIterable, Identifiable, Sendable {
+    case system
+    case server
+
+    public var id: String { rawValue }
+
+    public var title: String {
+        switch self {
+        case .system: return t("System resolver")
+        case .server: return t("Specified server")
+        }
+    }
+}
+
 public struct DNSRecord: Identifiable, Hashable, Sendable {
     public let id = UUID()
     public let name: String
     public let type: DNSRecordType
-    public let ttl: UInt32
+    public let ttl: UInt32?
     public let value: String
 
-    public init(name: String, type: DNSRecordType, ttl: UInt32, value: String) {
+    public init(name: String, type: DNSRecordType, ttl: UInt32?, value: String) {
         self.name = name
         self.type = type
         self.ttl = ttl
@@ -49,13 +63,16 @@ public struct DNSRecord: Identifiable, Hashable, Sendable {
 
 public struct DNSQueryResult: Sendable {
     public let records: [DNSRecord]
+    public let mode: DNSLookupMode
     public let server: String
     public let elapsed: TimeInterval
     public let responseCode: String
     public let authoritative: Bool
 
-    public init(records: [DNSRecord], server: String, elapsed: TimeInterval, responseCode: String, authoritative: Bool) {
+    public init(records: [DNSRecord], mode: DNSLookupMode = .server, server: String,
+                elapsed: TimeInterval, responseCode: String, authoritative: Bool) {
         self.records = records
+        self.mode = mode
         self.server = server
         self.elapsed = elapsed
         self.responseCode = responseCode
@@ -65,6 +82,9 @@ public struct DNSQueryResult: Sendable {
 
 public enum DNSError: LocalizedError {
     case invalidName
+    case serverRequired
+    case serverNotAllowedInSystemMode
+    case systemResolverRecordType
     case socket(String)
     case timeout
     case cancelled
@@ -74,6 +94,9 @@ public enum DNSError: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .invalidName: return t("Enter a valid DNS name.")
+        case .serverRequired: return t("Enter a DNS server for this query mode.")
+        case .serverNotAllowedInSystemMode: return t("Remove the DNS server or switch to specified-server mode.")
+        case .systemResolverRecordType: return t("System resolver mode supports only A and AAAA records.")
         case .socket(let message): return message
         case .timeout: return t("The DNS server did not answer in time.")
         case .cancelled: return t("Diagnostic cancelled")
@@ -87,33 +110,34 @@ public enum DNSError: LocalizedError {
 
 /// Minimal but complete DNS client (UDP with TCP fallback for truncated answers).
 public enum DNSClient {
-    /// Name servers configured on this Mac (`/etc/resolv.conf` plus scoped resolvers).
+    /// Returns configured name-server addresses for inspection. This flat list
+    /// does not preserve macOS resolver scopes and must not drive system lookups.
     public static func systemServers(cancellation: DiagnosticCancellation? = nil) -> [String] {
         if cancellation?.isCancelled == true { return [] }
-        var servers: [String] = []
-        if let content = try? String(contentsOfFile: "/etc/resolv.conf", encoding: .utf8) {
-            for line in content.split(separator: "\n") {
-                let trimmed = line.trimmingCharacters(in: .whitespaces)
-                guard trimmed.hasPrefix("nameserver") else { continue }
-                let parts = trimmed.split(separator: " ").map(String.init)
-                if parts.count >= 2, IPv4(parts[1]) != nil || parts[1].contains(":") {
-                    servers.append(parts[1])
-                }
-            }
-        }
-        // `scutil --dns` also lists DHCP provided servers.
+        let resolvConf = try? String(contentsOfFile: "/etc/resolv.conf", encoding: .utf8)
         let result = Shell.runSync("/usr/sbin/scutil", ["--dns"], timeout: 5, cancellation: cancellation)
-        if result.succeeded {
-            for line in result.stdout.split(separator: "\n") {
-                let trimmed = line.trimmingCharacters(in: .whitespaces)
-                if trimmed.hasPrefix("nameserver["), let value = trimmed.split(separator: ":").last {
-                    let server = value.trimmingCharacters(in: .whitespaces)
-                    if !servers.contains(server) { servers.append(server) }
-                }
-            }
-        }
         if cancellation?.isCancelled == true { return [] }
-        if servers.isEmpty { servers = ["1.1.1.1", "8.8.8.8"] }
+        return parseSystemServers(resolvConf: resolvConf, scutilOutput: result.succeeded ? result.stdout : "")
+    }
+
+    static func parseSystemServers(resolvConf: String?, scutilOutput: String) -> [String] {
+        var servers: [String] = []
+        func append(_ value: String) {
+            let address = value.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !address.isEmpty, !servers.contains(address) else { return }
+            servers.append(address)
+        }
+
+        for line in (resolvConf ?? "").split(whereSeparator: \.isNewline) {
+            let fields = line.split(whereSeparator: \.isWhitespace)
+            guard fields.count >= 2, fields[0] == "nameserver" else { continue }
+            append(String(fields[1]))
+        }
+        for line in scutilOutput.split(whereSeparator: \.isNewline) {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard trimmed.hasPrefix("nameserver["), let separator = trimmed.firstIndex(of: ":") else { continue }
+            append(String(trimmed[trimmed.index(after: separator)...]))
+        }
         return servers
     }
 
@@ -166,7 +190,9 @@ public enum DNSClient {
                              timeout: TimeInterval = 3,
                              cancellation: DiagnosticCancellation? = nil) throws -> DNSQueryResult {
         if cancellation?.isCancelled == true { throw DNSError.cancelled }
-        let target = server ?? systemServers(cancellation: cancellation).first ?? "1.1.1.1"
+        guard let target = server?.trimmingCharacters(in: .whitespacesAndNewlines), !target.isEmpty else {
+            throw DNSError.serverRequired
+        }
         if cancellation?.isCancelled == true { throw DNSError.cancelled }
         let start = Date()
 
@@ -190,19 +216,44 @@ public enum DNSClient {
 
         let elapsed = Date().timeIntervalSince(start)
         let parsed = try parse(response, expectedID: identifier)
-        return DNSQueryResult(records: parsed.records, server: target, elapsed: elapsed,
+        return DNSQueryResult(records: parsed.records, mode: .server, server: target, elapsed: elapsed,
                               responseCode: parsed.responseCode, authoritative: parsed.authoritative)
     }
 
-    /// Convenience: resolve a hostname to A + AAAA records.
-    public static func resolveHost(_ host: String) -> [String] {
-        var result: [String] = []
-        for type in [DNSRecordType.a, .aaaa] {
-            if let response = try? query(name: host, type: type) {
-                result.append(contentsOf: response.records.map(\.value))
-            }
+    /// Resolve an address record through macOS DNS-SD, preserving system resolver policy.
+    public static func resolveSystem(name: String,
+                                     type: DNSRecordType,
+                                     timeout: TimeInterval = 3,
+                                     cancellation: DiagnosticCancellation? = nil) throws -> DNSQueryResult {
+        guard type == .a || type == .aaaa else { throw DNSError.systemResolverRecordType }
+        if cancellation?.isCancelled == true { throw DNSError.cancelled }
+        let started = ProcessInfo.processInfo.systemUptime
+        let addresses: [ResolvedSocketAddress]
+        do {
+            addresses = try SocketAddressResolver.resolve(name, timeout: timeout, cancellation: cancellation)
+        } catch SocketAddressResolutionError.cancelled {
+            throw DNSError.cancelled
+        } catch SocketAddressResolutionError.timedOut {
+            throw DNSError.timeout
         }
-        return result
+        if cancellation?.isCancelled == true { throw DNSError.cancelled }
+
+        let family = type == .a ? AF_INET : AF_INET6
+        let records = addresses.filter { $0.family == family }.map {
+            DNSRecord(name: name, type: type, ttl: nil, value: $0.numericAddress)
+        }
+        return DNSQueryResult(records: records, mode: .system, server: t("macOS system resolver"),
+                              elapsed: ProcessInfo.processInfo.systemUptime - started,
+                              responseCode: t("System resolution"), authoritative: false)
+    }
+
+    /// Convenience: resolve a hostname to A + AAAA records through the system resolver.
+    public static func resolveHost(_ host: String) -> [String] {
+        do {
+            return try SocketAddressResolver.resolve(host, timeout: 5).map(\.numericAddress)
+        } catch {
+            return []
+        }
     }
 
     // MARK: Transport

@@ -537,32 +537,50 @@ public enum TCPProbe {
                             timeout: TimeInterval = 1.5,
                             concurrency: Int = 128,
                             cancellation: DiagnosticCancellation? = nil,
-                            progress: (@Sendable (PortProbeResult) -> Void)? = nil) async -> [PortProbeResult] {
-        await withTaskGroup(of: PortProbeResult.self) { group in
-            var results: [PortProbeResult] = []
-            var index = 0
-            let width = max(1, min(concurrency, ports.count))
+                            progress: (@MainActor @Sendable (PortProbeResult) -> Void)? = nil) async -> [PortProbeResult] {
+        let activeCancellation = cancellation ?? DiagnosticCancellation()
+        return await scan(host: host, ports: ports, timeout: timeout, concurrency: concurrency,
+                          cancellation: activeCancellation, progress: progress) { target, port, budget, token in
+            probe(host: target, port: port, timeout: budget, cancellation: token)
+        }
+    }
 
-            while index < width, index < ports.count, cancellation?.isCancelled != true {
-                let port = ports[index]
-                group.addTask { probe(host: host, port: port, timeout: timeout, cancellation: cancellation) }
-                index += 1
-            }
+    static func scan(host: String, ports: [Int], timeout: TimeInterval, concurrency: Int,
+                     cancellation: DiagnosticCancellation,
+                     progress: (@MainActor @Sendable (PortProbeResult) -> Void)?,
+                     probe: @escaping @Sendable (String, Int, TimeInterval, DiagnosticCancellation) -> PortProbeResult) async -> [PortProbeResult] {
+        let activeCancellation = cancellation
+        return await withTaskCancellationHandler {
+            await withTaskGroup(of: PortProbeResult.self) { group in
+                var results: [PortProbeResult] = []
+                var index = 0
+                let width = max(1, min(concurrency, ports.count))
 
-            while let result = await group.next() {
-                if cancellation?.isCancelled == true {
-                    group.cancelAll()
-                    break
-                }
-                results.append(result)
-                progress?(result)
-                if index < ports.count, cancellation?.isCancelled != true {
+                while index < width, index < ports.count, !activeCancellation.isCancelled {
                     let port = ports[index]
-                    group.addTask { probe(host: host, port: port, timeout: timeout, cancellation: cancellation) }
+                    group.addTask { probe(host, port, timeout, activeCancellation) }
                     index += 1
                 }
+
+                while let result = await group.next() {
+                    if result.failure?.code != .cancelled {
+                        results.append(result)
+                        await progress?(result)
+                    }
+                    if Task.isCancelled || activeCancellation.isCancelled {
+                        group.cancelAll()
+                        break
+                    }
+                    if index < ports.count {
+                        let port = ports[index]
+                        group.addTask { probe(host, port, timeout, activeCancellation) }
+                        index += 1
+                    }
+                }
+                return results.sorted { $0.port < $1.port }
             }
-            return results.sorted { $0.port < $1.port }
+        } onCancel: {
+            cancellation.cancel()
         }
     }
 

@@ -13,6 +13,7 @@ public struct LookupView: View {
     @NMStateCompat private var kind: Kind
     @NMStateCompat private var query = "example.com"
     @NMStateCompat private var server = ""
+    @NMStateCompat private var dnsMode: DNSLookupMode = .system
     @NMStateCompat private var recordType: DNSRecordType = .a
     @NMStateCompat private var records: [DNSRecord] = []
     @NMStateCompat private var output = ""
@@ -31,29 +32,44 @@ public struct LookupView: View {
                     .pickerStyle(.menu)
             }
             GroupBox(t("Query")) {
-                HStack {
-                    TextField(kind == .sntp ? t("NTP server") : t("Hostname or IP address"), text: $query)
-                        .textFieldStyle(.roundedBorder)
-                        .accessibilityIdentifier("diagnosticQueryTarget")
+                VStack(alignment: .leading, spacing: 10) {
                     if kind == .dns {
-                        Picker(t("Type"), selection: $recordType) { ForEach(DNSRecordType.allCases) { Text($0.displayName).tag($0) } }
+                        Picker(t("Resolver"), selection: dnsModeBinding) {
+                            ForEach(DNSLookupMode.allCases) { Text($0.title).tag($0) }
+                        }
+                        .pickerStyle(.segmented)
+                        .frame(maxWidth: 340)
+                        .accessibilityIdentifier("diagnosticDNSMode")
+                    }
+
+                    HStack {
+                        TextField(kind == .sntp ? t("NTP server") : t("Hostname or IP address"), text: $query)
+                            .textFieldStyle(.roundedBorder)
+                            .accessibilityIdentifier("diagnosticQueryTarget")
+                        if kind == .dns {
+                            Picker(t("Type"), selection: $recordType) {
+                                ForEach(availableRecordTypes) { Text($0.displayName).tag($0) }
+                            }
                             .frame(width: 110)
                             .accessibilityIdentifier("diagnosticDNSRecordType")
-                    }
-                    TextField(t("Server (optional)"), text: $server)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 190)
-                        .accessibilityIdentifier("diagnosticLookupServer")
-                    Button(isRunning ? t("Running…") : t("Lookup")) { run() }
-                        .buttonStyle(.borderedProminent)
-                        .disabled(isRunning)
-                        .accessibilityIdentifier("diagnosticLookupRun")
-                    if isRunning {
-                        Button { diagnosticTask?.cancel() } label: {
-                            Label(t("Cancel"), systemImage: "xmark.circle")
                         }
-                        .buttonStyle(.bordered)
-                        .accessibilityIdentifier("cancelDiagnosticLookup")
+                        if kind != .dns || dnsMode == .server {
+                            TextField(kind == .dns ? t("DNS server") : t("Server (optional)"), text: $server)
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 190)
+                                .accessibilityIdentifier("diagnosticLookupServer")
+                        }
+                        Button(isRunning ? t("Running…") : t("Lookup")) { run() }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(isRunning)
+                            .accessibilityIdentifier("diagnosticLookupRun")
+                        if isRunning {
+                            Button { diagnosticTask?.cancel() } label: {
+                                Label(t("Cancel"), systemImage: "xmark.circle")
+                            }
+                            .buttonStyle(.bordered)
+                            .accessibilityIdentifier("cancelDiagnosticLookup")
+                        }
                     }
                 }
             }
@@ -62,7 +78,7 @@ public struct LookupView: View {
                 Table(records) {
                     TableColumn(t("Name")) { Text($0.name).font(.body.monospaced()) }
                     TableColumn(t("Type")) { Text($0.type.displayName) }
-                    TableColumn("TTL") { Text(String($0.ttl)) }
+                    TableColumn("TTL") { Text($0.ttl.map { String($0) } ?? "—") }
                     TableColumn(t("Value")) { Text($0.value).font(.body.monospaced()) }
                 }.frame(minHeight: 300)
             } else {
@@ -89,10 +105,20 @@ public struct LookupView: View {
         switch kind {
         case .dns:
             let selectedType = recordType
-            let selectedServer = server.isEmpty ? nil : server
-            let runID = history.beginDiagnostic(kind: .dns, target: target, parameters: ["recordType": selectedType.displayName, "server": selectedServer ?? "system"])
+            let selectedMode = dnsMode
+            let selectedServer = server.trimmingCharacters(in: .whitespacesAndNewlines)
+            if selectedMode == .server && selectedServer.isEmpty {
+                error = t("Enter a DNS server for this query mode.")
+                return
+            }
+            let serverArgument = selectedMode == .server ? selectedServer : nil
+            let runID = history.beginDiagnostic(kind: .dns, target: target,
+                                                parameters: ["recordType": selectedType.displayName,
+                                                             "mode": selectedMode.rawValue,
+                                                             "server": serverArgument ?? ""])
             diagnosticTask = Task {
-                let result = await DiagnosticService.runDNS(host: target, recordType: selectedType, server: selectedServer)
+                let result = await DiagnosticService.runDNS(host: target, recordType: selectedType,
+                                                            server: serverArgument, mode: selectedMode)
                 records = result.dnsRecords
                 output = result.displayOutput ?? result.detail
                 error = result.status == .succeeded ? nil : result.summary
@@ -126,5 +152,18 @@ public struct LookupView: View {
                 isRunning = false
             }
         }
+    }
+
+    private var availableRecordTypes: [DNSRecordType] {
+        dnsMode == .system ? [.a, .aaaa] : DNSRecordType.allCases
+    }
+
+    private var dnsModeBinding: Binding<DNSLookupMode> {
+        Binding(get: { dnsMode }, set: { newMode in
+            dnsMode = newMode
+            if newMode == .system && recordType != .a && recordType != .aaaa {
+                recordType = .a
+            }
+        })
     }
 }

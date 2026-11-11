@@ -57,15 +57,30 @@ public enum DiagnosticService {
         }
     }
 
-    public static func runDNS(host: String, recordType: DNSRecordType = .a, server: String? = nil, serverPort: UInt16 = 53, timeout: TimeInterval = 3) async -> DiagnosticExecutionResult {
+    public static func runDNS(host: String, recordType: DNSRecordType = .a, server: String? = nil,
+                              serverPort: UInt16 = 53, timeout: TimeInterval = 3,
+                              mode: DNSLookupMode? = nil) async -> DiagnosticExecutionResult {
         await executeBlocking { cancellation in
             do {
-                let result = try DNSClient.query(name: host, type: recordType, server: server, serverPort: serverPort, timeout: timeout, cancellation: cancellation)
+                let selectedMode = mode ?? (server == nil ? .system : .server)
+                if selectedMode == .system, server != nil { throw DNSError.serverNotAllowedInSystemMode }
+                let result: DNSQueryResult
+                switch selectedMode {
+                case .system:
+                    result = try DNSClient.resolveSystem(name: host, type: recordType, timeout: timeout, cancellation: cancellation)
+                case .server:
+                    result = try DNSClient.query(name: host, type: recordType, server: server,
+                                                 serverPort: serverPort, timeout: timeout, cancellation: cancellation)
+                }
                 let values = result.records.map(\.value).joined(separator: ", ")
                 return DiagnosticExecutionResult(status: .succeeded, summary: tf("%d record(s)", result.records.count),
-                                                 detail: tf("Server: %@\nResponse: %@\nValues: %@", result.server, result.responseCode, values.isEmpty ? t("No records") : values),
+                                                 detail: tf("Mode: %@\nResolver: %@\nResponse: %@\nValues: %@",
+                                                            result.mode.title, result.server, result.responseCode,
+                                                            values.isEmpty ? t("No records") : values),
                                                  latency: result.elapsed, source: "DNS", dnsRecords: result.records,
-                                                 displayOutput: tf("Server: %@\nResponse: %@\nElapsed: %@", result.server, result.responseCode, Fmt.duration(result.elapsed)))
+                                                 displayOutput: tf("Mode: %@\nResolver: %@\nResponse: %@\nElapsed: %@",
+                                                                   result.mode.title, result.server, result.responseCode,
+                                                                   Fmt.duration(result.elapsed)))
             } catch {
                 return DiagnosticExecutionResult(status: classify(error), summary: error.localizedDescription, source: "DNS")
             }
