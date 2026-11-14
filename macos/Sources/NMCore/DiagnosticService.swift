@@ -22,9 +22,11 @@ public struct DiagnosticExecutionResult: Sendable {
     public let source: String
     public let dnsRecords: [DNSRecord]
     public let displayOutput: String?
+    public let evidence: DiagnosticRuntimeEvidence?
 
     public init(status: DiagnosticRunStatus, summary: String, detail: String = "", latency: TimeInterval? = nil,
-                source: String = "NETworkManager", dnsRecords: [DNSRecord] = [], displayOutput: String? = nil) {
+                source: String = "NETworkManager", dnsRecords: [DNSRecord] = [], displayOutput: String? = nil,
+                evidence: DiagnosticRuntimeEvidence? = nil) {
         self.status = status
         self.summary = summary
         self.detail = detail
@@ -32,6 +34,7 @@ public struct DiagnosticExecutionResult: Sendable {
         self.source = source
         self.dnsRecords = dnsRecords
         self.displayOutput = displayOutput
+        self.evidence = evidence
     }
 }
 
@@ -54,15 +57,30 @@ public enum DiagnosticService {
         }
     }
 
-    public static func runDNS(host: String, recordType: DNSRecordType = .a, server: String? = nil, serverPort: UInt16 = 53, timeout: TimeInterval = 3) async -> DiagnosticExecutionResult {
+    public static func runDNS(host: String, recordType: DNSRecordType = .a, server: String? = nil,
+                              serverPort: UInt16 = 53, timeout: TimeInterval = 3,
+                              mode: DNSLookupMode? = nil) async -> DiagnosticExecutionResult {
         await executeBlocking { cancellation in
             do {
-                let result = try DNSClient.query(name: host, type: recordType, server: server, serverPort: serverPort, timeout: timeout, cancellation: cancellation)
+                let selectedMode = mode ?? (server == nil ? .system : .server)
+                if selectedMode == .system, server != nil { throw DNSError.serverNotAllowedInSystemMode }
+                let result: DNSQueryResult
+                switch selectedMode {
+                case .system:
+                    result = try DNSClient.resolveSystem(name: host, type: recordType, timeout: timeout, cancellation: cancellation)
+                case .server:
+                    result = try DNSClient.query(name: host, type: recordType, server: server,
+                                                 serverPort: serverPort, timeout: timeout, cancellation: cancellation)
+                }
                 let values = result.records.map(\.value).joined(separator: ", ")
                 return DiagnosticExecutionResult(status: .succeeded, summary: tf("%d record(s)", result.records.count),
-                                                 detail: tf("Server: %@\nResponse: %@\nValues: %@", result.server, result.responseCode, values.isEmpty ? t("No records") : values),
+                                                 detail: tf("Mode: %@\nResolver: %@\nResponse: %@\nValues: %@",
+                                                            result.mode.title, result.server, result.responseCode,
+                                                            values.isEmpty ? t("No records") : values),
                                                  latency: result.elapsed, source: "DNS", dnsRecords: result.records,
-                                                 displayOutput: tf("Server: %@\nResponse: %@\nElapsed: %@", result.server, result.responseCode, Fmt.duration(result.elapsed)))
+                                                 displayOutput: tf("Mode: %@\nResolver: %@\nResponse: %@\nElapsed: %@",
+                                                                   result.mode.title, result.server, result.responseCode,
+                                                                   Fmt.duration(result.elapsed)))
             } catch {
                 return DiagnosticExecutionResult(status: classify(error), summary: error.localizedDescription, source: "DNS")
             }
@@ -70,32 +88,75 @@ public enum DiagnosticService {
     }
 
     public static func runTCP(host: String, port: Int, timeout: TimeInterval = 2) async -> DiagnosticExecutionResult {
-        await executeBlocking { cancellation in
+        await executeBlocking(preserveTerminal: true) { cancellation in
             let result = TCPProbe.probe(host: host, port: port, timeout: timeout, cancellation: cancellation)
             switch result.status {
             case .open:
-                return DiagnosticExecutionResult(status: .succeeded, summary: tf("Port %d open", port), latency: result.latency, source: "TCP")
-            case .closed, .filtered, .openFiltered:
-                return DiagnosticExecutionResult(status: .failed, summary: tf("Port %d %@", port, result.status.rawValue), source: "TCP")
+                return DiagnosticExecutionResult(status: .succeeded, summary: tf("Port %d open", port),
+                                                 detail: "address=\(result.address ?? "n/a")", latency: result.latency, source: "TCP",
+                                                 evidence: DiagnosticRuntimeEvidence(tcpAttempts: result.attempts))
             case .error:
-                let message = result.message ?? t("TCP probe failed")
-                return DiagnosticExecutionResult(status: classify(message: message), summary: message, source: "TCP")
+                break
+            case .closed, .noResponse, .filtered, .openFiltered:
+                break
             }
+            guard let failure = result.failure else {
+                let message = result.message ?? t("TCP probe failed")
+                return DiagnosticExecutionResult(status: .failed, summary: message, detail: message, source: "TCP")
+            }
+            let status: DiagnosticRunStatus
+            switch failure.code {
+            case .refused: status = .failed
+            case .timedOut: status = .timedOut
+            case .unreachable: status = .unreachable
+            case .permissionDenied: status = .permissionDenied
+            case .cancelled: status = .cancelled
+            case .resolution, .execution: status = .failed
+            }
+            let summary = failure.code == .refused ? tf("Port %d closed", port) : failure.message
+            let evidence = "reason=\(failure.code.rawValue); stage=\(failure.stage.rawValue); errno=\(failure.errno.map(String.init) ?? "n/a"); soError=\(failure.soError.map(String.init) ?? "n/a"); address=\(failure.address ?? "n/a")"
+            return DiagnosticExecutionResult(status: status, summary: summary, detail: evidence,
+                                             source: "TCP", evidence: DiagnosticRuntimeEvidence(tcpFailure: failure, tcpAttempts: result.attempts))
         }
     }
 
     public static func runTraceroute(host: String, maxHops: Int = 16, timeout: TimeInterval = 45) async -> DiagnosticExecutionResult {
-        await execute { cancellation in
-        let result = await Shell.runTool("traceroute", ["-m", String(max(1, min(maxHops, 64))), host], timeout: timeout, cancellation: cancellation)
+        let target = host.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Arguments remain separate argv entries. Reject option-shaped targets
+        // before invoking a tool whose options can alter diagnostic behavior.
+        guard !target.isEmpty, !target.hasPrefix("-"), target.utf8.count <= 253,
+              target.utf8.allSatisfy({ $0 > 32 && $0 < 127 }),
+              !target.contains("/"), !target.contains("\\") else {
+            return DiagnosticExecutionResult(status: .failed, summary: t("Invalid input"), source: "traceroute")
+        }
+        return await execute(preserveTerminal: true) { cancellation in
+            let job = ProcessJobSpec(operation: .traceroute, targetScope: target,
+                                     deadline: Date().addingTimeInterval(max(0, timeout)),
+                                     maximumOutputBytesPerStream: 128_000, cancellation: cancellation)
+            let result = await Shell.runTool("traceroute", ["-m", String(max(1, min(maxHops, 64))), target], job: job)
+            return tracerouteResult(result)
+        }
+    }
+
+    static func tracerouteResult(_ result: CommandResult) -> DiagnosticExecutionResult {
         let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
-        if result.cancelled {
-            return DiagnosticExecutionResult(status: .cancelled, summary: t("Traceroute cancelled"), detail: String(output.prefix(8_000)), source: "traceroute")
-        }
-        if result.succeeded {
-            return DiagnosticExecutionResult(status: .succeeded, summary: t("Traceroute completed"), detail: String(output.prefix(8_000)), source: "traceroute")
-        }
-        return DiagnosticExecutionResult(status: result.timedOut ? .timedOut : .failed, summary: result.timedOut ? t("Traceroute timed out") : t("Traceroute failed"), detail: String(output.prefix(8_000)), source: "traceroute")
-        }
+        let preview = String(output.prefix(8_000))
+        let previewClipped = output.count > 8_000
+        let outputNote = result.stdoutTruncated || result.stderrTruncated || previewClipped
+            ? "\n" + t("Output truncated") : ""
+        let cleanupNote = result.cleanupCompleted ? "" : "\n" + t("Process cleanup incomplete")
+        let status: DiagnosticRunStatus
+        let summary: String
+        if result.cancelled { status = .cancelled; summary = t("Traceroute cancelled") }
+        else if result.timedOut { status = .timedOut; summary = t("Traceroute timed out") }
+        else if result.failureCode == .permissionDenied { status = .permissionDenied; summary = t("Permission denied") }
+        else if result.failureCode == .missingExecutable { status = .failed; summary = t("Traceroute is not installed") }
+        else if result.succeeded { status = .succeeded; summary = t("Traceroute completed") }
+        else { status = .failed; summary = t("Traceroute failed") }
+        return DiagnosticExecutionResult(status: status, summary: summary,
+            detail: preview + outputNote + cleanupNote, source: "traceroute",
+            displayOutput: output + outputNote + cleanupNote,
+            evidence: DiagnosticRuntimeEvidence(process: result.processEvidence))
     }
 
     public static func runSNTP(host: String, timeout: TimeInterval = 3, port: UInt16 = 123) async -> DiagnosticExecutionResult {
@@ -181,21 +242,23 @@ public enum DiagnosticService {
         }
     }
 
-    private static func executeBlocking(_ operation: @escaping @Sendable (DiagnosticCancellation) -> DiagnosticExecutionResult) async -> DiagnosticExecutionResult {
-        await execute { cancellation in
+    private static func executeBlocking(preserveTerminal: Bool = false, _ operation: @escaping @Sendable (DiagnosticCancellation) -> DiagnosticExecutionResult) async -> DiagnosticExecutionResult {
+        await execute(preserveTerminal: preserveTerminal) { cancellation in
             await runBlockingDiagnostic { operation(cancellation) }
         }
     }
 
-    private static func execute(_ operation: @escaping @Sendable (DiagnosticCancellation) async -> DiagnosticExecutionResult) async -> DiagnosticExecutionResult {
+    private static func execute(preserveTerminal: Bool = false, _ operation: @escaping @Sendable (DiagnosticCancellation) async -> DiagnosticExecutionResult) async -> DiagnosticExecutionResult {
         let cancellation = DiagnosticCancellation()
         let result = await withTaskCancellationHandler {
             await Task.detached(priority: .userInitiated) { await operation(cancellation) }.value
         } onCancel: {
             cancellation.cancel()
         }
-        if cancellation.isCancelled || Task.isCancelled {
-            return DiagnosticExecutionResult(status: .cancelled, summary: t("Diagnostic cancelled"), source: result.source)
+        if !preserveTerminal && (cancellation.isCancelled || Task.isCancelled) {
+            return DiagnosticExecutionResult(status: .cancelled, summary: t("Diagnostic cancelled"), detail: result.detail,
+                latency: result.latency, source: result.source, dnsRecords: result.dnsRecords,
+                displayOutput: result.displayOutput, evidence: result.evidence)
         }
         return result
     }

@@ -419,25 +419,53 @@ def check_offline(server, deadline):
 def check_network(server, deadline):
     with MCPProcess(server, deadline, "--allow-network") as client:
         client.initialize()
-        names = {tool["name"] for tool in client.result("tools/list")["tools"]}
-        check(names == OFFLINE_TOOLS | NETWORK_TOOLS, "Network opt-in did not expose expected tools")
+        tools = {tool["name"]: tool for tool in client.result("tools/list")["tools"]}
+        check(set(tools) == OFFLINE_TOOLS | NETWORK_TOOLS, "Network opt-in did not expose expected tools")
+        for name in ["ping", "dns_lookup"]:
+            description = tools[name]["description"]
+            timeout_schema = tools[name]["inputSchema"]["properties"]["timeout"]
+            check("one total network budget" in description and "per phase" not in description,
+                  name + " must describe its shared network budget")
+            check("total network budget" in timeout_schema["description"]
+                  and timeout_schema["minimum"] == 0.1 and timeout_schema["maximum"] == 5,
+                  name + " timeout schema lost its total budget or bounds")
         ping = tool_data(client.call("ping", {"host": "127.0.0.1", "timeout": 0.5}))
         check(ping["status"] == "succeeded", "ICMP loopback probe failed")
+        ping6 = tool_data(client.call("ping", {"host": "::1", "timeout": 0.5}))
+        check(ping6["status"] == "succeeded", "IPv6 ICMP loopback probe failed")
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
             listener.bind(("127.0.0.1", 0))
             listener.listen(4)
             port = listener.getsockname()[1]
             result = tool_data(client.call("tcp_probe", {"host": "127.0.0.1", "port": port, "timeout": 0.5}))
             check(result["status"] == "succeeded", "TCP loopback probe failed")
+            attempts = result.get("evidence", {}).get("tcpAttempts", [])
+            check(len(attempts) == 1 and attempts[0]["address"] == "127.0.0.1"
+                  and attempts[0].get("code") is None and attempts[0]["elapsed"] >= 0,
+                  "TCP success lost its structured per-address evidence")
         closed = tool_data(client.call("tcp_probe", {"host": "127.0.0.1", "port": port, "timeout": 0.5}), error=True)
         check(closed["status"] == "failed", "Closed TCP port was not reported as a failed probe")
+        failure = closed.get("evidence", {}).get("tcpFailure", {})
+        check(failure.get("code") == "refused" and failure.get("stage") in {"connect", "socketError"}
+              and failure.get("address") == "127.0.0.1" and failure.get("attempts"),
+              "TCP refusal lost its stable reason, stage or address attempts")
+        check(failure.get("errno") is not None or failure.get("soError") is not None,
+              "TCP refusal must preserve the syscall errno or socket SO_ERROR")
 
         with DNSFixture() as fixture:
             result = tool_data(client.call("dns_lookup", {
-                "host": "fixture.test", "recordType": "A", "server": "127.0.0.1",
+                "host": "fixture.test", "mode": "server", "recordType": "A", "server": "127.0.0.1",
                 "serverPort": fixture.port, "timeout": 0.5,
             }))
-            check(result["status"] == "succeeded" and "127.0.0.1" in json.dumps(result), "Loopback DNS fixture failed")
+            check(result["status"] == "succeeded" and result["mode"] == "server"
+                  and "127.0.0.1" in json.dumps(result), "Loopback explicit-server DNS fixture failed")
+        system_result = tool_data(client.call("dns_lookup", {
+            "host": "localhost", "mode": "system", "recordType": "A",
+        }))
+        check(system_result["status"] == "succeeded" and system_result["mode"] == "system"
+              and any(record["value"] == "127.0.0.1" and record["ttl"] is None
+                      for record in system_result["dnsRecords"]),
+              "macOS system-resolver DNS mode did not return the localhost address without a fabricated TTL")
         with DNSFixture(answer=False) as fixture:
             started = time.monotonic()
             result = tool_data(client.call("dns_lookup", {
@@ -451,6 +479,10 @@ def check_network(server, deadline):
             ("tcp_probe", {"host": "127.0.0.1", "port": 0}),
             ("tcp_probe", {"host": "127.0.0.1", "port": 22, "timeout": 6}),
             ("dns_lookup", {"host": "fixture.test", "recordType": "INVALID"}),
+            ("dns_lookup", {"host": "localhost", "mode": "invalid"}),
+            ("dns_lookup", {"host": "localhost", "mode": "system", "server": "127.0.0.1"}),
+            ("dns_lookup", {"host": "localhost", "mode": "server"}),
+            ("dns_lookup", {"host": "localhost", "mode": "system", "recordType": "MX"}),
         ]:
             invalid = tool_data(client.call(name, arguments), error=True)
             check(invalid.get("error", {}).get("code") == "invalid_arguments", "Invalid input omitted its error code")

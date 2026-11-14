@@ -1,19 +1,55 @@
 # macOS 改进计划 / macOS improvement plan
 
-研究日期 / Research date: **2026-11-09** · 文档修订 / Documentation revision: **2026-11-10**
+研究日期 / Research date: **2026-11-09** · 文档修订 / Documentation revision: **2026-11-14**
 
-**待实施提案。** 方案审阅的源码是 [0944345d73df](https://github.com/Nevergoodstudy/NETworkManager-macOS/tree/0944345d73df0eafb2e7353aecca48d924398de8)，该功能提交于 2026-11-10 通过 [PR #12](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/12) 合并进 `main`。文中所列已有能力以该源码基准为准，不代表已完成真实设备互操作或正式签名公证发布。
+**计划基准与实施跟踪。** 方案审阅的源码是 [0944345d73df](https://github.com/Nevergoodstudy/NETworkManager-macOS/tree/0944345d73df0eafb2e7353aecca48d924398de8)，该功能提交于 2026-11-10 通过 [PR #12](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/12) 合并进 `main`。文中所列已有能力以该源码基准为准，不代表已完成真实设备互操作或正式签名公证发布。
 
-**Proposed work.** The reviewed source is [0944345d73df](https://github.com/Nevergoodstudy/NETworkManager-macOS/tree/0944345d73df0eafb2e7353aecca48d924398de8), merged into `main` through [PR #12](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/12) on 2026-11-10. Existing capabilities in the proposal refer to that baseline; they do not establish live-device interoperability or a formally signed and notarized release.
+**Planning baseline and implementation tracking.** The reviewed source is [0944345d73df](https://github.com/Nevergoodstudy/NETworkManager-macOS/tree/0944345d73df0eafb2e7353aecca48d924398de8), merged into `main` through [PR #12](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/12) on 2026-11-10. Existing capabilities in the proposal refer to that baseline; they do not establish live-device interoperability or a formally signed and notarized release.
 
 | 内容 / Material | 入口 / Entry |
 |---|---|
+| T03 单次 Ping 总预算与取消 / Single-Ping budget and cancellation | [双语实施、回环验证与剩余验收 / Implementation, loopback checks and remaining gates](T03_PING_BUDGET_2026-11-14.md) |
+| 2026-11-14 阶段跟进 / Stage follow-up | [DNS 可靠性、UI 验证与 CoreWLAN 评估 / DNS reliability, UI checks and CoreWLAN assessment](PROGRESS_2026-11-14.md) |
+| T01 连接与监听端口的本地实施 / Local connections and listeners implementation | [双语结果契约与验证记录 / Result contract and validation](T01_SOCKET_INVENTORY_2026-11-10.md) |
+| T01 ARP 与 Wi-Fi 系统采集 / ARP and Wi-Fi system collection | [双语状态与验证记录 / Result states and validation](T01_SYSTEM_INVENTORY_2026-11-11.md) |
+| T02 系统解析与指定 DNS 服务器 / System resolution and specified DNS server | [双语实施与验证记录 / Implementation and validation](T02_DNS_MODES_2026-11-11.md) |
+| T01 TCP 与 T03 进程适配器实施记录 / TCP and process adapter implementation | [双语实施与验证记录 / Implementation and validation](T01_T03_IMPLEMENTATION_2026-11-10.md) |
+| T03 IP 扫描初始化失败可见性 / Visible IP scan setup failures | [双语实施与验证记录 / Implementation and validation](T03_IP_SCAN_FAILURE_2026-11-11.md) |
+| T03 批量扫描进度与取消 / Batch scan progress and cancellation | [双语实施与验证记录 / Implementation and validation](T03_BATCH_PROGRESS_2026-11-11.md) |
 | 中文架构与实施方案 | [阅读全文](NEXT_GENERATION_RESEARCH_2026-11-09.zh-CN.md) |
 | English architecture and implementation proposal | [Read the proposal](NEXT_GENERATION_RESEARCH_2026-11-09.en.md) |
 | 16 项任务、依赖、估算与验收 / 16 tasks, dependencies, estimates and acceptance | [双语任务清单 / Bilingual backlog](NEXT_GENERATION_BACKLOG_2026-11-09.md) |
 | 表格导入 / Spreadsheet import | [Bilingual CSV](NEXT_GENERATION_BACKLOG_2026-11-09.csv) |
 | 机器可读任务 / Machine-readable tasks | [JSON, schemaVersion 2](NEXT_GENERATION_BACKLOG_2026-11-09.json) |
 | 交互路线看板 / Interactive roadmap | [Offline HTML](NEXT_GENERATION_ROADMAP_2026-11-09.html) |
+
+2026-11-14 的阶段跟进完成 DNS 响应与传输加固、主要 Lookup 界面状态验证及 CoreWLAN 字段能力评估；后续补齐单次 Ping 的共享总预算、取消与 IPv6 系统回退，并同步 MCP 超时契约。交付入口为 [PR #20](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/20)。当前处于 P0 基础诊断实施与 PR 审阅阶段；本机验证、远端 CI 与整项验收分别记录。T01/T02/T03 已有实现，仍为七个切片，整项验收为 0/16；剩余项见上表最新记录。
+
+The 2026-11-14 follow-up hardens DNS parsing/transport, verifies the main Lookup UI states and assesses CoreWLAN fields. A subsequent batch completes the single-Ping shared budget, cancellation and IPv6 system fallback, and updates MCP timeout contracts in [PR #20](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/20). The project is in P0 diagnostic implementation and PR review. Local validation, remote CI and acceptance are tracked separately. Seven slices cover T01/T02/T03, with 0/16 whole tasks fully accepted; the latest record above lists the remaining gates.
+
+2026-11-10 开始实施 T01 的 TCP 结果语义和 T03 的进程适配器切片，代码、兼容性和本机验证见上表实施记录；两项完整验收继续由 #14 与 #16 跟踪。
+
+Implementation began on 2026-11-10 with typed TCP outcomes and the bounded process adapter. The implementation record above describes the code, compatibility and local verification; #14 and #16 continue to track full acceptance.
+
+后续实现为连接和监听端口页面加入显式采集结果与部分数据状态，实施记录见上表；本次更新纳入 PR #20。
+
+A subsequent implementation adds explicit collection results and partial-data states to Connections and Listeners. Its implementation record is linked above and included in the PR #20 update.
+
+2026-11-11 的实现为 ARP 和 Wi-Fi 系统采集增加显式结果状态，并修正不完整 ARP 邻居的解析。诊断页和 Dashboard 现在区分命令失败与空结果；Wi-Fi 未知格式会报告无法识别的输出行数，不推断空详情的原因。受控 UI 验收仍待完成。代码、测试结果和限制见上表记录；本次更新纳入 PR #20。
+
+The 2026-11-11 implementation adds explicit result states for ARP and Wi-Fi collection and corrects incomplete-neighbor parsing. The diagnostics page and Dashboard distinguish command failures from empty results; unknown Wi-Fi output reports its unrecognized-line count without guessing why details are absent. Controlled UI acceptance remains open. The linked record documents the implementation, checks and limits; the work is included in the PR #20 update.
+
+同日还修复了 IP 扫描器吞掉单目标初始化错误后丢失结果行的问题。测试通过注入失败，不访问外部目标；详情见 T03 实施记录。
+
+The same day, the IP scanner was fixed to retain a target row when per-target setup fails. The deterministic test injects the error and contacts no external target; see the T03 implementation record.
+
+后续实现为 IP/TCP 批次接入实时进度和运行中任务取消，保留停止前已完成的 IP 行。实现和 fixture 验证见 T03 批次记录；GUI 自动化与更广泛的 MCP 作业接入仍未完成。
+
+A subsequent implementation adds live progress and in-flight task cancellation to IP/TCP batches and preserves IP rows completed before stop. See the T03 batch record for implementation and fixture checks; GUI automation and broader MCP job adoption remain open.
+
+2026-11-11 的 T02 实现将系统 A/AAAA 解析与指定服务器的原始 DNS 查询分开，并去掉隐式公网 DNS 回退。IPv6 nameserver 解析和 MCP 回环检查已覆盖；VPN split DNS、`.local` 与多接口仍需单独验收。详情见上表双语记录；本次更新纳入 PR #20。
+
+The 2026-11-11 T02 implementation separates system A/AAAA resolution from raw DNS queries to a specified server and removes the implicit public-DNS fallback. IPv6 nameserver parsing and MCP loopback checks are covered; VPN split DNS, `.local` and multiple interfaces remain to be accepted. See the bilingual record above; the work is included in the PR #20 update.
 
 先处理 TCP/权限/依赖失败分类、系统解析与显式 DNS、Job 执行边界、Repository 与 SQLite 迁移，再交付一条 DNS → TCP → TLS/HTTP 的故障处理流程。真实设备互操作、数据升级、最低系统和正式公证作为持续验收项。
 

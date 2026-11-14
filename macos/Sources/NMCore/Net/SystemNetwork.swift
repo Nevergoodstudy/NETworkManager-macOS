@@ -1,94 +1,57 @@
 import Foundation
 
-// MARK: - Local socket inventory
-
-/// A normalized socket row used by the Connections and Listeners tools.
-///
-/// macOS does not expose the Windows IP Helper tables used by the original
-/// application. `lsof` is the supported system inventory on macOS; keeping the
-/// parser here makes the UI independent from the command's column formatting.
-public struct SocketEntry: Identifiable, Hashable, Sendable {
-    public let id: String
-    public let command: String
-    public let pid: Int
-    public let user: String
-    public let fileDescriptor: String
-    public let family: String
-    public let transport: String
-    public let localAddress: String
-    public let remoteAddress: String
-    public let state: String
-
-    public init(id: String = UUID().uuidString, command: String, pid: Int, user: String,
-                fileDescriptor: String, family: String, transport: String,
-                localAddress: String, remoteAddress: String, state: String) {
-        self.id = id
-        self.command = command
-        self.pid = pid
-        self.user = user
-        self.fileDescriptor = fileDescriptor
-        self.family = family
-        self.transport = transport
-        self.localAddress = localAddress
-        self.remoteAddress = remoteAddress
-        self.state = state
-    }
+public enum SystemInventoryState: String, Sendable {
+    case loaded, empty, partial, unavailable, limited
 }
 
-public enum SocketInventory {
-    /// Return all IPv4/IPv6 sockets known by `lsof`.
-    public static func list(includeUDP: Bool = true) -> [SocketEntry] {
-        let result = Shell.runSync("/usr/sbin/lsof", ["-n", "-P", "-i"])
-        guard result.succeeded else { return [] }
-        return parse(result.stdout)
-            .filter { includeUDP || $0.transport.uppercased() != "UDP" }
+public enum SystemInventoryIssue: String, Sendable {
+    case missingExecutable, permissionDenied, busy, launchFailed, executionFailed
+    case timedOut, cancelled, outputTruncated, cleanupIncomplete, commandWarning
+    case unrecognizedOutput, fieldsUnavailable
+}
+
+public struct SystemInventoryResult<Entry: Sendable>: Sendable {
+    public let entries: [Entry]
+    public let issues: [SystemInventoryIssue]
+    public let command: CommandResult
+    public let unrecognizedRecordCount: Int
+
+    public var state: SystemInventoryState {
+        if entries.isEmpty && issues.contains(.fieldsUnavailable) { return .limited }
+        if issues.isEmpty { return entries.isEmpty ? .empty : .loaded }
+        return entries.isEmpty ? .unavailable : .partial
     }
 
-    public static func listeners() -> [SocketEntry] {
-        list().filter { $0.state.uppercased() == "LISTEN" || $0.state.uppercased() == "LISTENING" }
-    }
+    public init(entries: [Entry], command: CommandResult,
+                issues: [SystemInventoryIssue] = [], unrecognizedRecordCount: Int = 0) {
+        self.entries = entries
+        self.command = command
+        self.unrecognizedRecordCount = max(0, unrecognizedRecordCount)
 
-    public static func connections() -> [SocketEntry] {
-        list().filter { $0.state.uppercased() != "LISTEN" && $0.state.uppercased() != "LISTENING" }
-    }
-
-    /// Parse the stable, whitespace separated parts of lsof's default output.
-    /// The NAME column may contain spaces only in unusual process names, so the
-    /// first five columns and the last column are enough for the normal output.
-    public static func parse(_ text: String) -> [SocketEntry] {
-        var rows: [SocketEntry] = []
-        for line in text.split(whereSeparator: { $0.isNewline }).map(String.init) {
-            if line.hasPrefix("COMMAND ") || line.trimmingCharacters(in: .whitespaces).isEmpty { continue }
-            let columns = line.split(whereSeparator: { $0 == " " || $0 == "\t" }).map(String.init)
-            guard columns.count >= 9,
-                  let pid = Int(columns[1]) else { continue }
-
-            let type = columns[4]
-            guard type == "IPv4" || type == "IPv6" else { continue }
-            let name = columns[8...].joined(separator: " ")
-            let parsed = parseName(name)
-            rows.append(SocketEntry(
-                command: columns[0], pid: pid, user: columns[2],
-                fileDescriptor: columns[3], family: type,
-                transport: columns[7], localAddress: parsed.local,
-                remoteAddress: parsed.remote, state: parsed.state
-            ))
+        var resolved = issues
+        func add(_ issue: SystemInventoryIssue) {
+            if !resolved.contains(issue) { resolved.append(issue) }
         }
-        return rows
-    }
 
-    private static func parseName(_ name: String) -> (local: String, remote: String, state: String) {
-        let state: String
-        if let open = name.lastIndex(of: "("), name.last == ")" {
-            state = String(name[name.index(after: open)..<name.index(before: name.endIndex)])
-        } else {
-            state = ""
+        if command.cancelled { add(.cancelled) }
+        if command.timedOut { add(.timedOut) }
+        if let failure = command.failureCode {
+            switch failure {
+            case .missingExecutable: add(.missingExecutable)
+            case .permissionDenied: add(.permissionDenied)
+            case .busy: add(.busy)
+            case .launch: add(.launchFailed)
+            }
         }
-        let endpoint = name.split(separator: " ", maxSplits: 1).first.map(String.init) ?? name
-        if let arrow = endpoint.range(of: "->") {
-            return (String(endpoint[..<arrow.lowerBound]), String(endpoint[arrow.upperBound...]), state)
+        if !command.cleanupCompleted { add(.cleanupIncomplete) }
+        if command.stdoutTruncated || command.stderrTruncated { add(.outputTruncated) }
+        if command.status != 0 && !command.cancelled && !command.timedOut && command.failureCode == nil {
+            add(.executionFailed)
         }
-        return (endpoint, "", state)
+        if command.processEvidence?.terminationSignal != nil { add(.executionFailed) }
+        if !command.stderr.isEmpty { add(.commandWarning) }
+        if unrecognizedRecordCount > 0 { add(.unrecognizedOutput) }
+        self.issues = resolved
     }
 }
 
@@ -112,27 +75,65 @@ public struct NeighborEntry: Identifiable, Hashable, Sendable {
 }
 
 public enum NeighborTable {
+    public static func collect(timeout: TimeInterval = 5,
+                               cancellation: DiagnosticCancellation? = nil) async -> SystemInventoryResult<NeighborEntry> {
+        let command = await Shell.run("/usr/sbin/arp", ["-an"], timeout: timeout, cancellation: cancellation)
+        return interpret(command)
+    }
+
+    public static func collectSync(timeout: TimeInterval = 5,
+                                   cancellation: DiagnosticCancellation? = nil) -> SystemInventoryResult<NeighborEntry> {
+        interpret(Shell.runSync("/usr/sbin/arp", ["-an"], timeout: timeout, cancellation: cancellation))
+    }
+
     public static func list() -> [NeighborEntry] {
-        let result = Shell.runSync("/usr/sbin/arp", ["-an"], timeout: 5)
-        guard result.succeeded else { return [] }
-        return parse(result.stdout)
+        let result = collectSync()
+        return result.command.succeeded ? result.entries : []
+    }
+
+    static func interpret(_ command: CommandResult) -> SystemInventoryResult<NeighborEntry> {
+        let lines = command.stdout.split(whereSeparator: { $0.isNewline }).map(String.init)
+        let entries = lines.compactMap(parseLine)
+        let rejected = lines.filter { line in
+            !line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && parseLine(line) == nil
+        }.count
+        return SystemInventoryResult(entries: entries, command: command, unrecognizedRecordCount: rejected)
     }
 
     /// Parse output such as `? (192.168.1.1) at aa:bb:cc:dd:ee:ff on en0`.
     public static func parse(_ text: String) -> [NeighborEntry] {
-        text.split(whereSeparator: { $0.isNewline }).compactMap { raw in
-            let line = String(raw)
-            guard let left = line.firstIndex(of: "("),
-                  let right = line.firstIndex(of: ")"), right > left else { return nil }
-            let address = String(line[line.index(after: left)..<right])
-            let after = String(line[line.index(after: right)...])
-            let tokens = after.split(whereSeparator: { $0 == " " || $0 == "\t" }).map(String.init)
-            guard let at = tokens.firstIndex(of: "at"), at + 1 < tokens.count else { return nil }
-            let mac = tokens[at + 1]
-            let interface = tokens.firstIndex(of: "on").map { $0 + 1 < tokens.count ? tokens[$0 + 1] : "" } ?? ""
-            let state = tokens.contains("permanent") ? "Permanent" : (tokens.contains("incomplete") ? "Incomplete" : "Reachable")
-            return NeighborEntry(address: address, macAddress: Fmt.mac(mac), interface: interface, state: state)
-        }
+        text.split(whereSeparator: { $0.isNewline }).compactMap { parseLine(String($0)) }
+    }
+
+    private static func parseLine(_ line: String) -> NeighborEntry? {
+        guard let left = line.firstIndex(of: "("),
+              let right = line.firstIndex(of: ")"), right > left else { return nil }
+        let address = String(line[line.index(after: left)..<right])
+        let after = String(line[line.index(after: right)...])
+        let tokens = after.split(whereSeparator: { $0 == " " || $0 == "\t" }).map(String.init)
+        guard let at = tokens.firstIndex(of: "at"), at + 1 < tokens.count else { return nil }
+
+        let mac = tokens[at + 1]
+        let normalized = mac.trimmingCharacters(in: CharacterSet(charactersIn: "()"))
+        let isIncomplete = normalized.lowercased() == "incomplete" || tokens.contains("incomplete")
+        let macAddress = normalizedMAC(mac)
+        guard isIncomplete || macAddress != nil else { return nil }
+
+        let interface = tokens.firstIndex(of: "on").map { $0 + 1 < tokens.count ? tokens[$0 + 1] : "" } ?? ""
+        let state = tokens.contains("permanent") ? "Permanent" : (isIncomplete ? "Incomplete" : "Resolved")
+        return NeighborEntry(address: address, macAddress: isIncomplete ? "" : (macAddress ?? ""), interface: interface, state: state)
+    }
+
+    private static func normalizedMAC(_ value: String) -> String? {
+        // Darwin arp prints hexadecimal octets without leading zeroes.
+        let separator: Character = value.contains(":") ? ":" : "-"
+        let octets = value.split(separator: separator, omittingEmptySubsequences: false)
+        guard octets.count == 6, octets.allSatisfy({ octet in
+            (1...2).contains(octet.utf8.count) && octet.utf8.allSatisfy {
+                (48...57).contains($0) || (65...70).contains($0) || (97...102).contains($0)
+            }
+        }) else { return nil }
+        return octets.map { ($0.count == 1 ? "0" : "") + $0.uppercased() }.joined(separator: ":")
     }
 }
 
@@ -161,11 +162,50 @@ public struct WiFiSummary: Identifiable, Sendable {
 }
 
 public enum WiFiInventory {
-    public static func current() -> [WiFiSummary] {
+    public static func collect(timeout: TimeInterval = 20,
+                               cancellation: DiagnosticCancellation? = nil) async -> SystemInventoryResult<WiFiSummary> {
         let path = Shell.which("system_profiler") ?? "/usr/sbin/system_profiler"
-        let result = Shell.runSync(path, ["SPAirPortDataType", "-detailLevel", "mini"], timeout: 20)
-        guard result.succeeded else { return [] }
-        return parse(result.stdout)
+        let command = await Shell.run(path, ["SPAirPortDataType", "-detailLevel", "mini"],
+                                      timeout: timeout, cancellation: cancellation)
+        return interpret(command)
+    }
+
+    public static func collectSync(timeout: TimeInterval = 20,
+                                   cancellation: DiagnosticCancellation? = nil) -> SystemInventoryResult<WiFiSummary> {
+        let path = Shell.which("system_profiler") ?? "/usr/sbin/system_profiler"
+        return interpret(Shell.runSync(path, ["SPAirPortDataType", "-detailLevel", "mini"],
+                                       timeout: timeout, cancellation: cancellation))
+    }
+
+    public static func current() -> [WiFiSummary] {
+        let result = collectSync()
+        return result.command.succeeded ? result.entries : []
+    }
+
+    static func interpret(_ command: CommandResult) -> SystemInventoryResult<WiFiSummary> {
+        let entries = parse(command.stdout)
+        let unrecognizedLines = entries.isEmpty && command.succeeded
+            ? unrecognizedOutputLineCount(command.stdout)
+            : 0
+        return SystemInventoryResult(entries: entries, command: command,
+                                      issues: unrecognizedLines > 0 ? [.unrecognizedOutput] : [],
+                                      unrecognizedRecordCount: unrecognizedLines)
+    }
+
+    private static func unrecognizedOutputLineCount(_ text: String) -> Int {
+        text.split(whereSeparator: { $0.isNewline }).reduce(into: 0) { count, rawLine in
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            guard !line.isEmpty else { return }
+            let candidate = line.hasSuffix(":") ? String(line.dropLast()) : line
+            let lowercased = candidate.lowercased()
+            let isSection = ["airport", "wi-fi", "wifi", "interfaces", "current network information"]
+                .contains(lowercased)
+            let isInterface = ["en", "awdl", "llw", "p2p"].contains { prefix in
+                let suffix = candidate.dropFirst(prefix.count)
+                return candidate.hasPrefix(prefix) && !suffix.isEmpty && suffix.allSatisfy(\.isNumber)
+            }
+            if !isSection && !isInterface { count += 1 }
+        }
     }
 
     /// `system_profiler` is intentionally parsed conservatively. Unknown keys

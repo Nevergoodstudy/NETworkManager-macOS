@@ -234,8 +234,9 @@ public struct DiagnosticRun: Identifiable, Codable, Hashable, Sendable {
     public var latency: TimeInterval?
     public var source: String
     public var target: String?
+    public var evidence: DiagnosticRuntimeEvidence?
 
-    public init(id: UUID = UUID(), deviceID: UUID? = nil, kind: DiagnosticKind, status: DiagnosticRunStatus = .running, startedAt: Date = Date(), finishedAt: Date? = nil, parameters: [String: String] = [:], summary: String = "", detail: String = "", latency: TimeInterval? = nil, source: String = "NETworkManager", target: String? = nil) {
+    public init(id: UUID = UUID(), deviceID: UUID? = nil, kind: DiagnosticKind, status: DiagnosticRunStatus = .running, startedAt: Date = Date(), finishedAt: Date? = nil, parameters: [String: String] = [:], summary: String = "", detail: String = "", latency: TimeInterval? = nil, source: String = "NETworkManager", target: String? = nil, evidence: DiagnosticRuntimeEvidence? = nil) {
         self.id = id
         self.deviceID = deviceID
         self.kind = kind
@@ -248,6 +249,7 @@ public struct DiagnosticRun: Identifiable, Codable, Hashable, Sendable {
         self.latency = latency
         self.source = source
         self.target = target
+        self.evidence = evidence
     }
 }
 
@@ -443,7 +445,7 @@ public final class AssetStore: ObservableObject {
         return run.id
     }
 
-    public func finishDiagnostic(id: UUID, status: DiagnosticRunStatus, summary: String, detail: String = "", latency: TimeInterval? = nil, source: String = "NETworkManager") {
+    public func finishDiagnostic(id: UUID, status: DiagnosticRunStatus, summary: String, detail: String = "", latency: TimeInterval? = nil, source: String = "NETworkManager", evidence: DiagnosticRuntimeEvidence? = nil) {
         guard let index = diagnosticRuns.firstIndex(where: { $0.id == id }) else { return }
         diagnosticRuns[index].status = status
         diagnosticRuns[index].finishedAt = Date()
@@ -451,6 +453,7 @@ public final class AssetStore: ObservableObject {
         diagnosticRuns[index].detail = detail
         diagnosticRuns[index].latency = latency
         diagnosticRuns[index].source = source
+        diagnosticRuns[index].evidence = evidence
         save()
     }
 

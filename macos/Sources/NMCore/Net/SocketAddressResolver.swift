@@ -183,8 +183,10 @@ enum SocketAddressResolver {
         let numeric = numericAddresses(normalizedHost, port: port)
         if !numeric.isEmpty { return numeric }
 
+        guard timeout > 0 else { throw SocketAddressResolutionError.timedOut }
+        let started = ProcessInfo.processInfo.systemUptime
         let session = try DNSServiceAddressSession(host: normalizedHost, port: UInt16(port ?? 0))
-        return try collectAddresses(from: session, timeout: timeout, cancellation: cancellation)
+        return try collectAddresses(from: session, timeout: max(0, timeout - (ProcessInfo.processInfo.systemUptime - started)), cancellation: cancellation)
     }
 
     private static func numericAddresses(_ host: String, port: Int?) -> [ResolvedSocketAddress] {
@@ -218,11 +220,11 @@ enum SocketAddressResolver {
                                  cancellation: DiagnosticCancellation?) throws -> [ResolvedSocketAddress] {
         defer { session.cancel() }
         guard session.fileDescriptor >= 0 else { throw SocketAddressResolutionError.service(Int32(kDNSServiceErr_BadReference)) }
-        let deadline = Date().addingTimeInterval(max(0.05, timeout))
+        let deadline = ProcessInfo.processInfo.systemUptime + max(0, timeout)
 
         while !session.isFinished {
             if cancellation?.isCancelled == true { throw SocketAddressResolutionError.cancelled }
-            let remaining = deadline.timeIntervalSinceNow
+            let remaining = deadline - ProcessInfo.processInfo.systemUptime
             guard remaining > 0 else { throw SocketAddressResolutionError.timedOut }
 
             let events = waitForSocketReadiness(fd: session.fileDescriptor,
@@ -231,7 +233,7 @@ enum SocketAddressResolver {
                                                 cancellation: cancellation)
             if cancellation?.isCancelled == true { throw SocketAddressResolutionError.cancelled }
             guard events != nil else {
-                if Date() >= deadline { throw SocketAddressResolutionError.timedOut }
+                if ProcessInfo.processInfo.systemUptime >= deadline { throw SocketAddressResolutionError.timedOut }
                 continue
             }
             let status = session.processPendingResults()
