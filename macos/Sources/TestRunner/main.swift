@@ -247,6 +247,17 @@ final class LoopbackWhoisFixture: @unchecked Sendable {
     }
 }
 
+if CommandLine.arguments.contains("--ping-only") {
+    do {
+        try await PingChecks.run()
+        print("NMTest: Ping checks passed")
+        exit(0)
+    } catch {
+        fputs("NMTest: FAILED: " + String(describing: error) + String(UnicodeScalar(10)), stderr)
+        exit(1)
+    }
+}
+
 if CommandLine.arguments.contains("--dns-only") {
     do {
         try DNSResponseChecks.run()
@@ -1074,6 +1085,7 @@ do {
     }
     try await DiagnosticRuntimeEvidenceChecks.run()
     try TCPProbeChecks.run()
+    try await PingChecks.run()
     try await ProcessRuntimeChecks.run()
     try await SocketInventoryChecks.run()
     try await MCPClientConnectionChecks.run()

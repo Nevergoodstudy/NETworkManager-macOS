@@ -8,6 +8,7 @@
 
 | 内容 / Material | 入口 / Entry |
 |---|---|
+| T03 单次 Ping 总预算与取消 / Single-Ping budget and cancellation | [双语实施、回环验证与剩余验收 / Implementation, loopback checks and remaining gates](T03_PING_BUDGET_2026-11-14.md) |
 | 2026-11-14 阶段跟进 / Stage follow-up | [DNS 可靠性、UI 验证与 CoreWLAN 评估 / DNS reliability, UI checks and CoreWLAN assessment](PROGRESS_2026-11-14.md) |
 | T01 连接与监听端口的本地实施 / Local connections and listeners implementation | [双语结果契约与验证记录 / Result contract and validation](T01_SOCKET_INVENTORY_2026-11-10.md) |
 | T01 ARP 与 Wi-Fi 系统采集 / ARP and Wi-Fi system collection | [双语状态与验证记录 / Result states and validation](T01_SYSTEM_INVENTORY_2026-11-11.md) |
@@ -22,9 +23,9 @@
 | 机器可读任务 / Machine-readable tasks | [JSON, schemaVersion 2](NEXT_GENERATION_BACKLOG_2026-11-09.json) |
 | 交互路线看板 / Interactive roadmap | [Offline HTML](NEXT_GENERATION_ROADMAP_2026-11-09.html) |
 
-2026-11-14 的阶段跟进完成 DNS 响应与传输加固、主要 Lookup 界面状态验证及 CoreWLAN 字段能力评估，交付入口为 [PR #20](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/20) 的后续提交。当前处于 P0 基础诊断实施与 PR 审阅阶段；本机验证、远端 CI 与整项验收分别记录。T01/T02/T03 已有实现，整项验收仍为 0/16；完整剩余项见上表最新记录。
+2026-11-14 的阶段跟进完成 DNS 响应与传输加固、主要 Lookup 界面状态验证及 CoreWLAN 字段能力评估；后续补齐单次 Ping 的共享总预算、取消与 IPv6 系统回退，并同步 MCP 超时契约。交付入口为 [PR #20](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/20)。当前处于 P0 基础诊断实施与 PR 审阅阶段；本机验证、远端 CI 与整项验收分别记录。T01/T02/T03 已有实现，仍为七个切片，整项验收为 0/16；剩余项见上表最新记录。
 
-The 2026-11-14 follow-up hardens DNS parsing/transport, verifies the main Lookup UI states and assesses CoreWLAN fields, delivered through follow-up commits in [PR #20](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/20). The project is in P0 diagnostic implementation and PR review. Local validation, remote CI and whole-task acceptance are tracked separately. T01/T02/T03 have implementation, with 0/16 whole tasks fully accepted; the latest record above lists the remaining gates.
+The 2026-11-14 follow-up hardens DNS parsing/transport, verifies the main Lookup UI states and assesses CoreWLAN fields. A subsequent batch completes the single-Ping shared budget, cancellation and IPv6 system fallback, and updates MCP timeout contracts in [PR #20](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/20). The project is in P0 diagnostic implementation and PR review. Local validation, remote CI and acceptance are tracked separately. Seven slices cover T01/T02/T03, with 0/16 whole tasks fully accepted; the latest record above lists the remaining gates.
 
 2026-11-10 开始实施 T01 的 TCP 结果语义和 T03 的进程适配器切片，代码、兼容性和本机验证见上表实施记录；两项完整验收继续由 #14 与 #16 跟踪。
 

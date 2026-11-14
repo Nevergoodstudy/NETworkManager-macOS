@@ -2,6 +2,8 @@
 
 日期 / Date: 2026-11-11
 
+2026-11-14 后续 / Follow-up: [单次 Ping 总预算、取消与 IPv6 回退 / Single-Ping total budget, cancellation and IPv6 fallback](T03_PING_BUDGET_2026-11-14.md)。后续验证单独记录，下文保留原批次证据；T03 整项验收仍开放。 / Subsequent checks are recorded separately; the original evidence below is preserved and T03 acceptance remains open.
+
 本地分支 / Local branch: `codex/socket-inventory-local`
 交付范围 / Scope: IP 与 TCP GUI 批次的进度、取消和结果保留 / Progress, cancellation and result retention for IP and TCP GUI batches
 

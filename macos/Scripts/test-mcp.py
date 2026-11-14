@@ -419,10 +419,20 @@ def check_offline(server, deadline):
 def check_network(server, deadline):
     with MCPProcess(server, deadline, "--allow-network") as client:
         client.initialize()
-        names = {tool["name"] for tool in client.result("tools/list")["tools"]}
-        check(names == OFFLINE_TOOLS | NETWORK_TOOLS, "Network opt-in did not expose expected tools")
+        tools = {tool["name"]: tool for tool in client.result("tools/list")["tools"]}
+        check(set(tools) == OFFLINE_TOOLS | NETWORK_TOOLS, "Network opt-in did not expose expected tools")
+        for name in ["ping", "dns_lookup"]:
+            description = tools[name]["description"]
+            timeout_schema = tools[name]["inputSchema"]["properties"]["timeout"]
+            check("one total network budget" in description and "per phase" not in description,
+                  name + " must describe its shared network budget")
+            check("total network budget" in timeout_schema["description"]
+                  and timeout_schema["minimum"] == 0.1 and timeout_schema["maximum"] == 5,
+                  name + " timeout schema lost its total budget or bounds")
         ping = tool_data(client.call("ping", {"host": "127.0.0.1", "timeout": 0.5}))
         check(ping["status"] == "succeeded", "ICMP loopback probe failed")
+        ping6 = tool_data(client.call("ping", {"host": "::1", "timeout": 0.5}))
+        check(ping6["status"] == "succeeded", "IPv6 ICMP loopback probe failed")
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
             listener.bind(("127.0.0.1", 0))
             listener.listen(4)

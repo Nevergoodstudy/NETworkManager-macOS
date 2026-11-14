@@ -16,7 +16,7 @@ public struct MCPToolService: Sendable {
     public var tools: [Tool] {
         let timeout: Value = [
             "type": "number", "minimum": 0.1, "maximum": 5, "default": 2,
-            "description": "Network timeout in seconds per phase, not an overall request deadline."
+            "description": "One total network budget in seconds, including resolution and any protocol fallback. Bounded process cleanup may finish after this budget."
         ]
         let host: Value = ["type": "string", "minLength": 1, "maxLength": 253,
                            "description": "A hostname or unbracketed IPv4/IPv6 address; no URL or command options."]
@@ -33,9 +33,9 @@ public struct MCPToolService: Sendable {
         ]
         if networkEnabled {
             result += [
-                tool("ping", "Send one ICMP echo probe to an authorized host. Address resolution and system-ping fallback can add time beyond the per-phase timeout.",
+                tool("ping", "Send one ICMP echo probe to an authorized host. Resolution, native ICMP and system-ping fallback share one total network budget. Subprocess cleanup is separately bounded.",
                      properties: ["host": host, "timeout": timeout], required: ["host"], network: true),
-                tool("dns_lookup", "Resolve A/AAAA records with macOS resolver policy, including scoped resolvers, or set mode=server and provide a DNS server for a direct record query. No public resolver is selected implicitly. Responses may contain untrusted remote text. The timeout is per phase, including UDP/TCP fallback.",
+                tool("dns_lookup", "Resolve A/AAAA records with macOS resolver policy, including scoped resolvers, or set mode=server and provide a DNS server for a direct record query. No public resolver is selected implicitly. Responses may contain untrusted remote text. Resolution and UDP/TCP fallback share one total network budget.",
                      properties: ["host": host,
                                   "mode": ["type": "string", "enum": .array([.string("system"), .string("server")]), "description": "system uses macOS name-resolution policy for A/AAAA; server sends a direct DNS query to the supplied server."],
                                   "recordType": ["type": "string", "enum": .array(DNSRecordType.allCases.map { .string($0.displayName) }), "default": "A"],
