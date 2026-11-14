@@ -193,8 +193,9 @@ public enum DNSClient {
         guard let target = server?.trimmingCharacters(in: .whitespacesAndNewlines), !target.isEmpty else {
             throw DNSError.serverRequired
         }
-        if cancellation?.isCancelled == true { throw DNSError.cancelled }
-        let start = Date()
+        let started = ProcessInfo.processInfo.systemUptime
+        guard timeout.isFinite, timeout > 0 else { throw DNSError.timeout }
+        let budget = QueryBudget(deadline: started + timeout, cancellation: cancellation)
 
         var packet = Data()
         let identifier = UInt16.random(in: 1...65535)
@@ -207,16 +208,21 @@ public enum DNSClient {
         packet.append(contentsOf: [UInt8(type.rawValue >> 8), UInt8(type.rawValue & 0xFF)])
         packet.append(contentsOf: [0x00, 0x01]) // IN
 
-        var response = try udpExchange(packet: packet, server: target, port: serverPort, timeout: timeout, cancellation: cancellation)
+        // Resolution, UDP and every TCP fallback read share this deadline.
+        let address = try resolveServer(target, port: serverPort, timeout: budget.remaining(), cancellation: cancellation)
+        var response = try udpExchange(packet: packet, address: address, budget: budget)
+        let truncated = try DNSResponseParser.validateEnvelope(response, expectedID: identifier,
+                                                               name: name, type: type)
 
         // TCP fallback when truncated.
-        if response.count > 2, response[2] & 0x02 != 0 {
-            response = try tcpExchange(packet: packet, server: target, port: serverPort, timeout: timeout, cancellation: cancellation)
+        if truncated {
+            response = try tcpExchange(packet: packet, address: address, budget: budget)
         }
 
-        let elapsed = Date().timeIntervalSince(start)
-        let parsed = try parse(response, expectedID: identifier)
-        return DNSQueryResult(records: parsed.records, mode: .server, server: target, elapsed: elapsed,
+        _ = try budget.remaining()
+        let parsed = try DNSResponseParser.parse(response, expectedID: identifier, name: name, type: type)
+        return DNSQueryResult(records: parsed.records, mode: .server, server: target,
+                              elapsed: ProcessInfo.processInfo.systemUptime - started,
                               responseCode: parsed.responseCode, authoritative: parsed.authoritative)
     }
 
@@ -258,90 +264,115 @@ public enum DNSClient {
 
     // MARK: Transport
 
-    private static func udpExchange(packet: Data, server: String, port: UInt16, timeout: TimeInterval, cancellation: DiagnosticCancellation?) throws -> Data {
-        let address = try resolveServer(server, port: port, timeout: timeout, cancellation: cancellation)
-        if cancellation?.isCancelled == true { throw DNSError.cancelled }
+    private struct QueryBudget {
+        let deadline: TimeInterval
+        let cancellation: DiagnosticCancellation?
 
-        let fd = socket(address.family, SOCK_DGRAM, IPPROTO_UDP)
-        guard fd >= 0 else { throw DNSError.socket(String(cString: strerror(errno))) }
-        defer { close(fd) }
-
-        let flags = fcntl(fd, F_GETFL, 0)
-        _ = fcntl(fd, F_SETFL, flags | O_NONBLOCK)
-
-        let sent = packet.withUnsafeBytes { raw in
-            address.withSockAddr { sendto(fd, raw.baseAddress, raw.count, 0, $0, $1) }
-        }
-        guard sent == packet.count else { throw DNSError.socket(String(cString: strerror(errno))) }
-
-        guard waitForSocketReadiness(fd: fd, events: Int16(POLLIN), timeout: timeout, cancellation: cancellation) != nil else {
+        func remaining() throws -> TimeInterval {
             if cancellation?.isCancelled == true { throw DNSError.cancelled }
-            throw DNSError.timeout
+            let remaining = deadline - ProcessInfo.processInfo.systemUptime
+            guard remaining > 0 else { throw DNSError.timeout }
+            return remaining
         }
-        var buffer = [UInt8](repeating: 0, count: 4096)
-        let received = recv(fd, &buffer, buffer.count, 0)
-        if received < 0 {
-            if errno == EAGAIN || errno == EWOULDBLOCK { throw DNSError.timeout }
-            throw DNSError.socket(String(cString: strerror(errno)))
-        }
-        return Data(buffer.prefix(received))
-    }
 
-    private static func tcpExchange(packet: Data, server: String, port: UInt16, timeout: TimeInterval, cancellation: DiagnosticCancellation?) throws -> Data {
-        let address = try resolveServer(server, port: port, timeout: timeout, cancellation: cancellation)
-        if cancellation?.isCancelled == true { throw DNSError.cancelled }
-
-        let fd = socket(address.family, SOCK_STREAM, IPPROTO_TCP)
-        guard fd >= 0 else { throw DNSError.socket(String(cString: strerror(errno))) }
-        defer { close(fd) }
-
-        let flags = fcntl(fd, F_GETFL, 0)
-        _ = fcntl(fd, F_SETFL, flags | O_NONBLOCK)
-        let connectResult = address.withSockAddr { Darwin.connect(fd, $0, $1) }
-        if connectResult != 0 {
-            guard errno == EINPROGRESS,
-                  waitForSocketReadiness(fd: fd, events: Int16(POLLOUT), timeout: timeout, cancellation: cancellation) != nil else {
+        func wait(fd: Int32, events: Int16) throws {
+            guard let ready = waitForSocketReadiness(fd: fd, events: events, timeout: try remaining(),
+                                                     cancellation: cancellation) else {
                 if cancellation?.isCancelled == true { throw DNSError.cancelled }
                 throw DNSError.timeout
             }
-            var socketError: Int32 = 0
-            var length = socklen_t(MemoryLayout<Int32>.size)
-            guard getsockopt(fd, SOL_SOCKET, SO_ERROR, &socketError, &length) == 0, socketError == 0 else {
-                throw DNSError.socket(String(cString: strerror(socketError == 0 ? errno : socketError)))
-            }
+            _ = try remaining()
+            if ready & Int16(POLLNVAL) != 0 { throw DNSError.socket(String(cString: strerror(EBADF))) }
         }
+    }
+
+    private static func configureSocket(_ fd: Int32) throws {
+        let flags = fcntl(fd, F_GETFL, 0)
+        guard flags >= 0, fcntl(fd, F_SETFL, flags | O_NONBLOCK) == 0 else {
+            throw DNSError.socket(String(cString: strerror(errno)))
+        }
+        var noSignal: Int32 = 1
+        guard setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &noSignal, socklen_t(MemoryLayout<Int32>.size)) == 0 else {
+            throw DNSError.socket(String(cString: strerror(errno)))
+        }
+    }
+
+    private static func connectSocket(_ fd: Int32, address: ResolvedSocketAddress, budget: QueryBudget) throws {
+        _ = try budget.remaining()
+        let result = address.withSockAddr { Darwin.connect(fd, $0, $1) }
+        if result == 0 { return }
+        guard errno == EINPROGRESS || errno == EINTR else {
+            throw DNSError.socket(String(cString: strerror(errno)))
+        }
+        try budget.wait(fd: fd, events: Int16(POLLOUT))
+        var socketError: Int32 = 0
+        var length = socklen_t(MemoryLayout<Int32>.size)
+        guard getsockopt(fd, SOL_SOCKET, SO_ERROR, &socketError, &length) == 0 else {
+            throw DNSError.socket(String(cString: strerror(errno)))
+        }
+        guard socketError == 0 else { throw DNSError.socket(String(cString: strerror(socketError))) }
+    }
+
+    private static func udpExchange(packet: Data, address: ResolvedSocketAddress, budget: QueryBudget) throws -> Data {
+        let fd = socket(address.family, SOCK_DGRAM, IPPROTO_UDP)
+        guard fd >= 0 else { throw DNSError.socket(String(cString: strerror(errno))) }
+        defer { close(fd) }
+        try configureSocket(fd)
+        // A connected datagram socket accepts replies only from this endpoint.
+        try connectSocket(fd, address: address, budget: budget)
+
+        while true {
+            try budget.wait(fd: fd, events: Int16(POLLOUT))
+            let sent = packet.withUnsafeBytes { Darwin.send(fd, $0.baseAddress, $0.count, 0) }
+            if sent < 0 && [EINTR, EAGAIN, EWOULDBLOCK].contains(errno) { continue }
+            guard sent == packet.count else { throw DNSError.socket(String(cString: strerror(errno))) }
+            break
+        }
+        // Do not silently truncate a valid large datagram in our receive buffer.
+        var buffer = [UInt8](repeating: 0, count: 65_535)
+        while true {
+            try budget.wait(fd: fd, events: Int16(POLLIN))
+            let received = recv(fd, &buffer, buffer.count, 0)
+            if received < 0 && [EINTR, EAGAIN, EWOULDBLOCK].contains(errno) { continue }
+            guard received >= 0 else { throw DNSError.socket(String(cString: strerror(errno))) }
+            return Data(buffer.prefix(received))
+        }
+    }
+
+    private static func tcpExchange(packet: Data, address: ResolvedSocketAddress, budget: QueryBudget) throws -> Data {
+        let fd = socket(address.family, SOCK_STREAM, IPPROTO_TCP)
+        guard fd >= 0 else { throw DNSError.socket(String(cString: strerror(errno))) }
+        defer { close(fd) }
+        try configureSocket(fd)
+        try connectSocket(fd, address: address, budget: budget)
 
         var framed = Data([UInt8(packet.count >> 8), UInt8(packet.count & 0xFF)])
         framed.append(packet)
         var written = 0
         while written < framed.count {
-            guard waitForSocketReadiness(fd: fd, events: Int16(POLLOUT), timeout: timeout, cancellation: cancellation) != nil else {
-                if cancellation?.isCancelled == true { throw DNSError.cancelled }
-                throw DNSError.timeout
-            }
+            try budget.wait(fd: fd, events: Int16(POLLOUT))
             let amount = framed.withUnsafeBytes { write(fd, $0.baseAddress!.advanced(by: written), $0.count - written) }
-            if amount < 0 && errno == EINTR { continue }
+            if amount < 0 && [EINTR, EAGAIN, EWOULDBLOCK].contains(errno) { continue }
             guard amount > 0 else { throw DNSError.socket(String(cString: strerror(errno))) }
             written += amount
         }
 
-        let lengthData = try readExactly(fd: fd, count: 2, timeout: timeout, cancellation: cancellation)
+        let lengthData = try readExactly(fd: fd, count: 2, budget: budget)
         let lengthBytes = Array(lengthData)
         let length = Int(lengthBytes[0]) << 8 | Int(lengthBytes[1])
-        return try readExactly(fd: fd, count: length, timeout: timeout, cancellation: cancellation)
+        guard length >= 12 else { throw DNSError.malformed(t("response too short")) }
+        return try readExactly(fd: fd, count: length, budget: budget)
     }
 
-    private static func readExactly(fd: Int32, count: Int, timeout: TimeInterval, cancellation: DiagnosticCancellation?) throws -> Data {
+    private static func readExactly(fd: Int32, count: Int, budget: QueryBudget) throws -> Data {
         var response = [UInt8](repeating: 0, count: count)
         var readTotal = 0
         while readTotal < count {
-            guard waitForSocketReadiness(fd: fd, events: Int16(POLLIN), timeout: timeout, cancellation: cancellation) != nil else {
-                if cancellation?.isCancelled == true { throw DNSError.cancelled }
-                throw DNSError.timeout
-            }
+            try budget.wait(fd: fd, events: Int16(POLLIN))
             let chunk = response.withUnsafeMutableBytes { read(fd, $0.baseAddress!.advanced(by: readTotal), count - readTotal) }
-            if chunk < 0 && errno == EINTR { continue }
-            guard chunk > 0 else { throw DNSError.timeout }
+            if chunk < 0 && [EINTR, EAGAIN, EWOULDBLOCK].contains(errno) { continue }
+            guard chunk >= 0 else { throw DNSError.socket(String(cString: strerror(errno))) }
+            guard chunk > 0 else { throw DNSError.malformed(t("truncated TCP response")) }
             readTotal += chunk
         }
         return Data(response)
@@ -350,171 +381,18 @@ public enum DNSClient {
     // MARK: Encoding
 
     private static func encodeName(_ name: String) -> Data? {
+        if name == "." { return Data([0]) }
+        let normalized = name.hasSuffix(".") ? String(name.dropLast()) : name
         var data = Data()
-        for label in name.split(separator: ".", omittingEmptySubsequences: true) {
+        for label in normalized.split(separator: ".", omittingEmptySubsequences: false) {
             let bytes = Array(label.utf8)
             guard !bytes.isEmpty, bytes.count <= 63 else { return nil }
             data.append(UInt8(bytes.count))
             data.append(contentsOf: bytes)
         }
-        guard !data.isEmpty, data.count <= 253 else { return nil }
+        guard !data.isEmpty, data.count <= 254 else { return nil }
         data.append(0)
         return data
     }
 
-    // MARK: Parsing
-
-    private struct ParsedResponse {
-        let records: [DNSRecord]
-        let responseCode: String
-        let authoritative: Bool
-    }
-
-    private static func parse(_ data: Data, expectedID: UInt16) throws -> ParsedResponse {
-        let bytes = [UInt8](data)
-        guard bytes.count >= 12 else { throw DNSError.malformed(t("response too short")) }
-
-        let id = UInt16(bytes[0]) << 8 | UInt16(bytes[1])
-        guard id == expectedID else { throw DNSError.malformed(t("unexpected transaction id")) }
-
-        let flags = UInt16(bytes[2]) << 8 | UInt16(bytes[3])
-        let rcode = Int(flags & 0x0F)
-        let authoritative = (flags & 0x0400) != 0
-        let questionCount = Int(UInt16(bytes[4]) << 8 | UInt16(bytes[5]))
-        let answerCount = Int(UInt16(bytes[6]) << 8 | UInt16(bytes[7]))
-        let authorityCount = Int(UInt16(bytes[8]) << 8 | UInt16(bytes[9]))
-        let additionalCount = Int(UInt16(bytes[10]) << 8 | UInt16(bytes[11]))
-
-        let responseCodes = ["NOERROR", "FORMERR", "SERVFAIL", "NXDOMAIN", "NOTIMP", "REFUSED"]
-        let codeName = rcode < responseCodes.count ? responseCodes[rcode] : "RCODE\(rcode)"
-
-        var offset = 12
-        for _ in 0..<questionCount {
-            _ = try skipName(bytes, &offset)
-            offset += 4
-        }
-
-        var records: [DNSRecord] = []
-        let total = answerCount + authorityCount + additionalCount
-        for _ in 0..<total {
-            guard offset < bytes.count else { break }
-            let owner = (try? readName(bytes, &offset)) ?? "?"
-            guard offset + 10 <= bytes.count else { break }
-            let typeValue = UInt16(bytes[offset]) << 8 | UInt16(bytes[offset + 1])
-            let ttl = UInt32(bytes[offset + 4]) << 24 | UInt32(bytes[offset + 5]) << 16
-                | UInt32(bytes[offset + 6]) << 8 | UInt32(bytes[offset + 7])
-            let rdLength = Int(UInt16(bytes[offset + 8]) << 8 | UInt16(bytes[offset + 9]))
-            offset += 10
-            guard offset + rdLength <= bytes.count else { break }
-            let rdata = Array(bytes[offset..<(offset + rdLength)])
-
-            if let type = DNSRecordType(rawValue: typeValue) {
-                let value = describe(type: type, rdata: rdata, fullMessage: bytes) ?? "?"
-                records.append(DNSRecord(name: owner, type: type, ttl: ttl, value: value))
-            } else if typeValue == 41 {
-                // OPT pseudo record – skip
-            }
-            offset += rdLength
-        }
-
-        return ParsedResponse(records: records, responseCode: codeName, authoritative: authoritative)
-    }
-
-    private static func describe(type: DNSRecordType, rdata: [UInt8], fullMessage: [UInt8]) -> String? {
-        switch type {
-        case .a:
-            guard rdata.count == 4 else { return nil }
-            return rdata.map(String.init).joined(separator: ".")
-        case .aaaa:
-            guard rdata.count == 16 else { return nil }
-            var groups: [String] = []
-            for index in stride(from: 0, to: 16, by: 2) {
-                groups.append(String(format: "%x", Int(rdata[index]) << 8 | Int(rdata[index + 1])))
-            }
-            return groups.joined(separator: ":")
-        case .cname, .ns, .ptr:
-            var offset = 0
-            return (try? readName(rdata, &offset, fullMessage: fullMessage)) ?? nil
-        case .mx:
-            guard rdata.count > 2 else { return nil }
-            let preference = Int(rdata[0]) << 8 | Int(rdata[1])
-            var offset = 2
-            let exchange = (try? readName(rdata, &offset, fullMessage: fullMessage)) ?? "?"
-            return "\(preference) \(exchange)"
-        case .txt:
-            var offset = 0
-            var parts: [String] = []
-            while offset < rdata.count {
-                let length = Int(rdata[offset])
-                offset += 1
-                guard offset + length <= rdata.count else { break }
-                parts.append(String(decoding: rdata[offset..<(offset + length)], as: UTF8.self))
-                offset += length
-            }
-            return parts.joined()
-        case .srv:
-            guard rdata.count > 6 else { return nil }
-            let priority = Int(rdata[0]) << 8 | Int(rdata[1])
-            let weight = Int(rdata[2]) << 8 | Int(rdata[3])
-            let port = Int(rdata[4]) << 8 | Int(rdata[5])
-            var offset = 6
-            let target = (try? readName(rdata, &offset, fullMessage: fullMessage)) ?? "?"
-            return "\(priority) \(weight) \(port) \(target)"
-        case .soa:
-            var offset = 0
-            let mname = (try? readName(rdata, &offset, fullMessage: fullMessage)) ?? "?"
-            let rname = (try? readName(rdata, &offset, fullMessage: fullMessage)) ?? "?"
-            return "\(mname) \(rname)"
-        case .caa:
-            guard rdata.count > 2 else { return nil }
-            let flags = rdata[0]
-            let tagLength = Int(rdata[1])
-            guard 2 + tagLength <= rdata.count else { return nil }
-            let tag = String(decoding: rdata[2..<(2 + tagLength)], as: UTF8.self)
-            let value = String(decoding: rdata[(2 + tagLength)...], as: UTF8.self)
-            return "\(flags) \(tag) \"\(value)\""
-        }
-    }
-
-    private static func skipName(_ bytes: [UInt8], _ offset: inout Int) throws {
-        while offset < bytes.count {
-            let length = Int(bytes[offset])
-            if length == 0 { offset += 1; return }
-            if length & 0xC0 == 0xC0 { offset += 2; return }
-            offset += length + 1
-        }
-        throw DNSError.malformed(t("truncated name"))
-    }
-
-    private static func readName(_ bytes: [UInt8], _ offset: inout Int, fullMessage: [UInt8]? = nil) throws -> String {
-        let message = fullMessage ?? bytes
-        var labels: [String] = []
-        var cursor = offset
-        var jumped = false
-        var guardCounter = 0
-
-        while cursor < message.count {
-            guardCounter += 1
-            if guardCounter > 128 { break }
-            let length = Int(message[cursor])
-            if length == 0 {
-                cursor += 1
-                if !jumped { offset = cursor }
-                break
-            }
-            if length & 0xC0 == 0xC0 {
-                guard cursor + 1 < message.count else { break }
-                let pointer = (Int(message[cursor] & 0x3F) << 8) | Int(message[cursor + 1])
-                if !jumped { offset = cursor + 2 }
-                jumped = true
-                cursor = pointer
-                continue
-            }
-            guard cursor + 1 + length <= message.count else { break }
-            labels.append(String(decoding: message[(cursor + 1)..<(cursor + 1 + length)], as: UTF8.self))
-            cursor += 1 + length
-            if !jumped { offset = cursor }
-        }
-        return labels.joined(separator: ".")
-    }
 }

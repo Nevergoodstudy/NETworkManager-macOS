@@ -247,6 +247,18 @@ final class LoopbackWhoisFixture: @unchecked Sendable {
     }
 }
 
+if CommandLine.arguments.contains("--dns-only") {
+    do {
+        try DNSResponseChecks.run()
+        try await DNSTransportChecks.run()
+        print("NMTest: DNS checks passed")
+        exit(0)
+    } catch {
+        fputs("NMTest: FAILED: \(error)\n", stderr)
+        exit(1)
+    }
+}
+
 if CommandLine.arguments.contains("--socket-inventory-only") {
     do {
         try await SocketInventoryChecks.run()
@@ -992,6 +1004,8 @@ do {
     try reloadedCredentialStore.remove(credential)
     try check((try? reloadedCredentialStore.secret(for: credential)) == nil, "Keychain credential removal")
 
+    try DNSResponseChecks.run()
+    try await DNSTransportChecks.run()
     let dnsFixture = try DNSFixtureServer()
     defer { dnsFixture.stop() }
     let dnsStatus = DiagnosticStatusBox()

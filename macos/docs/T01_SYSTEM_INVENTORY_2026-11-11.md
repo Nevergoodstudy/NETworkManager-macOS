@@ -7,6 +7,8 @@
 
 [计划索引 / Plan index](README.md) · [连接与监听端口 / Connections and listeners](T01_SOCKET_INVENTORY_2026-11-10.md)
 
+后续 / Follow-up: [2026-11-14 CoreWLAN 字段能力、缺值语义与权限验证边界 / CoreWLAN fields, absence semantics and permission-test limits](PROGRESS_2026-11-14.md)。以下保留原日期的实施证据。 / The original dated implementation evidence is preserved below.
+
 ## 中文
 
 本批代码和 fixture 已纳入 PR #20 的实现更新；受控 UI 验收和不同系统版本的字段检查仍待完成。

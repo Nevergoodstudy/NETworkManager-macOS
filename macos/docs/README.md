@@ -1,13 +1,14 @@
 # macOS 改进计划 / macOS improvement plan
 
-研究日期 / Research date: **2026-11-09** · 文档修订 / Documentation revision: **2026-11-11**
+研究日期 / Research date: **2026-11-09** · 文档修订 / Documentation revision: **2026-11-14**
 
-**待实施提案。** 方案审阅的源码是 [0944345d73df](https://github.com/Nevergoodstudy/NETworkManager-macOS/tree/0944345d73df0eafb2e7353aecca48d924398de8)，该功能提交于 2026-11-10 通过 [PR #12](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/12) 合并进 `main`。文中所列已有能力以该源码基准为准，不代表已完成真实设备互操作或正式签名公证发布。
+**计划基准与实施跟踪。** 方案审阅的源码是 [0944345d73df](https://github.com/Nevergoodstudy/NETworkManager-macOS/tree/0944345d73df0eafb2e7353aecca48d924398de8)，该功能提交于 2026-11-10 通过 [PR #12](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/12) 合并进 `main`。文中所列已有能力以该源码基准为准，不代表已完成真实设备互操作或正式签名公证发布。
 
-**Proposed work.** The reviewed source is [0944345d73df](https://github.com/Nevergoodstudy/NETworkManager-macOS/tree/0944345d73df0eafb2e7353aecca48d924398de8), merged into `main` through [PR #12](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/12) on 2026-11-10. Existing capabilities in the proposal refer to that baseline; they do not establish live-device interoperability or a formally signed and notarized release.
+**Planning baseline and implementation tracking.** The reviewed source is [0944345d73df](https://github.com/Nevergoodstudy/NETworkManager-macOS/tree/0944345d73df0eafb2e7353aecca48d924398de8), merged into `main` through [PR #12](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/12) on 2026-11-10. Existing capabilities in the proposal refer to that baseline; they do not establish live-device interoperability or a formally signed and notarized release.
 
 | 内容 / Material | 入口 / Entry |
 |---|---|
+| 2026-11-14 阶段跟进 / Stage follow-up | [DNS 可靠性、UI 验证与 CoreWLAN 评估 / DNS reliability, UI checks and CoreWLAN assessment](PROGRESS_2026-11-14.md) |
 | T01 连接与监听端口的本地实施 / Local connections and listeners implementation | [双语结果契约与验证记录 / Result contract and validation](T01_SOCKET_INVENTORY_2026-11-10.md) |
 | T01 ARP 与 Wi-Fi 系统采集 / ARP and Wi-Fi system collection | [双语状态与验证记录 / Result states and validation](T01_SYSTEM_INVENTORY_2026-11-11.md) |
 | T02 系统解析与指定 DNS 服务器 / System resolution and specified DNS server | [双语实施与验证记录 / Implementation and validation](T02_DNS_MODES_2026-11-11.md) |
@@ -20,6 +21,10 @@
 | 表格导入 / Spreadsheet import | [Bilingual CSV](NEXT_GENERATION_BACKLOG_2026-11-09.csv) |
 | 机器可读任务 / Machine-readable tasks | [JSON, schemaVersion 2](NEXT_GENERATION_BACKLOG_2026-11-09.json) |
 | 交互路线看板 / Interactive roadmap | [Offline HTML](NEXT_GENERATION_ROADMAP_2026-11-09.html) |
+
+2026-11-14 的阶段跟进完成 DNS 响应与传输加固、主要 Lookup 界面状态验证及 CoreWLAN 字段能力评估，交付入口为 [PR #20](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/20) 的后续提交。当前处于 P0 基础诊断实施与 PR 审阅阶段；本机验证、远端 CI 与整项验收分别记录。T01/T02/T03 已有实现，整项验收仍为 0/16；完整剩余项见上表最新记录。
+
+The 2026-11-14 follow-up hardens DNS parsing/transport, verifies the main Lookup UI states and assesses CoreWLAN fields, delivered through follow-up commits in [PR #20](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/20). The project is in P0 diagnostic implementation and PR review. Local validation, remote CI and whole-task acceptance are tracked separately. T01/T02/T03 have implementation, with 0/16 whole tasks fully accepted; the latest record above lists the remaining gates.
 
 2026-11-10 开始实施 T01 的 TCP 结果语义和 T03 的进程适配器切片，代码、兼容性和本机验证见上表实施记录；两项完整验收继续由 #14 与 #16 跟踪。
 
