@@ -116,13 +116,24 @@ public enum NeighborTable {
         let mac = tokens[at + 1]
         let normalized = mac.trimmingCharacters(in: CharacterSet(charactersIn: "()"))
         let isIncomplete = normalized.lowercased() == "incomplete" || tokens.contains("incomplete")
-        let isMAC = mac.filter(\.isHexDigit).count == 12 &&
-            mac.allSatisfy { $0.isHexDigit || $0 == ":" || $0 == "-" }
-        guard isIncomplete || isMAC else { return nil }
+        let macAddress = normalizedMAC(mac)
+        guard isIncomplete || macAddress != nil else { return nil }
 
         let interface = tokens.firstIndex(of: "on").map { $0 + 1 < tokens.count ? tokens[$0 + 1] : "" } ?? ""
         let state = tokens.contains("permanent") ? "Permanent" : (isIncomplete ? "Incomplete" : "Resolved")
-        return NeighborEntry(address: address, macAddress: isIncomplete ? "" : Fmt.mac(mac), interface: interface, state: state)
+        return NeighborEntry(address: address, macAddress: isIncomplete ? "" : (macAddress ?? ""), interface: interface, state: state)
+    }
+
+    private static func normalizedMAC(_ value: String) -> String? {
+        // Darwin arp prints hexadecimal octets without leading zeroes.
+        let separator: Character = value.contains(":") ? ":" : "-"
+        let octets = value.split(separator: separator, omittingEmptySubsequences: false)
+        guard octets.count == 6, octets.allSatisfy({ octet in
+            (1...2).contains(octet.utf8.count) && octet.utf8.allSatisfy {
+                (48...57).contains($0) || (65...70).contains($0) || (97...102).contains($0)
+            }
+        }) else { return nil }
+        return octets.map { ($0.count == 1 ? "0" : "") + $0.uppercased() }.joined(separator: ":")
     }
 }
 

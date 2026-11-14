@@ -325,6 +325,22 @@ do {
     let neighbors = NeighborTable.parse("? (192.168.1.1) at aa:bb:cc:dd:ee:ff on en0 ifscope [ethernet]\n")
     try check(neighbors.first?.macAddress == "AA:BB:CC:DD:EE:FF" && neighbors.first?.interface == "en0" &&
               neighbors.first?.state == "Resolved", "neighbor parser reports a cached MAC as resolved, not live reachability")
+    for mac in ["1:0:5e:0:0:fb", "01:00:5E:00:00:FB", "01-00-5e-00-00-fb"] {
+        let result = NeighborTable.interpret(CommandResult(status: 0,
+            stdout: "? (224.0.0.251) at \(mac) on en0 ifscope permanent [ethernet]\n", stderr: ""))
+        try check(result.state == .loaded && result.issues.isEmpty && result.entries.count == 1 &&
+                  result.entries.first?.macAddress == "01:00:5E:00:00:FB" &&
+                  result.entries.first?.state == "Permanent",
+                  "ARP accepts and normalizes six padded or unpadded hexadecimal octets")
+    }
+    for mac in ["aa:bb:cc:dd:ee", "aa:bb:cc:dd:ee:ff:00", "aaa:b:cc:dd:ee:ff",
+                "aa::bb:cc:dd:ee:ff", "aa:bb-cc:dd:ee:ff", "gg:bb:cc:dd:ee:ff"] {
+        let result = NeighborTable.interpret(CommandResult(status: 0,
+            stdout: "? (192.0.2.1) at \(mac) on en0\n", stderr: ""))
+        try check(result.state == .unavailable && result.entries.isEmpty &&
+                  result.issues.contains(.unrecognizedOutput) && result.unrecognizedRecordCount == 1,
+                  "ARP rejects malformed octets and reports unrecognized output")
+    }
     let incompleteNeighbor = NeighborTable.parse("? (192.168.1.22) at (incomplete) on en0 ifscope [ethernet]\n")
     try check(incompleteNeighbor.first?.state == "Incomplete" && incompleteNeighbor.first?.macAddress.isEmpty == true,
               "incomplete ARP rows are not presented as reachable MAC entries")
@@ -344,7 +360,7 @@ do {
     let liveNeighbors = NeighborTable.collectSync()
     try check(liveNeighbors.command.status == 0 &&
               [.loaded, .empty, .partial].contains(liveNeighbors.state),
-              "the system ARP adapter returns a classified live result")
+              "the system ARP adapter returns a classified live result (status=\(liveNeighbors.command.status), state=\(liveNeighbors.state.rawValue), issues=\(liveNeighbors.issues.map(\.rawValue)), rejected=\(liveNeighbors.unrecognizedRecordCount))")
     let route = DefaultRouteInventory.parse("route to: default\ndestination: default\n       gateway: 192.168.1.1\n  interface: en0\n")
     try check(route == DefaultRouteInfo(gateway: "192.168.1.1", interface: "en0"), "default route parser")
     try check(DefaultRouteInventory.parse("interface: en0\n") == nil, "incomplete default route")
