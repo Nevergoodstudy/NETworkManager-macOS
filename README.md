@@ -9,7 +9,7 @@
 
 NETworkManager for macOS 是基于 [BornToBeRoot/NETworkManager](https://github.com/BornToBeRoot/NETworkManager) 进行的独立 macOS 适配。上游项目主要使用 C#、WPF 面向 Windows；本仓库的 macOS 应用使用 SwiftUI 和 AppKit 实现，原版 Windows 源码仍保留在 `Source/`。本项目并非上游官方发行版。
 
-应用面向需要集中管理网络资产、执行日常诊断并安全连接设备的网络工程与运维人员。当前 macOS 版本要求 macOS 14 或更高版本。
+应用面向需要集中管理网络资产、执行日常诊断并安全连接设备的网络工程与运维人员。macOS 版本仅支持 Apple Silicon（M 系列、arm64）Mac，要求 macOS 14 或更高版本；Intel Mac 不受支持。M 系列 MacBook、iMac、Mac mini、Mac Studio 和 Mac Pro 均可使用。
 
 ### 功能概览
 
@@ -57,7 +57,7 @@ NETworkManager for macOS 是基于 [BornToBeRoot/NETworkManager](https://github.
 CREATE_DMG=1 ./macos/Scripts/build-app.sh
 ```
 
-本机开发构建默认使用 ad-hoc 签名；这不等同于 Developer ID 签名或 Apple 公证。用于分发的正式 Universal DMG、公证步骤和所需凭据见 [macOS 构建与发布指南](macos/README.md)。
+本机开发构建默认使用 ad-hoc 签名；这不等同于 Developer ID 签名或 Apple 公证。Apple Silicon arm64 DMG、公证步骤和所需凭据见 [macOS 构建与发布指南](macos/README.md)。
 
 ### 上游来源与许可证
 
@@ -67,7 +67,7 @@ CREATE_DMG=1 ./macos/Scripts/build-app.sh
 
 NETworkManager for macOS is an independent macOS adaptation of [BornToBeRoot/NETworkManager](https://github.com/BornToBeRoot/NETworkManager). The upstream project is primarily a C#/WPF application for Windows. This repository implements the macOS app with SwiftUI and AppKit while retaining the original Windows source under `Source/`. This is not an official upstream release.
 
-The app is designed for network engineers and administrators who need a focused place to organize network assets, run routine diagnostics, and connect to devices securely. The macOS edition requires macOS 14 or later.
+The app is designed for network engineers and administrators who need a focused place to organize network assets, run routine diagnostics, and connect to devices securely. The macOS edition runs only on Apple Silicon (M-series, arm64) Macs and requires macOS 14 or later; Intel Macs are not supported. M-series MacBook, iMac, Mac mini, Mac Studio, and Mac Pro models are supported.
 
 ### Capabilities
 
@@ -115,7 +115,7 @@ Create a DMG:
 CREATE_DMG=1 ./macos/Scripts/build-app.sh
 ```
 
-Local development builds use ad-hoc signing by default; this is not Developer ID signing or Apple notarization. See the [macOS build and release guide](macos/README.md) for a distributable Universal DMG, notarization, and required credentials.
+Local development builds use ad-hoc signing by default; this is not Developer ID signing or Apple notarization. See the [macOS build and release guide](macos/README.md) for the Apple Silicon arm64 DMG, notarization, and required credentials.
 
 ### Upstream and license
 

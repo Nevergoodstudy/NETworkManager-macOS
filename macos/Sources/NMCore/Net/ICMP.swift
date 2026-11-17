@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 
 // MARK: - Result types
@@ -47,8 +48,8 @@ public struct ResolvedTarget: Sendable {
     public let family: Int32
     public let sockaddrBytes: [UInt8]
 
-    public static func resolve(_ host: String, cancellation: DiagnosticCancellation? = nil) throws -> ResolvedTarget {
-        guard let resolved = try SocketAddressResolver.resolve(host, cancellation: cancellation).first else {
+    public static func resolve(_ host: String, timeout: TimeInterval = 5, cancellation: DiagnosticCancellation? = nil) throws -> ResolvedTarget {
+        guard let resolved = try SocketAddressResolver.resolve(host, timeout: timeout, cancellation: cancellation).first else {
             throw POSIXError(.EHOSTUNREACH)
         }
         return ResolvedTarget(hostname: host, address: resolved.numericAddress,
@@ -65,7 +66,7 @@ public struct ResolvedTarget: Sendable {
 public final class ICMPPinger {
     private var socketFD: Int32
     private let target: ResolvedTarget
-    private let timeout: TimeInterval
+    private var timeout: TimeInterval
     private var nextSequence: UInt16 = 1
     private let payloadSize: Int
     private var currentTTL: Int
@@ -73,25 +74,25 @@ public final class ICMPPinger {
 
     /// - Parameters:
     ///   - host: hostname or IP address
-    ///   - timeout: receive timeout per echo request
+    ///   - timeout: total budget per echo; constructor resolution is separately bounded
     ///   - ttl: IP TTL / hop limit (traceroute uses increasing values)
     ///   - payloadSize: ICMP payload bytes besides the 8 byte header
-    public init(host: String, timeout: TimeInterval = 2.0, ttl: Int = 64, payloadSize: Int = 32, cancellation: DiagnosticCancellation? = nil) throws {
-        self.target = try ResolvedTarget.resolve(host, cancellation: cancellation)
+    public convenience init(host: String, timeout: TimeInterval = 2.0, ttl: Int = 64, payloadSize: Int = 32, cancellation: DiagnosticCancellation? = nil) throws {
+        guard Ping.validTimeout(timeout) else { throw POSIXError(.EINVAL) }
+        let target = try ResolvedTarget.resolve(host, timeout: timeout, cancellation: cancellation)
+        try self.init(target: target, timeout: timeout, ttl: ttl, payloadSize: payloadSize, cancellation: cancellation)
+    }
+
+    init(target: ResolvedTarget, timeout: TimeInterval, ttl: Int = 64, payloadSize: Int = 32, cancellation: DiagnosticCancellation? = nil) throws {
+        guard Ping.validTimeout(timeout) else { throw POSIXError(.EINVAL) }
+        self.target = target
         self.timeout = timeout
         self.payloadSize = max(8, payloadSize)
-        self.currentTTL = max(1, ttl)
+        self.currentTTL = max(1, min(255, ttl))
         self.cancellation = cancellation
-
         let proto = target.family == AF_INET6 ? IPPROTO_ICMPV6 : IPPROTO_ICMP
         socketFD = socket(target.family, SOCK_DGRAM, proto)
-        guard socketFD >= 0 else {
-            throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .ENOENT)
-        }
-
-        let receiveTimeout = cancellation == nil ? timeout : min(timeout, 0.1)
-        var tv = timeval(tv_sec: Int(receiveTimeout), tv_usec: Int32((receiveTimeout - Double(Int(receiveTimeout))) * 1_000_000))
-        setsockopt(socketFD, SOL_SOCKET, SO_RCVTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
+        guard socketFD >= 0 else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .ENOENT) }
 
         var one: Int32 = 1
         if target.family == AF_INET {
@@ -109,7 +110,7 @@ public final class ICMPPinger {
     public var resolvedAddress: String { target.address }
 
     public func setTTL(_ ttl: Int) {
-        currentTTL = max(1, ttl)
+        currentTTL = max(1, min(255, ttl))
         var value = Int32(currentTTL)
         if target.family == AF_INET {
             setsockopt(socketFD, IPPROTO_IP, IP_TTL, &value, socklen_t(MemoryLayout<Int32>.size))
@@ -119,8 +120,8 @@ public final class ICMPPinger {
     }
 
     public func setReceiveTimeout(_ seconds: TimeInterval) {
-        var tv = timeval(tv_sec: Int(seconds), tv_usec: Int32((seconds - Double(Int(seconds))) * 1_000_000))
-        setsockopt(socketFD, SOL_SOCKET, SO_RCVTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
+        guard Ping.validTimeout(seconds) else { return }
+        timeout = seconds
     }
 
     deinit {
@@ -135,92 +136,112 @@ public final class ICMPPinger {
 
     // MARK: Echo
 
-    /// Send one echo request and wait for the matching reply.
+    /// Send one echo request. Native receive and optional system fallback share
+    /// one budget; constructor resolution has its own bounded budget.
     public func ping(sequence: Int? = nil, allowSystemFallback: Bool = true) -> ICMPReply {
+        ping(sequence: sequence, allowSystemFallback: allowSystemFallback, deadline: PingDeadline(timeout: timeout))
+    }
+
+    func ping(sequence: Int? = nil, allowSystemFallback: Bool, deadline: PingDeadline) -> ICMPReply {
         let seq = UInt16(truncatingIfNeeded: sequence ?? Int(nextSequence))
         nextSequence &+= 1
-
-        if cancellation?.isCancelled == true {
-            return ICMPReply(sequence: Int(seq), outcome: .error(t("Diagnostic cancelled")), rtt: nil, ttl: nil, source: nil)
-        }
-
-        let packet = buildPacket(sequence: seq)
-        let start = Date()
-
+        if cancellation?.isCancelled == true { return Ping.reply(.error(t("Diagnostic cancelled")), sequence: seq) }
+        guard deadline.remaining > 0 else { return Ping.reply(.timeout, sequence: seq) }
         guard socketFD >= 0 else {
-            return ICMPReply(sequence: Int(seq), outcome: .error(t("The ICMP socket is closed.")), rtt: nil, ttl: nil, source: nil)
+            return Ping.reply(.error(t("The ICMP socket is closed.")), sequence: seq)
         }
-
-        let sent = packet.withUnsafeBytes { raw -> Int in
+        // Reserve half the remaining time for Darwin's system-client fallback.
+        let nativeDeadline = allowSystemFallback ? deadline.limited(to: deadline.remaining / 2) : deadline
+        let packet = buildPacket(sequence: seq)
+        let start = deadline.now()
+        let sent = packet.withUnsafeBytes { raw in
             target.sockaddrBytes.withUnsafeBytes { sa in
-                sendto(socketFD, raw.baseAddress, raw.count, 0,
-                       sa.baseAddress!.assumingMemoryBound(to: sockaddr.self),
-                       socklen_t(target.sockaddrBytes.count))
+                sendto(socketFD, raw.baseAddress, raw.count, MSG_DONTWAIT,
+                       sa.baseAddress!.assumingMemoryBound(to: sockaddr.self), socklen_t(sa.count))
             }
         }
+        let result: ICMPReply
         if sent < 0 {
-            return ICMPReply(sequence: Int(seq), outcome: .error(String(cString: strerror(errno))), rtt: nil, ttl: nil, source: nil)
+            result = Ping.reply(.error(String(cString: strerror(errno))), sequence: seq)
+        } else {
+            result = Self.receiveReply(fd: socketFD, family: target.family, sequence: seq,
+                                       start: start, deadline: nativeDeadline, cancellation: cancellation)
         }
+        if cancellation?.isCancelled == true { return Ping.reply(.error(t("Diagnostic cancelled")), sequence: seq) }
+        guard deadline.remaining > 0 else { return Ping.reply(.timeout, sequence: seq) }
+        if allowSystemFallback {
+            switch result.outcome {
+            case .timeout, .error:
+                return SystemPing.run(target: target, ttl: currentTTL, sequence: seq, deadline: deadline, cancellation: cancellation)
+            default: break
+            }
+        }
+        return result
+    }
 
-        // Receive loop: ignore replies that belong to other sequences.
-        let deadline = start.addingTimeInterval(timeout)
-        while Date() < deadline && cancellation?.isCancelled != true {
+    /// Polling and nonblocking receive keep silence and unrelated traffic under
+    /// the same deadline, even without an explicit cancellation token.
+    static func receiveReply(fd: Int32, family: Int32, sequence: UInt16, start: ContinuousClock.Instant,
+                             deadline: PingDeadline, cancellation: DiagnosticCancellation?) -> ICMPReply {
+        while true {
+            if cancellation?.isCancelled == true { return Ping.reply(.error(t("Diagnostic cancelled")), sequence: sequence) }
+            let remaining = deadline.remaining
+            guard remaining > 0 else { return Ping.reply(.timeout, sequence: sequence) }
+            var descriptor = pollfd(fd: fd, events: Int16(POLLIN), revents: 0)
+            let ready = poll(&descriptor, 1, Int32(max(1, min(50, ceil(remaining * 1_000)))))
+            if ready == 0 { continue }
+            if ready < 0 {
+                if errno == EINTR { continue }
+                return Ping.reply(.error(String(cString: strerror(errno))), sequence: sequence)
+            }
+            guard descriptor.revents & Int16(POLLIN) != 0 else {
+                return Ping.reply(.error(POSIXError(.EIO).localizedDescription), sequence: sequence)
+            }
             var buffer = [UInt8](repeating: 0, count: 2048)
             var control = [UInt8](repeating: 0, count: 512)
             var sourceStorage = sockaddr_storage()
             var receivedTTL: Int?
-            let received: Int = buffer.withUnsafeMutableBytes { bufferBytes in
+            let received = buffer.withUnsafeMutableBytes { bufferBytes in
                 control.withUnsafeMutableBytes { controlBytes in
                     var iov = iovec(iov_base: bufferBytes.baseAddress, iov_len: bufferBytes.count)
-                    var message = msghdr()
-                    message.msg_name = withUnsafeMutablePointer(to: &sourceStorage) { UnsafeMutableRawPointer($0) }
-                    message.msg_namelen = socklen_t(MemoryLayout<sockaddr_storage>.size)
-                    message.msg_iov = withUnsafeMutablePointer(to: &iov) { $0 }
-                    message.msg_iovlen = 1
-                    message.msg_control = controlBytes.baseAddress
-                    message.msg_controllen = socklen_t(controlBytes.count)
-                    let result = recvmsg(socketFD, &message, 0)
-                    receivedTTL = Self.ttl(from: message)
-                    return result
+                    return withUnsafeMutablePointer(to: &sourceStorage) { sourcePointer in
+                        withUnsafeMutablePointer(to: &iov) { iovPointer in
+                            var message = msghdr()
+                            message.msg_name = UnsafeMutableRawPointer(sourcePointer)
+                            message.msg_namelen = socklen_t(MemoryLayout<sockaddr_storage>.size)
+                            message.msg_iov = iovPointer
+                            message.msg_iovlen = 1
+                            message.msg_control = controlBytes.baseAddress
+                            message.msg_controllen = socklen_t(controlBytes.count)
+                            let result = recvmsg(fd, &message, MSG_DONTWAIT)
+                            if result >= 0 { receivedTTL = Self.ttl(from: message) }
+                            return result
+                        }
+                    }
                 }
             }
             if received < 0 {
-                if errno == EAGAIN || errno == EWOULDBLOCK {
-                    if cancellation != nil && Date() < deadline { continue }
-                    break
-                }
-                return ICMPReply(sequence: Int(seq), outcome: .error(String(cString: strerror(errno))),
-                                 rtt: nil, ttl: nil, source: nil)
+                if errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK { continue }
+                return Ping.reply(.error(String(cString: strerror(errno))), sequence: sequence)
             }
-
-            let rtt = Date().timeIntervalSince(start)
+            if cancellation?.isCancelled == true { return Ping.reply(.error(t("Diagnostic cancelled")), sequence: sequence) }
+            guard deadline.remaining > 0 else { return Ping.reply(.timeout, sequence: sequence) }
+            guard let parsed = parseICMP(Array(buffer.prefix(received)), family: family) else { continue }
+            let rtt = max(0, PingDeadline.seconds(start.duration(to: deadline.now())))
             let source = Self.numericHost(sourceStorage)
-
-            guard let parsed = Self.parseICMP(Array(buffer.prefix(received)), family: target.family) else {
-                continue
-            }
-
             switch parsed.type {
-            case 0, 129: // echo reply
-                guard parsed.sequence == seq || parsed.sequence == 0 else { continue }
-                return ICMPReply(sequence: Int(seq), outcome: .success, rtt: rtt, ttl: receivedTTL, source: source)
-            case 11: // time exceeded
-                return ICMPReply(sequence: Int(seq), outcome: .ttlExpired(hop: source ?? "?"), rtt: rtt, ttl: receivedTTL, source: source)
-            case 3, 1: // unreachable
-                let reason = ICMPPinger.unreachableReason(parsed.code)
-                return ICMPReply(sequence: Int(seq), outcome: .unreachable(reason: reason, from: source ?? "?"),
+            case 0 where family == AF_INET, 129 where family == AF_INET6:
+                guard parsed.sequence == sequence || parsed.sequence == 0 else { continue }
+                return ICMPReply(sequence: Int(sequence), outcome: .success, rtt: rtt, ttl: receivedTTL, source: source)
+            case 11 where family == AF_INET, 3 where family == AF_INET6:
+                return ICMPReply(sequence: Int(sequence), outcome: .ttlExpired(hop: source ?? "?"),
                                  rtt: rtt, ttl: receivedTTL, source: source)
-            default:
-                continue
+            case 3 where family == AF_INET, 1 where family == AF_INET6:
+                return ICMPReply(sequence: Int(sequence), outcome: .unreachable(reason: unreachableReason(parsed.code), from: source ?? "?"),
+                                 rtt: rtt, ttl: receivedTTL, source: source)
+            default: continue
             }
         }
-
-        // macOS has shipped configurations where an unprivileged datagram
-        // ICMP socket is created successfully but its replies are not exposed
-        // to recvmsg. Fall back to the system client using an argument array,
-        // preserving the same ICMPReply contract for the UI and scanners.
-        if allowSystemFallback && cancellation?.isCancelled != true { return systemPing(sequence: seq) }
-        return ICMPReply(sequence: Int(seq), outcome: .timeout, rtt: nil, ttl: nil, source: nil)
     }
 
     // MARK: Packet building / parsing
@@ -285,19 +306,6 @@ public final class ICMPPinger {
         return ParsedICMP(type: type, code: code, sequence: sequence)
     }
 
-    private func systemPing(sequence: UInt16) -> ICMPReply {
-        guard let path = Shell.which("ping") else {
-            return ICMPReply(sequence: Int(sequence), outcome: .timeout, rtt: nil, ttl: nil, source: nil)
-        }
-
-        let waitMilliseconds = max(1, Int(ceil(timeout * 1_000)))
-        let arguments = ["-n", "-c", "1", "-W", String(waitMilliseconds), "-m", String(currentTTL), target.address]
-        let result = Shell.runSync(path, arguments, timeout: max(timeout + 1.0, 2.0))
-        let parsed = Self.parseSystemPing(result.output, fallbackAddress: target.address, sequence: sequence)
-        if let parsed, parsed.outcome.isSuccess { return parsed }
-        return parsed ?? ICMPReply(sequence: Int(sequence), outcome: .timeout, rtt: nil, ttl: nil, source: nil)
-    }
-
     static func parseSystemPing(_ output: String, fallbackAddress: String, sequence: UInt16) -> ICMPReply? {
         let lines = output.split(whereSeparator: { $0.isNewline }).map(String.init)
         guard let replyLine = lines.first(where: { $0.contains("bytes from") && $0.contains("icmp_seq=") }) else {
@@ -307,12 +315,13 @@ public final class ICMPPinger {
         var source = fallbackAddress
         if let fromRange = replyLine.range(of: "bytes from ") {
             let remainder = replyLine[fromRange.upperBound...]
-            source = remainder.split(separator: ":", maxSplits: 1).first.map(String.init) ?? fallbackAddress
+            source = remainder.split(whereSeparator: { $0.isWhitespace }).first.map(String.init) ?? fallbackAddress
+            // IPv4 replies end the source with a colon; ping6 uses a comma.
+            if source.last == ":" || source.last == "," { source.removeLast() }
         }
-        let ttl = value(after: "ttl=", in: replyLine).flatMap(Int.init)
+        let ttl = (value(after: "ttl=", in: replyLine) ?? value(after: "hlim=", in: replyLine)).flatMap(Int.init)
         let rttMilliseconds = value(after: "time=", in: replyLine).flatMap(Double.init)
-        let replySequence = value(after: "icmp_seq=", in: replyLine).flatMap(UInt16.init) ?? sequence
-        return ICMPReply(sequence: Int(replySequence), outcome: .success,
+        return ICMPReply(sequence: Int(sequence), outcome: .success,
                          rtt: rttMilliseconds.map { $0 / 1_000.0 }, ttl: ttl, source: source)
     }
 
@@ -343,13 +352,14 @@ public final class ICMPPinger {
         let limit = Int(message.msg_controllen)
 
         while offset + headerSize <= limit {
-            let header = base.advanced(by: offset).assumingMemoryBound(to: cmsghdr.self)
-            let length = Int(header.pointee.cmsg_len)
-            if length < headerSize { break }
+            let header = base.advanced(by: offset).loadUnaligned(as: cmsghdr.self)
+            let length = Int(header.cmsg_len)
+            guard length >= headerSize, length <= limit - offset else { break }
             let ipv6HopLimit: Int32 = 47
-            if header.pointee.cmsg_level == IPPROTO_IP && header.pointee.cmsg_type == IP_RECVTTL
-                || header.pointee.cmsg_level == IPPROTO_IPV6 && header.pointee.cmsg_type == ipv6HopLimit {
-                let value = base.advanced(by: offset + headerSize).load(as: Int32.self)
+            if header.cmsg_level == IPPROTO_IP && header.cmsg_type == IP_RECVTTL
+                || header.cmsg_level == IPPROTO_IPV6 && header.cmsg_type == ipv6HopLimit {
+                guard length - headerSize >= MemoryLayout<Int32>.size else { return nil }
+                let value = base.advanced(by: offset + headerSize).loadUnaligned(as: Int32.self)
                 return Int(value)
             }
             // Darwin aligns cmsg data to 4 bytes.
@@ -375,28 +385,10 @@ public final class ICMPPinger {
 // MARK: - Convenience helpers
 
 public enum Ping {
-    /// Perform a single ping and return the reply.
+    /// One total network budget covers resolution, native ICMP and fallback.
+    /// Bounded subprocess teardown can finish after the network budget expires.
     public static func once(host: String, timeout: TimeInterval = 2, cancellation: DiagnosticCancellation? = nil) async -> ICMPReply {
-        let raw = await runBlockingDiagnostic {
-            do {
-                let pinger = try ICMPPinger(host: host, timeout: timeout, cancellation: cancellation)
-                return pinger.ping(allowSystemFallback: false)
-            } catch {
-                return ICMPReply(sequence: 0, outcome: .error(error.localizedDescription), rtt: nil, ttl: nil, source: nil)
-            }
-        }
-        guard cancellation?.isCancelled != true, case .timeout = raw.outcome else { return raw }
-        return await systemPing(host: host, timeout: timeout, sequence: raw.sequence, cancellation: cancellation)
-    }
-
-    private static func systemPing(host: String, timeout: TimeInterval, sequence: Int, cancellation: DiagnosticCancellation?) async -> ICMPReply {
-        guard let path = Shell.which("ping") else { return .init(sequence: sequence, outcome: .timeout, rtt: nil, ttl: nil, source: nil) }
-        if cancellation?.isCancelled == true { return .init(sequence: sequence, outcome: .timeout, rtt: nil, ttl: nil, source: nil) }
-        let waitMilliseconds = max(1, Int(ceil(timeout * 1_000)))
-        let arguments = ["-n", "-c", "1", "-W", String(waitMilliseconds), "-m", "64", host]
-        let result = await Shell.run(path, arguments, timeout: max(timeout + 1, 2), cancellation: cancellation)
-        return ICMPPinger.parseSystemPing(result.output, fallbackAddress: host, sequence: UInt16(truncatingIfNeeded: sequence))
-            ?? .init(sequence: sequence, outcome: .timeout, rtt: nil, ttl: nil, source: nil)
+        await once(host: host, timeout: timeout, cancellation: cancellation, operations: .live)
     }
 
     /// Resolve the hostname for an IP address (reverse DNS), returns nil on failure.

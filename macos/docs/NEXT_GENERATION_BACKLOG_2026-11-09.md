@@ -2,11 +2,11 @@
 
 [中文方案](NEXT_GENERATION_RESEARCH_2026-11-09.zh-CN.md) · [English proposal](NEXT_GENERATION_RESEARCH_2026-11-09.en.md) · [Index / 索引](README.md)
 
-研究基准 / Research baseline: 2026-11-09. 修订 / Revised: 2026-11-10.
+研究基准 / Research baseline: 2026-11-09. 修订 / Revised: 2026-11-14.
 
-所有任务均为待实施提案。估算为开发人日，依赖表示实施顺序；P0/P1/P2 表示优先级，不等于固定日历阶段。T15 从第一周持续推进，最终发布前需复核。
+以下保留原始任务提案、估算与验收范围。当前七个实现切片覆盖 T01/T02/T03，0/16 主项满足全部验收；最新推进见 [Ping 总预算记录](T03_PING_BUDGET_2026-11-14.md)与[同日 DNS 记录](PROGRESS_2026-11-14.md)，远端状态见 PR #20。估算为开发人日，依赖表示实施顺序；P0/P1/P2 表示优先级，不等于固定日历阶段。T15 从第一周持续推进，最终发布前需复核。
 
-All items are proposed work. Estimates are engineering person-days; dependencies describe ordering. Priorities do not set calendar dates. T15 runs throughout the work and must be checked again against the final release build.
+The original proposals, estimates and acceptance scope are retained below. Seven implementation slices cover T01/T02/T03, with 0/16 fully accepted; see the [Ping budget record](T03_PING_BUDGET_2026-11-14.md), [same-day DNS record](PROGRESS_2026-11-14.md) and PR #20 for current delivery status. Estimates are engineering person-days; dependencies describe ordering. Priorities do not set calendar dates. T15 runs throughout the work and must be checked again against the final release build.
 
 完整任务集不构成 90 天交付承诺。两名工程师和共享 QA/实验环境是阶段估算的前提；单人应收敛至 P0 和一个完整排障流程。
 

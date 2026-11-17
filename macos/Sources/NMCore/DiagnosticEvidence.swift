@@ -14,6 +14,7 @@ public struct DiagnosticEvidenceItem: Codable, Hashable, Sendable {
     public var detail: String
     public var latency: TimeInterval?
     public var source: String
+    public var evidence: DiagnosticRuntimeEvidence?
 }
 
 public enum DiagnosticEvidenceExporter {
@@ -33,7 +34,8 @@ public enum DiagnosticEvidenceExporter {
                 summary: redact(run.summary),
                 detail: redact(run.detail),
                 latency: run.latency,
-                source: redact(run.source)
+                source: redact(run.source),
+                evidence: redact(evidence: run.evidence)
             )
         }
     }
@@ -61,7 +63,31 @@ public enum DiagnosticEvidenceExporter {
                 lines.append("|  |  |  |  |  |  | \(value.summary) \(value.detail) |")
             }
         }
+        for value in values {
+            guard let evidence = value.evidence else { continue }
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            if let data = try? encoder.encode(evidence) {
+                let json = String(decoding: data, as: UTF8.self)
+                let longestFence = json.split(whereSeparator: { $0 != "`" }).map(\.count).max() ?? 0
+                let fence = String(repeating: "`", count: max(3, longestFence + 1))
+                lines += ["", "Runtime evidence: \(value.id.uuidString)", "", fence + "json", json, fence]
+            }
+        }
         return lines.joined(separator: "\n") + "\n"
+    }
+
+    private static func redact(evidence: DiagnosticRuntimeEvidence?) -> DiagnosticRuntimeEvidence? {
+        guard let evidence, let encoded = try? JSONEncoder().encode(evidence),
+              let object = try? JSONSerialization.jsonObject(with: encoded) else { return nil }
+        func redacted(_ value: Any) -> Any {
+            if let text = value as? String { return redact(text) }
+            if let values = value as? [String: Any] { return values.mapValues(redacted) }
+            if let values = value as? [Any] { return values.map(redacted) }
+            return value
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: redacted(object)) else { return nil }
+        return try? JSONDecoder().decode(DiagnosticRuntimeEvidence.self, from: data)
     }
 
     private static func redact(parameters: [String: String]) -> [String: String] {

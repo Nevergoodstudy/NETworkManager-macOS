@@ -27,7 +27,10 @@ real network. / 以下总览示意图展示了更新后的 macOS 窗口，并使
 
 ![NETworkManager macOS dashboard mockup](docs/ui-dashboard-mockup.png)
 
-The macOS target requires macOS 14 or later. It uses the existing OUI, ports,
+The macOS target supports Apple Silicon Macs only (arm64; M-series MacBook,
+iMac, Mac mini, Mac Studio, and Mac Pro) and requires macOS 14 or later. Intel
+Macs and Rosetta execution are unsupported. The application and its bundled
+MCP helper are built as arm64-only binaries. It uses the existing OUI, ports,
 and WHOIS XML data from macos/Sources/NMCore/Resources/ and stores user data
 under ~/Library/Application Support/NETworkManager/.
 
@@ -145,27 +148,29 @@ are not captured by this audit log.
     ./macos/Scripts/build-app.sh
     CREATE_DMG=1 ./macos/Scripts/build-app.sh
 
-Set ARCHITECTURE=arm64 or ARCHITECTURE=x86_64 to build a specific
-architecture, or use ARCHITECTURE=universal for an arm64+x86_64 bundle. Set
-CODESIGN_IDENTITY="Developer ID Application: ..." to sign the app. Without an
-identity the script creates an ad-hoc signed local bundle. Notarization still
-requires an Apple Developer account and should be performed by the release
+The build script always creates an arm64-only bundle. Intel and Universal
+architecture requests are rejected, and all Mach-O files in the app are
+checked before signing. Set `VERSION` to override the four-part application
+version; the same value is written to the bundle and DMG filename. Set
+`CODESIGN_IDENTITY="Developer ID Application: ..."` to sign the app. Without
+an identity the script creates an ad-hoc signed local bundle. Notarization
+still requires an Apple Developer account and is performed by the release
 pipeline after signing.
 
 ## Formal release
 
-Use `macos/Scripts/release-dmg.sh` for a Universal DMG that must pass Apple
-notarization and Gatekeeper assessment. It requires a Developer ID Application
-identity already installed in the current Keychain and a Notary profile created
-with `xcrun notarytool store-credentials`. It verifies the app signature and
+Use `macos/Scripts/release-dmg.sh` for an Apple Silicon arm64-only DMG that
+must pass Apple notarization and Gatekeeper assessment. It requires a Developer
+ID Application identity already installed in the current Keychain and a Notary
+profile created with `xcrun notarytool store-credentials`. It verifies the app signature and
 Hardened Runtime, submits the DMG with `--wait`, staples and validates the
 ticket, then runs `spctl` and `hdiutil verify`. Missing credentials fail before
 the build; `--dry-run` only prints the required release steps and never reports
 an artifact as notarized.
 
-The GitHub Actions release job runs for `v*` tags and requires these repository
-secrets. After Apple accepts notarization and the DMG passes Gatekeeper checks,
-the job creates a **draft GitHub Release** and attaches the Universal DMG. A
+The GitHub Actions release job runs for `v*` tags on Apple Silicon runners and
+requires these repository secrets. After Apple accepts notarization and the DMG passes Gatekeeper checks,
+the job creates a **draft GitHub Release** and attaches the arm64 DMG. A
 maintainer must review and publish that draft; reruns update a draft asset but
 refuse to replace an already public release.
 

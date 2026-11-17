@@ -310,14 +310,14 @@ def build():
 
     doc.add_page_break()
     add_heading(doc, "1. 仓库基线与关键差距")
-    add_text(doc, "截至本方案日期，macOS 端不是从零开始：它已有可运行的 SwiftPM 应用和 Universal App/DMG 打包路径。下一阶段的主要问题是把独立工具组织成工作流，并补齐资产、凭据、历史、平台权限和分发质量。")
+    add_text(doc, "截至本方案日期，macOS 端不是从零开始：它已有可运行的 SwiftPM 应用和 Apple Silicon arm64 App/DMG 打包路径。项目于 2026-11-17 明确仅支持 arm64；更早研究中出现的 Universal/Intel 描述属于历史基准，不再代表当前发布目标。下一阶段的主要问题是把独立工具组织成工作流，并补齐资产、凭据、历史、平台权限和分发质量。")
     add_table(doc, ["领域", "已经具备", "关键缺口 / 计划处理"], [
         ("应用与 UI", "SwiftUI + AppKit；macOS 14+；分组导航、工具搜索、设置窗口、操作台概览。", "仍以工具入口为中心；没有环境上下文、设备详情检查器、事件队列和任务时间线。先重做导航与主窗口工作流。"),
         ("诊断能力", "接口信息、IPv4 发现、TCP 连接扫描、有限次数 Ping、DNS、Traceroute、SNTP、WHOIS、Wake-on-LAN、子网计算、本机连接/邻居信息。", "Ping Monitor 不是持续服务；诊断结果没有统一历史与资产关联；增加取消、超时、重试与新鲜度语义。"),
         ("SNMP / 邻居", "原生 BER 支持 SNMP v1/v2c GET、WALK、SET；LLDP/CDP 依赖可选 lldpcli。", "没有 SNMPv3 USM。先按 RFC 实现并用多厂商测试矩阵验证；抓包能力不放进无守护进程的首发范围。"),
         ("资产与秘密", "JSON 配置文件、Windows JSON/XML 导入、密码加密导出。", "没有统一 Site/Device/Subnet/Run 模型；凭据没有 Keychain 存储与引用；配置文件 JSON 不应承担明文秘密仓库。"),
         ("远程访问", "RDP/VNC URL scheme、Terminal.app、浏览器或外部工具交接。", "内嵌 SSH/SFTP 会话、已知主机密钥确认和多会话工作区尚未形成；RDP/VNC 客户端仍是外部依赖。"),
-        ("后台与发布", "脚本可生成 arm64、x86_64、Universal .app 与 DMG；默认 ad-hoc 签名。", "开机启动当前直接写用户 LaunchAgents plist 并调用 launchctl；发布脚本尚未完成 Developer ID、Notary 提交、staple 与安装回归。"),
+        ("后台与发布", "当前脚本仅生成 arm64 .app 与 DMG；默认 ad-hoc 签名。", "开机启动当前直接写用户 LaunchAgents plist 并调用 launchctl；发布脚本尚未完成 Developer ID、Notary 提交、staple 与安装回归。"),
     ], widths=[1.0, 2.65, 3.35], font_size=8.2)
 
     add_callout(
@@ -370,7 +370,7 @@ def build():
         ("凭据", "Keychain 存用户名密码、SNMP 密钥、API token 与 SSH 私钥引用；数据库只存 item ID 和非秘密属性。", "提供每环境最小权限凭据、访问/删除、备份迁移说明和脱敏导出。不要把秘密塞进 JSON profile。"),
         ("集成策略", "先只读 NetBox、Zabbix、LibreNMS。支持连接测试、范围映射、分页、速率限制、版本兼容提示和断线重试。", "只读连接器能快速获得资产与告警上下文，也降低把本地观测误写为权威资产的风险。NetBox 写 API 令牌应单独授权且默认关闭。"),
         ("高级权限", "原生 TCP/UDP 诊断优先；抓包、内核扩展和管理员 helper 不在首发。", "macOS 抓包需要系统级 BPF 权限配置；若未来做 helper，需独立安装、可见状态、可卸载和单独安全评审。"),
-        ("平台与分发", "继续 SwiftUI/AppKit 和 macOS 14+；先做 Developer ID + Hardened Runtime + notarized Universal DMG。", "当前 Package.swift 和 Info.plist 已以 14.0 为最低系统；App Store 作为单独兼容性与沙盒评估，不阻塞独立 DMG。"),
+        ("平台与分发", "继续 SwiftUI/AppKit 和 macOS 14+；仅支持 Apple Silicon arm64，先做 Developer ID + Hardened Runtime + notarized arm64 DMG。", "当前 Package.swift 和 Info.plist 已以 14.0 为最低系统；App Store 作为单独兼容性与沙盒评估，不阻塞独立 DMG。"),
     ], widths=[1.12, 2.88, 3.0], font_size=8.0)
 
     add_heading(doc, "5. 分阶段路线")
@@ -381,7 +381,7 @@ def build():
         ("P2 可观测性连接", "只读 NetBox、Zabbix 或 LibreNMS 连接器中的一个先完成纵向切片；状态新鲜度、告警队列、同步来源；SNMPv3 GET/WALK。", "连接器可断线恢复且不重复资产；SNMPv3 覆盖 RFC 向量、超时、错误凭据、引擎重启及多品牌设备。明确现状是“实时连接”还是“周期采集”。"),
         ("P3 排障与证据链", "诊断任务统一控制、取消、参数快照、结果标签、导出报告；运行历史可按环境/设备/时间查询。", "用户可从告警复现同一组检查；导出可脱敏、包含时间/来源/目标与错误阶段；失败和拒绝权限不伪装成离线。"),
         ("P4 远程会话与受控操作", "先把 SSH 主机会话做成应用内标签工作流；评估维护中的 SSH/SFTP Swift 库、许可证和安全记录；known_hosts 首次确认/变更告警；常用无副作用命令模版。", "没有绕过主机密钥校验；写操作显示目标、命令/差异、影响范围，明确确认后运行；操作记录不泄漏凭据。RDP/VNC 继续显式交给用户安装的客户端。"),
-        ("P5 稳定与正式分发", "自动构建 arm64/x86_64 与 Universal；自动化核心协议测试、GUI 冒烟、签名验证、Notary 提交/日志、staple、DMG 安装/升级/卸载回归；隐私说明与支持包脱敏。", "在最低支持 macOS 与当前 macOS 版本通过安装、权限拒绝恢复、升级、退出清理；Gatekeeper 首次运行不需用户绕过；无遗留进程、LaunchAgent、临时授权或日志秘密。"),
+        ("P5 稳定与正式分发", "仅自动构建 Apple Silicon arm64；自动化核心协议测试、GUI 冒烟、架构/签名验证、Notary 提交/日志、staple、DMG 安装/升级/卸载回归；隐私说明与支持包脱敏。", "在最低支持 macOS 与当前 macOS 版本通过安装、权限拒绝恢复、升级、退出清理；Gatekeeper 首次运行不需用户绕过；无遗留进程、LaunchAgent、临时授权或日志秘密。"),
     ], widths=[1.15, 3.45, 2.4], font_size=7.9)
 
     add_heading(doc, "推荐首发 MVP", 2)
@@ -389,7 +389,7 @@ def build():
     add_bullet(doc, "本地资产/子网管理与 Windows profile 导入；凭据由 Keychain 管理，导出默认不含秘密。")
     add_bullet(doc, "基于设备直接触发 Ping、DNS、TCP、Traceroute 与 SNMP 读操作；保存诊断时间、参数、来源、结果和新鲜度。")
     add_bullet(doc, "一项只读外部集成先做端到端验证，优先根据目标客户现有部署选择 NetBox 或 Zabbix/LibreNMS，不假设客户同时运行全部系统。")
-    add_bullet(doc, "默认前台运行、退出无后台服务；Developer ID 签名、公证、Universal DMG 和升级/移除检查。")
+    add_bullet(doc, "默认前台运行、退出无后台服务；arm64-only Developer ID 签名、公证、DMG 和升级/移除检查。")
 
     add_heading(doc, "首发明确不包含", 2)
     add_text(doc, "自建 24/7 NMS 服务端、隐藏常驻 daemon、内置 BPF 抓包授权组件、自动修改 NetBox/NMS 权威数据、无确认批量变更、强制捆绑 Homebrew/Python/PowerShell/RDP/VNC 服务。")

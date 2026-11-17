@@ -7,6 +7,8 @@ Source baseline: [0944345d73df](https://github.com/Nevergoodstudy/NETworkManager
 
 **Status: proposed work.** The reviewed source baseline is feature-branch commit [0944345d73df](https://github.com/Nevergoodstudy/NETworkManager-macOS/tree/0944345d73df0eafb2e7353aecca48d924398de8), subsequently merged into `main` through [PR #12](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/12) on 2026-11-10. “Available in the reviewed code” refers to that baseline; it does not establish live-device interoperability or a formally signed and notarized release. This document records proposed follow-up work.
 
+**Architecture policy update (2026-11-17):** Current macOS releases target Apple Silicon (arm64) only. Universal/Intel references below describe the 2026-11-09 research baseline and are superseded for current builds and acceptance.
+
 **Product goal:** when an incident lands on a Mac, connect its assets, alerts, measurements from different observation points, remote sessions, and operational evidence. Make checks repeatable, changes comparable, and handoffs straightforward.
 
 Keep the native SwiftUI/AppKit application and build on its existing SwiftPM modules. Establish shared execution and evidence foundations, then improve diagnostic confidence, asset identity, and incident workflows. Add terminal, packet, automation, and telemetry capabilities through focused adapters.
@@ -35,7 +37,7 @@ A V2 roadmap dated 2026-11-03 preceded later work on assets, Keychain, SSH, SNMP
 | Remote sessions | System OpenSSH, SwiftTerm, strict host-key interaction, four Cisco IOS read-only templates | Jump hosts, connection plans, workspace recovery, serial, SFTP, and multi-vendor read-only drivers | [EmbeddedSSHView.swift:48-82](https://github.com/Nevergoodstudy/NETworkManager-macOS/blob/0944345d73df0eafb2e7353aecca48d924398de8/macos/Sources/NMRemote/EmbeddedSSHView.swift#L48) |
 | MCP | Four local tools and three optional single-target diagnostics with stdio, cancellation, validation, structured output, and a four-job limit | Evidence/workspace authorization, plan schemas, consistent GUI errors, and persisted MCP results | [MCP.md:70-125](https://github.com/Nevergoodstudy/NETworkManager-macOS/blob/0944345d73df0eafb2e7353aecca48d924398de8/macos/MCP.md#L70) |
 | Secrets and evidence | Keychain references, redacted export, damaged-data recovery, OSLog events, and limited operation audit | Case/Observation, attachment retention, evidence versions, and structured operation results | [DiagnosticEvidence.swift:3-45](https://github.com/Nevergoodstudy/NETworkManager-macOS/blob/0944345d73df0eafb2e7353aecca48d924398de8/macos/Sources/NMCore/DiagnosticEvidence.swift#L3) |
-| Lifecycle and release | SMAppService main-app login item, universal package, and notarization scripts | Minimum OS/Intel validation, real Developer ID, Gatekeeper evidence, and upgrade coverage | [LoginItemManager.swift:17-32,61-80](https://github.com/Nevergoodstudy/NETworkManager-macOS/blob/0944345d73df0eafb2e7353aecca48d924398de8/macos/Sources/NMCore/LoginItemManager.swift#L17) |
+| Lifecycle and release | SMAppService main-app login item, arm64-only package, and notarization scripts | Minimum OS, real Developer ID, Gatekeeper evidence, and upgrade coverage on Apple Silicon | [LoginItemManager.swift:17-32,61-80](https://github.com/Nevergoodstudy/NETworkManager-macOS/blob/0944345d73df0eafb2e7353aecca48d924398de8/macos/Sources/NMCore/LoginItemManager.swift#L17) |
 
 The recorded local and fixture checks do not substitute for live NetBox/Zabbix systems or SNMP/SSH devices from multiple vendors.
 
@@ -227,10 +229,10 @@ These are proposed targets. Record hardware, OS, data size, sample count, and p5
 - **Storage:** indexed pagination for 10,000 devices and 100,000 runs, with a 50-row query p95 target under 200 ms; no full-store encoding on the main thread; failed migration or disk write preserves the original.
 - **Evidence:** every result has UTC time, vantage point, source, method, parameters, and version; retained history remains available according to policy after asset deletion; the same external ID does not create a second asset when its address changes.
 - **Interoperability:** at least one real NetBox and Zabbix installation and two network OS families for SSH/SNMPv3; RFC vectors are not device compatibility certification [S29-S30].
-- **Platform:** macOS 14 and every newer supported version, Apple Silicon and Intel, VPN and multiple interfaces, dual stack, sleep/wake, permission recovery, locked Keychain, missing tools, and paths containing spaces.
+- **Platform:** macOS 14 and every newer supported version on Apple Silicon, VPN and multiple interfaces, dual stack, sleep/wake, permission recovery, locked Keychain, missing tools, and paths containing spaces.
 - **Process and MCP:** app close, cancellation, MCP EOF, and client disconnect leave no project-owned orphan jobs; multiple NMCP processes do not claim a shared quota; snapshot reads stay within workspace authorization.
 - **Secrets:** use canaries across Keychain, logs, profiles, evidence, backups, and exports; configuration and pcap files are sensitive attachments by default.
-- **Release:** final universal build, Developer ID, Hardened Runtime, notarization/staple/Gatekeeper, upgrade, and first-run evidence. Existing ad-hoc checks do not establish formal distribution [S31].
+- **Release:** final arm64-only build, Developer ID, Hardened Runtime, notarization/staple/Gatekeeper, upgrade, and first-run evidence. Existing ad-hoc checks do not establish formal distribution [S31].
 - **Product result:** use redacted real incidents to compare handoff completeness, time, context switching, and incorrect conclusions. Do not claim a specific MTTR improvement from this research.
 
 ## 9. Architecture decisions and deferred work

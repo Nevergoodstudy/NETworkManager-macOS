@@ -20,7 +20,8 @@ daemon 或特权 helper，不监听 HTTP 端口。当前 MCP 接口只提供下�
 
 ### 在应用中连接 Codex
 
-使用本轮新构建、包含 MCP 的 `NETworkManager.app`，要求 macOS 14+。安装后的
+使用本轮新构建、包含 MCP 的 `NETworkManager.app`，要求 Apple Silicon（arm64）Mac
+和 macOS 14+。Intel Mac 不受支持。安装后的
 连接流程不需要终端命令、Swift 工具链或服务器 API key：
 
 1. 把 `NETworkManager.app` 放到“应用程序”，然后打开应用。
@@ -107,6 +108,13 @@ MCP 客户端会构造协议请求。可让客户端执行以下参数示例：
 网络结果还包含 `summary`、`detail`、以秒为单位的 `latencySeconds`（无测量
 值时为 `null`）。DNS 结果包含 `dnsRecords`，每条记录为 `name`、`type`、
 `ttl`、`value`。端口和 OUI 结果是当前随包参考数据，不代表实时服务识别。
+
+TCP 的 `timeout` 现在覆盖系统地址解析和全部地址尝试，共用一个总预算。
+TCP 响应新增可选 `evidence`：`tcpAttempts` 保存地址、地址族、阶段、耗时及
+socket 证据；失败时 `tcpFailure` 保存稳定 `code`、`stage` 和已尝试地址。
+`errno` 表示失败系统调用的错误，`soError` 表示成功读取的 `SO_ERROR`，两者
+分别保存。只有明确拒绝连接才归类为 `refused`，超时不会被解释为端口关闭
+或本地网络权限拒绝。原有顶层字段继续保留，客户端应允许新增可选字段。
 
 参数错误返回 `isError: true`、`status: "failed"` 和
 `error: {"code":"invalid_arguments","message":"..."}`；并发超限使用
@@ -220,8 +228,9 @@ running isolated local checks.
 
 ### Connect Codex from the app
 
-Use a newly built `NETworkManager.app` that includes MCP, on macOS 14 or later.
-The installed app needs no terminal commands, Swift toolchain, or server API key:
+Use a newly built `NETworkManager.app` that includes MCP, on an Apple Silicon
+(arm64) Mac with macOS 14 or later. Intel Macs are unsupported. The installed
+app needs no terminal commands, Swift toolchain, or server API key:
 
 1. Install `NETworkManager.app` in Applications and open it.
 2. Open **Settings → MCP**. The section shows **MCP included and ready**.
@@ -304,6 +313,15 @@ Network results add `summary`, `detail`, and `latencySeconds` in seconds, or
 `null` when no timing is available. DNS adds `dnsRecords` containing `name`,
 `type`, `ttl`, and `value`. Reference lookups reflect the bundled dataset rather
 than live service or vendor discovery.
+
+For TCP, `timeout` is one total budget covering system address resolution and
+all address attempts. TCP responses add optional `evidence`: `tcpAttempts`
+records address, family, stage, elapsed time and socket facts; `tcpFailure`
+adds a stable `code`, `stage` and the attempted addresses on failure. `errno`
+comes from a failing system call; `soError` is a successfully read `SO_ERROR`.
+Only explicit connection refusal produces `refused`. A timeout establishes
+neither a closed port nor a Local Network privacy denial. Existing top-level
+fields are retained; clients should accept additional optional fields.
 
 Invalid arguments return a tool error with `isError: true`, `status: "failed"`,
 and an `error` object containing `code: "invalid_arguments"` and `message`.

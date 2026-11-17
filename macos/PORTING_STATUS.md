@@ -1,5 +1,9 @@
 # macOS 功能对照矩阵
 
+**当前平台政策（2026-11-17）：** macOS 产品仅支持 Apple Silicon（arm64）Mac，最低 macOS 14；Intel Mac 与 Rosetta 执行不受支持。本页在 2026-11-16 及更早记录的 Universal/x86_64 构建和验证属于当时的历史证据，不表示当前仍支持 Intel。当前策略由源码编译检查、仅 arm64 打包、GitHub Actions ARM runner 和分发包架构校验共同执行。
+
+**Current platform policy (2026-11-17):** The macOS product supports Apple Silicon (arm64) Macs only, with macOS 14 as the minimum. Intel Macs and Rosetta execution are unsupported. Universal/x86_64 builds and checks recorded on or before 2026-11-16 are historical evidence and do not describe current support. The policy is enforced by a source compile guard, arm64-only packaging, Apple Silicon GitHub Actions runners, and distribution-bundle architecture checks.
+
 这份矩阵按 Windows 版网站工具清单逐项记录 macOS 版的实际状态。`Native`
 表示功能由 Swift/Core 实现；`System replacement` 表示使用 macOS 自带命令、URL
 scheme 或 Terminal.app 完成相同目的；`Optional dependency` 表示需要用户安装
@@ -92,7 +96,7 @@ arm64 应用及 DMG 打包通过；完整 MCP 套件在应用复制、重命名�
 Apple Developer 签名身份；发布签名与公证需由发布者通过 `CODESIGN_IDENTITY`
 及 Apple Developer 流程完成。应用本身不捆绑 RDP、VNC、lldpd 或 PowerShell。这样可以保持 `.app` 和 DMG
 可分发，并让用户选择符合组织策略的客户端。打包脚本会复制 SwiftPM 资源包，
-支持 arm64 和 x86_64。
+当前打包脚本仅支持 arm64，并会复制 SwiftPM 资源包。
 
 ## 本机验证状态（2026-11-06）
 
@@ -107,7 +111,9 @@ Apple Developer 签名身份；发布签名与公证需由发布者通过 `CODES
 | P2 可观测性连接 | 本地核心、HTTP fixture 与 NetBox 导入确认 GUI 通过，现场互操作未验证 | NetBox 覆盖 v1/v2 token 头、只读分页、重定向与跨源分页拦截、缺凭据、错误脱敏、资产字段映射、未命名设备和安全策略；同步结果先显示可选候选，重复项及无主 IP 设备不可选，显式确认后才调用本地资产合并；URL/凭据变化清除旧预览。新增 Zabbix 活动问题只读 JSON-RPC、Bearer token、trigger/host/interface 映射、HTTPS/loopback 限制及跨源重定向阻断；SNMPv3 标准向量与错误路径通过。真实 NetBox/Zabbix API 和多品牌 SNMP 设备尚未验证。 |
 | P3 排障与证据链 | 本地核心、fixture 与缺凭据 GUI 通过，真实告警互操作未验证 | DNS 等待 UDP 响应时的父任务取消、DNS-SD 主机地址解析的取消/超时资源释放、`localhost` 解析后的真实 TCP loopback connect、已取消父任务启动 TCP 诊断时保留取消状态、异常退出恢复和脱敏导出有本地测试；资产诊断及独立 DNS/WHOIS/SNTP 查询写入同一可筛选历史，旧版无设备关联记录可兼容解码。独立 WHOIS/SNTP 现将取消贯通到底层 TCP/UDP I/O；loopback fixture 验证成功响应与取消，独立查询 GUI 的取消按钮和历史回写已实测。Zabbix 告警可对唯一映射的本地设备运行 Ping，事件 ID、来源、目标、状态与结果写入统一历史；逐主机反馈运行状态、结果摘要/延迟并可按事件打开历史，重复点击受拦截，重复 IP 不强行关联。2026-11-05 最终 GUI 已验证 DNS 成功、WHOIS 失败和 SNTP 超时均回写正确目标、状态及来源；Zabbix GUI 已验证无凭据状态与刷新禁用。真实监控平台闭环和跨 macOS 版本的解析器权限行为仍未测。 |
 | P4 远程会话与受控操作 | 本机 SSH GUI 操作链通过，真实设备未验证 | loopback OpenSSH fixture 上通过严格主机密钥确认、Keychain 身份引用、公钥认证、shell 提示符、经确认发送 `whoami`、回显和脱敏操作记录；设备差异与实际写操作仍未验证。 |
-| P5 稳定与正式分发 | 本地 Universal 构建与临时安装生命周期通过，正式发布未完成 | 最新 Universal `.app`/DMG 的架构、签名结构、plist、镜像校验及临时安装/替换安装/启动/卸载通过；ad-hoc 签名被 `spctl` 拒绝，当前 Keychain 中没有可用 Developer ID 身份。Developer ID、公证、Gatekeeper 首次运行及真实旧版本升级迁移未验证（现有归档 DMG 均为 2026.7.7.0）；当前本机 macOS 27.2 不替代最低支持 macOS 14 的实机测试。 |
+| P5 稳定与正式分发 | 本机 arm64-only `.app`/DMG、MCP 和临时安装生命周期通过；正式签名发布未完成 | 2026-11-17 的 `2026.11.17.0-arm64` 包已经过 Mach-O 全量架构检查、bundle 签名、plist、DMG 校验、MCP 回归、临时安装/替换安装/启动/卸载；该包为 ad-hoc 签名，不代表 Developer ID、公证、Gatekeeper 首次运行或真实旧版本迁移已验证。当前本机 macOS 27.2 不替代最低支持 macOS 14 的实机测试。旧 Universal 验证是历史记录。 |
+
+- 2026-11-17 Apple Silicon-only 政策与交付复验：Debug/Release SwiftPM `NMTest` 与 `NMCheck` 通过；架构策略测试确认 arm64 编译可用，Intel 目标编译和 x86_64/Universal 打包请求在不替换既有输出的情况下失败。Release `NMCP`、GUI app 与资源构建通过；源码 MCP 启动器按 `hw.optional.arm64` 检查硬件能力，因此 Rosetta shell 中的 Apple Silicon 主机仍可使用。生成的 `dist/macos-arm64-2026-11-17-github-preview/NETworkManager-macOS-2026.11.17.0-arm64.dmg` 中，主程序、MCP helper 及全部 Mach-O 文件均只有 arm64，Info.plist 要求原生执行且优先 arm64。MCP stdio/搬迁签名套件、DMG 镜像校验、临时安装/启动/替换升级/再次启动/卸载全部通过。ad-hoc 签名已验证，但本机没有进行 Developer ID、公证与 Gatekeeper 放行测试。DMG SHA-256：`e105572f466c2962e3b709d0a30da311eb3a43270b897005dd70e714f6dadb3a`。验证环境：arm64、macOS 27.2、Swift 6.4.2；最低 macOS 14 实机回归仍未完成。
 
 - 2026-11-06 发布就绪复核：Release `NMTest`、Release `NMCheck` 和 workflow YAML 语法验证通过；从当前源码重建 Universal app/DMG，`lipo` 确认 `arm64`/`x86_64`，签名结构与 `Info.plist` 验证通过，`hdiutil verify` 和临时安装/启动/替换升级/卸载生命周期通过。该包为 ad-hoc 签名，`spctl` 明确拒绝；本机没有有效 Developer ID identity 或 `NETworkManagerRelease` Notary profile，因此正式签名、公证和 Gatekeeper 放行未完成。当前本地候选 DMG：`dist/macos-delivery-2026-11-06-local-adhoc/NETworkManager-macOS-2026.7.7.0-universal.dmg`；SHA-256：`442f869c8d1f97057699e3aa37e8a2e2693830cb518c880e87fe3c62bdfed442`。GitHub Actions 现对普通工作流仅授予 `contents: read`，正式发布 job 单独提权为 `contents: write`；`script/**` 与 `Images/**` 改动也会触发构建。当前目录没有 Git 提交历史或 remote，无法从此目录推送或创建 GitHub Release。真实 NetBox/Zabbix 与多厂商 SNMP 互操作、最低支持 macOS 14 实机回归仍未完成。 |
 

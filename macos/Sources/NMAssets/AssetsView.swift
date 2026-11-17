@@ -535,11 +535,9 @@ struct DeviceInspector: View {
             case .sntp: result = await DiagnosticService.runSNTP(host: target, timeout: timeout)
             case .snmp: result = await DiagnosticService.runSNMP(host: target, port: port, timeout: timeout, oid: oid, version: version, authProtocol: authProtocol, securityLevel: securityLevel, credential: credentialSecret)
             }
-            let finalResult = Task.isCancelled
-                ? DiagnosticExecutionResult(status: .cancelled, summary: t("Diagnostic cancelled"), source: result.source)
-                : result
+            let finalResult = result
             await MainActor.run {
-                store.finishDiagnostic(id: runID, status: finalResult.status, summary: finalResult.summary, detail: finalResult.detail, latency: finalResult.latency, source: finalResult.source)
+                store.finishDiagnostic(id: runID, status: finalResult.status, summary: finalResult.summary, detail: finalResult.detail, latency: finalResult.latency, source: finalResult.source, evidence: finalResult.evidence)
                 OperationsTelemetry.diagnosticFinished(kind: kind, status: finalResult.status, runID: runID, duration: Date().timeIntervalSince(startedAt))
                 message = finalResult.latency.map { tf("%@ · %@", finalResult.summary, Fmt.ms($0)) } ?? finalResult.summary
                 activeDiagnostic = nil

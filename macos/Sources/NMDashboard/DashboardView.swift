@@ -5,8 +5,8 @@ import NMCore
 public struct DashboardView: View {
     @Environment(\.palette) private var palette
     @NMStateCompat private var interfaces: [NetworkInterfaceInfo] = []
-    @NMStateCompat private var sockets: [SocketEntry] = []
-    @NMStateCompat private var neighbors: [NeighborEntry] = []
+    @NMStateCompat private var socketResult: SocketInventoryResult?
+    @NMStateCompat private var neighborResult: SystemInventoryResult<NeighborEntry>?
     @NMStateCompat private var gateway = ""
     @NMStateCompat private var routeInterface = ""
     @NMStateCompat private var routeError: String?
@@ -35,6 +35,40 @@ public struct DashboardView: View {
                 openPortScanner: @escaping (String) -> Void = { _ in }) {
         self.openTool = openTool
         self.openPortScanner = openPortScanner
+    }
+
+    private var sockets: [SocketEntry] { socketResult?.entries ?? [] }
+    private var neighbors: [NeighborEntry] { neighborResult?.entries ?? [] }
+    private var socketCountDisplay: String {
+        guard let socketResult, socketResult.state != .unavailable else { return "—" }
+        return "\(socketResult.entries.count)"
+    }
+    private var neighborCountDisplay: String {
+        guard let neighborResult,
+              neighborResult.state != .unavailable,
+              neighborResult.state != .limited else { return "—" }
+        return "\(neighborResult.entries.count)"
+    }
+
+    private var socketSummary: String {
+        guard let socketResult else { return t("Socket inventory has not been refreshed.") }
+        switch socketResult.state {
+        case .loaded: return tf("Returned %d record(s).", socketResult.entries.count)
+        case .empty: return t("No visible sockets found")
+        case .partial: return t("Socket data may be incomplete")
+        case .unavailable: return t("Socket inventory unavailable")
+        }
+    }
+
+    private var neighborSummary: String {
+        guard let neighborResult else { return t("Neighbor table has not been refreshed.") }
+        switch neighborResult.state {
+        case .loaded: return tf("Returned %d record(s).", neighborResult.entries.count)
+        case .empty: return t("No neighbor entries were returned.")
+        case .partial: return t("Neighbor data may be incomplete.")
+        case .unavailable: return t("Neighbor inventory unavailable")
+        case .limited: return t("Some requested system network fields were not provided.")
+        }
     }
 
     public var body: some View {
@@ -110,8 +144,8 @@ public struct DashboardView: View {
         let gridColumns = Array(repeating: GridItem(.flexible(), spacing: 12), count: columns)
         return LazyVGrid(columns: gridColumns, alignment: .leading, spacing: 12) {
             metric(title: "Primary IPv4", value: primaryIPv4, detail: routeInterface.isEmpty ? t("No default interface") : routeInterface, icon: "network")
-            metric(title: "Active sockets", value: "\(sockets.count)", detail: t("Connections and listeners"), icon: "arrow.left.arrow.right")
-            metric(title: "Known neighbors", value: neighbors.isEmpty ? "—" : "\(neighbors.count)", detail: neighbors.isEmpty ? t("No ARP data returned") : t("macOS ARP cache"), icon: "point.3.connected.trianglepath.dotted")
+            metric(title: "Active sockets", value: socketCountDisplay, detail: socketSummary, icon: "arrow.left.arrow.right")
+            metric(title: "Known neighbors", value: neighborCountDisplay, detail: neighborSummary, icon: "point.3.connected.trianglepath.dotted")
         }
     }
 
@@ -269,16 +303,26 @@ public struct DashboardView: View {
     }
 
     private var neighborsPanel: some View {
-        panel(title: t("Local neighbors"), icon: "point.3.connected.trianglepath.dotted", trailing: "\(neighbors.count)") {
+        panel(title: t("Local neighbors"), icon: "point.3.connected.trianglepath.dotted", trailing: neighborCountDisplay) {
+            if let neighborResult, neighborResult.state == .partial {
+                Label(neighborSummary, systemImage: "exclamationmark.triangle")
+                    .font(.caption).foregroundStyle(palette.warning)
+            }
             if neighbors.isEmpty {
-                emptyMessage("macOS returned no neighbor records.")
+                Text(neighborSummary)
+                    .font(.callout)
+                    .foregroundStyle(neighborResult?.state == .unavailable ? palette.danger : palette.textSecondary)
+                    .padding(.vertical, 5)
             } else {
                 ForEach(neighbors.prefix(6)) { item in
                     HStack(spacing: 8) {
-                        Circle().fill(palette.success).frame(width: 7, height: 7)
+                        Circle().fill(item.state == "Resolved" ? palette.success :
+                                      (item.state == "Incomplete" ? palette.warning : palette.textSecondary))
+                            .frame(width: 7, height: 7)
                         Text(item.address).font(.callout.monospaced())
                         Spacer(minLength: 4)
                         Text(item.macAddress).font(.caption.monospaced()).foregroundStyle(palette.textSecondary)
+                        Text(t(item.state)).font(.caption).foregroundStyle(palette.textSecondary)
                         Text(item.interface).font(.caption).foregroundStyle(palette.textSecondary)
                     }
                     .padding(.vertical, 3)
@@ -289,9 +333,16 @@ public struct DashboardView: View {
     }
 
     private var socketsPanel: some View {
-        panel(title: t("Live sockets"), icon: "arrow.left.arrow.right", trailing: "\(sockets.count)") {
+        panel(title: t("Live sockets"), icon: "arrow.left.arrow.right", trailing: socketCountDisplay) {
+            if let socketResult, socketResult.state == .partial {
+                Label(socketSummary, systemImage: "exclamationmark.triangle")
+                    .font(.caption).foregroundStyle(palette.warning)
+            }
             if sockets.isEmpty {
-                emptyMessage("No IP sockets were returned by macOS.")
+                Text(socketSummary)
+                    .font(.callout)
+                    .foregroundStyle(socketResult?.state == .unavailable ? palette.danger : palette.textSecondary)
+                    .padding(.vertical, 5)
             } else {
                 ForEach(sockets.prefix(6)) { item in
                     VStack(alignment: .leading, spacing: 2) {
@@ -439,11 +490,13 @@ public struct DashboardView: View {
             let snapshot = await Task.detached(priority: .userInitiated) {
                 let routeResult = DefaultRouteInventory.current()
                 let interfaces = NetworkInterfaces.list()
+                let sockets = SocketInventory.collectSync()
+                let neighbors = NeighborTable.collectSync()
                 let route = routeResult.route
                 return DashboardSnapshot(
                     interfaces: interfaces,
-                    sockets: SocketInventory.list(),
-                    neighbors: NeighborTable.list(),
+                    sockets: sockets,
+                    neighbors: neighbors,
                     gateway: route?.gateway ?? "",
                     routeInterface: route?.interface ?? "",
                     routeError: routeResult.error,
@@ -452,8 +505,8 @@ public struct DashboardView: View {
             }.value
 
             interfaces = snapshot.interfaces
-            sockets = snapshot.sockets
-            neighbors = snapshot.neighbors
+            socketResult = snapshot.sockets
+            neighborResult = snapshot.neighbors
             gateway = snapshot.gateway
             routeInterface = snapshot.routeInterface
             routeError = snapshot.routeError
@@ -572,7 +625,7 @@ public struct DashboardView: View {
                     ? tf("Stopped after %d of %d addresses.", scannedHosts, totalHosts)
                     : tf("Completed: %d of %d hosts responded.", discoveryResults.count, totalHosts)
                 if !wasCancelled {
-                    neighbors = await Task.detached(priority: .utility) { NeighborTable.list() }.value
+                    neighborResult = await NeighborTable.collect()
                     refreshedAt = Date()
                 }
             }
@@ -612,8 +665,8 @@ public struct DashboardView: View {
 
 private struct DashboardSnapshot: Sendable {
     let interfaces: [NetworkInterfaceInfo]
-    let sockets: [SocketEntry]
-    let neighbors: [NeighborEntry]
+    let sockets: SocketInventoryResult
+    let neighbors: SystemInventoryResult<NeighborEntry>
     let gateway: String
     let routeInterface: String
     let routeError: String?

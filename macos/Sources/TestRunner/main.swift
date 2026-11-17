@@ -2,13 +2,17 @@ import Foundation
 import Darwin
 import CryptoKit
 @testable import NMCore
-import NMScanners
+@testable import NMScanners
 import NMCalculators
 import NMRemote
 import NMIntegrations
 
 struct CheckFailure: Error, CustomStringConvertible {
     let description: String
+}
+
+private struct ScannerProbeFixtureError: LocalizedError {
+    var errorDescription: String? { "fixture initialization failed" }
 }
 
 final class DiagnosticStatusBox: @unchecked Sendable {
@@ -19,8 +23,51 @@ final class DiagnosticStatusBox: @unchecked Sendable {
     func get() -> DiagnosticRunStatus? { lock.lock(); defer { lock.unlock() }; return value }
 }
 
+final class ScannerBatchFixture: @unchecked Sendable {
+    private let lock = NSLock()
+    private var progressEvents: [(Int, String?)] = []
+    private var launchedProbes = 0
+
+    func recordProgress(_ completed: Int, _ host: String?) {
+        lock.lock(); progressEvents.append((completed, host)); lock.unlock()
+    }
+
+    func recordProbeStart() {
+        lock.lock(); launchedProbes += 1; lock.unlock()
+    }
+
+    var events: [(Int, String?)] {
+        lock.lock(); defer { lock.unlock() }
+        return progressEvents
+    }
+
+    var probeCount: Int {
+        lock.lock(); defer { lock.unlock() }
+        return launchedProbes
+    }
+}
+
+final class PortBatchFixture: @unchecked Sendable {
+    private let lock = NSLock()
+    private var resultPorts: [Int] = []
+    private var startedProbes = 0
+
+    func recordResult(_ port: Int) { lock.lock(); resultPorts.append(port); lock.unlock() }
+    func recordProbeStart() { lock.lock(); startedProbes += 1; lock.unlock() }
+
+    var ports: [Int] { lock.lock(); defer { lock.unlock() }; return resultPorts }
+    var probeCount: Int { lock.lock(); defer { lock.unlock() }; return startedProbes }
+}
+
 func check(_ condition: @autoclosure () -> Bool, _ message: String) throws {
     guard condition() else { throw CheckFailure(description: message) }
+}
+
+private func waitForSemaphoreSignals(_ semaphore: DispatchSemaphore, count: Int,
+                                     timeout: TimeInterval) -> Bool {
+    let deadline = DispatchTime.now() + timeout
+    for _ in 0..<count where semaphore.wait(timeout: deadline) != .success { return false }
+    return true
 }
 
 func loopbackNTPResponse(for request: Data) -> Data? {
@@ -103,7 +150,7 @@ private func checkAddressResolutionCancellation() throws {
 }
 
 final class LoopbackTCPListener {
-    let fileDescriptor: Int32
+    private(set) var fileDescriptor: Int32
     let port: Int
 
     init() throws {
@@ -140,6 +187,12 @@ final class LoopbackTCPListener {
     }
 
     deinit { close(fileDescriptor) }
+
+    func closeListener() {
+        guard fileDescriptor >= 0 else { return }
+        close(fileDescriptor)
+        fileDescriptor = -1
+    }
 }
 
 final class LoopbackWhoisFixture: @unchecked Sendable {
@@ -191,6 +244,40 @@ final class LoopbackWhoisFixture: @unchecked Sendable {
         } else {
             while recv(client, &buffer, buffer.count, 0) > 0 {}
         }
+    }
+}
+
+if CommandLine.arguments.contains("--ping-only") {
+    do {
+        try await PingChecks.run()
+        print("NMTest: Ping checks passed")
+        exit(0)
+    } catch {
+        fputs("NMTest: FAILED: " + String(describing: error) + String(UnicodeScalar(10)), stderr)
+        exit(1)
+    }
+}
+
+if CommandLine.arguments.contains("--dns-only") {
+    do {
+        try DNSResponseChecks.run()
+        try await DNSTransportChecks.run()
+        print("NMTest: DNS checks passed")
+        exit(0)
+    } catch {
+        fputs("NMTest: FAILED: \(error)\n", stderr)
+        exit(1)
+    }
+}
+
+if CommandLine.arguments.contains("--socket-inventory-only") {
+    do {
+        try await SocketInventoryChecks.run()
+        print("NMTest: socket inventory checks passed")
+        exit(0)
+    } catch {
+        fputs("NMTest: FAILED: \(error)\n", stderr)
+        exit(1)
     }
 }
 
@@ -247,26 +334,240 @@ do {
     let sockets = SocketInventory.parse("COMMAND PID USER FD TYPE DEVICE SIZE/OFF NODE NAME\nnginx 42 root 6u IPv4 0 0 TCP 127.0.0.1:8080 (LISTEN)\ncurl 43 user 7u IPv4 0 0 TCP 127.0.0.1:5000->93.184.216.34:443 (ESTABLISHED)\n")
     try check(sockets.count == 2 && sockets[0].state == "LISTEN", "socket parser")
     let neighbors = NeighborTable.parse("? (192.168.1.1) at aa:bb:cc:dd:ee:ff on en0 ifscope [ethernet]\n")
-    try check(neighbors.first?.macAddress == "AA:BB:CC:DD:EE:FF" && neighbors.first?.interface == "en0", "neighbor parser")
+    try check(neighbors.first?.macAddress == "AA:BB:CC:DD:EE:FF" && neighbors.first?.interface == "en0" &&
+              neighbors.first?.state == "Resolved", "neighbor parser reports a cached MAC as resolved, not live reachability")
+    for mac in ["1:0:5e:0:0:fb", "01:00:5E:00:00:FB", "01-00-5e-00-00-fb"] {
+        let result = NeighborTable.interpret(CommandResult(status: 0,
+            stdout: "? (224.0.0.251) at \(mac) on en0 ifscope permanent [ethernet]\n", stderr: ""))
+        try check(result.state == .loaded && result.issues.isEmpty && result.entries.count == 1 &&
+                  result.entries.first?.macAddress == "01:00:5E:00:00:FB" &&
+                  result.entries.first?.state == "Permanent",
+                  "ARP accepts and normalizes six padded or unpadded hexadecimal octets")
+    }
+    for mac in ["aa:bb:cc:dd:ee", "aa:bb:cc:dd:ee:ff:00", "aaa:b:cc:dd:ee:ff",
+                "aa::bb:cc:dd:ee:ff", "aa:bb-cc:dd:ee:ff", "gg:bb:cc:dd:ee:ff"] {
+        let result = NeighborTable.interpret(CommandResult(status: 0,
+            stdout: "? (192.0.2.1) at \(mac) on en0\n", stderr: ""))
+        try check(result.state == .unavailable && result.entries.isEmpty &&
+                  result.issues.contains(.unrecognizedOutput) && result.unrecognizedRecordCount == 1,
+                  "ARP rejects malformed octets and reports unrecognized output")
+    }
+    let incompleteNeighbor = NeighborTable.parse("? (192.168.1.22) at (incomplete) on en0 ifscope [ethernet]\n")
+    try check(incompleteNeighbor.first?.state == "Incomplete" && incompleteNeighbor.first?.macAddress.isEmpty == true,
+              "incomplete ARP rows are not presented as reachable MAC entries")
+    let emptyNeighbors = NeighborTable.interpret(CommandResult(status: 0, stdout: "", stderr: ""))
+    try check(emptyNeighbors.state == .empty, "a successful empty neighbor query stays distinct from failure")
+    let partialNeighbors = NeighborTable.interpret(CommandResult(
+        status: 0,
+        stdout: "? (192.168.1.1) at aa:bb:cc:dd:ee:ff on en0\ninvalid record\n",
+        stderr: "warning"
+    ))
+    try check(partialNeighbors.state == .partial && partialNeighbors.entries.count == 1 &&
+              partialNeighbors.unrecognizedRecordCount == 1,
+              "valid ARP rows remain visible when command output also contains a warning or malformed record")
+    let failedNeighbors = NeighborTable.interpret(CommandResult(status: 1, stdout: "", stderr: "failed"))
+    try check(failedNeighbors.state == .unavailable && failedNeighbors.issues.contains(.executionFailed),
+              "neighbor command failures do not look like an empty table")
+    let liveNeighbors = NeighborTable.collectSync()
+    try check(liveNeighbors.command.status == 0 &&
+              [.loaded, .empty, .partial].contains(liveNeighbors.state),
+              "the system ARP adapter returns a classified live result (status=\(liveNeighbors.command.status), state=\(liveNeighbors.state.rawValue), issues=\(liveNeighbors.issues.map(\.rawValue)), rejected=\(liveNeighbors.unrecognizedRecordCount))")
     let route = DefaultRouteInventory.parse("route to: default\ndestination: default\n       gateway: 192.168.1.1\n  interface: en0\n")
     try check(route == DefaultRouteInfo(gateway: "192.168.1.1", interface: "en0"), "default route parser")
     try check(DefaultRouteInventory.parse("interface: en0\n") == nil, "incomplete default route")
     let wifi = WiFiInventory.parse("AirPort:\n  en0:\n    Current Network Information:\n      Office WiFi:\n        BSSID: aa:bb:cc:dd:ee:ff\n        Channel: 36\n        Security: WPA2 Personal\n        Signal / Noise: -50 dBm / -90 dBm\n")
     try check(wifi.first?.bssid == "aa:bb:cc:dd:ee:ff" && wifi.first?.channel == "36", "wifi parser")
+    let limitedWiFi = WiFiInventory.interpret(CommandResult(status: 0, stdout: "AirPort:\n  en0:\n", stderr: ""))
+    try check(limitedWiFi.state == .empty && limitedWiFi.issues.isEmpty,
+              "an interface-only Wi-Fi summary stays empty when it provides no evidence for why details are absent")
+    let unknownWiFi = WiFiInventory.interpret(CommandResult(status: 0, stdout: "unexpected profiler format\n", stderr: ""))
+    try check(unknownWiFi.state == .unavailable && unknownWiFi.issues.contains(.unrecognizedOutput) &&
+              unknownWiFi.unrecognizedRecordCount == 1,
+              "non-empty Wi-Fi output that the parser cannot recognize is reported with a line count")
+    let failedWiFi = WiFiInventory.interpret(CommandResult(status: 127, stdout: "", stderr: "missing"))
+    try check(failedWiFi.state == .unavailable && failedWiFi.issues.contains(.executionFailed),
+              "system_profiler failures remain distinct from unavailable Wi-Fi fields")
+    let liveWiFi = WiFiInventory.collectSync()
+    try check(liveWiFi.command.status == 0 &&
+              [.loaded, .empty, .partial, .unavailable].contains(liveWiFi.state),
+              "the system_profiler adapter returns a classified live result without logging Wi-Fi identifiers")
     try check(DNSClient.reverseName(for: "192.0.2.1") == "1.2.0.192.in-addr.arpa", "reverse DNS")
+    let parsedDNSServers = DNSClient.parseSystemServers(
+        resolvConf: "nameserver 10.0.0.1\nnameserver 2001:db8::53\n",
+        scutilOutput: "resolver #1\n  nameserver[0] : 2001:db8::53\n  nameserver[1] : fe80::1%en0\n"
+    )
+    try check(parsedDNSServers == ["10.0.0.1", "2001:db8::53", "fe80::1%en0"],
+              "resolver inventory parsing preserves complete IPv6 servers and removes duplicates")
+    try check(DNSClient.parseSystemServers(resolvConf: nil, scutilOutput: "").isEmpty,
+              "an empty resolver inventory does not invent public DNS servers")
+    var implicitDNSServerRejected = false
+    do { _ = try DNSClient.query(name: "example.com", type: .a) }
+    catch DNSError.serverRequired { implicitDNSServerRejected = true }
+    try check(implicitDNSServerRejected, "raw DNS packet queries require an explicitly selected server")
     try checkAddressResolutionCancellation()
     let localhostAddresses = try SocketAddressResolver.resolve("localhost", port: 80, timeout: 3)
     try check(localhostAddresses.contains { $0.family == AF_INET && $0.numericAddress == "127.0.0.1" }, "system DNS-SD resolves localhost IPv4")
     try check(localhostAddresses.allSatisfy { $0.length > 0 && $0.bytes.count == Int($0.length) }, "resolved sockaddr values preserve their platform lengths")
+    let systemDNS = await DiagnosticService.runDNS(host: "localhost", recordType: .a, timeout: 3, mode: .system)
+    try check(systemDNS.status == .succeeded && systemDNS.dnsRecords.contains { $0.value == "127.0.0.1" && $0.ttl == nil },
+              "system DNS mode uses macOS resolution and does not fabricate a TTL")
+    let systemAAAA = await DiagnosticService.runDNS(host: "localhost", recordType: .aaaa, timeout: 3, mode: .system)
+    try check(systemAAAA.status == .succeeded && systemAAAA.dnsRecords.allSatisfy { $0.type == .aaaa && $0.ttl == nil },
+              "system DNS mode supports AAAA results without inventing a TTL")
+    let unsupportedSystemDNS = await DiagnosticService.runDNS(host: "localhost", recordType: .mx, mode: .system)
+    try check(unsupportedSystemDNS.status == .failed && unsupportedSystemDNS.summary == DNSError.systemResolverRecordType.localizedDescription,
+              "system DNS mode rejects record types unavailable through address resolution")
     let tcpFixture = try LoopbackTCPListener()
     let resolvedTCP = try awaitNetBoxFixture {
         await DiagnosticService.runTCP(host: "localhost", port: tcpFixture.port, timeout: 1)
     }
     try check(resolvedTCP.status == .succeeded, "TCP diagnostic connects through the cancellable localhost resolver")
+    let refusedPort = try LoopbackTCPListener()
+    let refusedNumber = refusedPort.port
+    refusedPort.closeListener()
+    let refused = TCPProbe.probe(host: "127.0.0.1", port: refusedNumber, timeout: 0.5)
+    try check(refused.failure?.code == .refused && refused.status == .closed && (refused.failure?.errno == Int32(ECONNREFUSED) || refused.failure?.soError == Int32(ECONNREFUSED)),
+              "TCP refusal preserves ECONNREFUSED instead of treating every failure as closed")
+    let missingTool = await Shell.runTool("__networkmanager_missing_test_tool__", timeout: 1)
+    try check(missingTool.failureCode == .missingExecutable && !missingTool.succeeded,
+              "missing process dependencies have a stable launch failure")
+    let boundedOutput = await Shell.run("/bin/sh", ["-c", "i=0; while [ $i -lt 20000 ]; do printf x; printf y >&2; i=$((i+1)); done"],
+                                        timeout: 5, maximumOutputBytesPerStream: 256)
+    try check(boundedOutput.stdoutTruncated && boundedOutput.stderrTruncated &&
+              boundedOutput.stdoutBytesObserved > boundedOutput.stdout.utf8.count &&
+              boundedOutput.stderrBytesObserved > boundedOutput.stderr.utf8.count,
+              "bounded process capture drains both noisy output streams")
     let cancelledPortScan = DiagnosticCancellation()
     cancelledPortScan.cancel()
     let skippedPorts = await TCPProbe.scan(host: "127.0.0.1", ports: [1, 2, 3], timeout: 10, cancellation: cancelledPortScan)
     try check(skippedPorts.isEmpty, "a cancelled port scan starts no probes")
+    let completedPortBatch = PortBatchFixture()
+    let tcpBatch = await TCPProbe.scan(
+        host: "fixture", ports: [9, 8, 7], timeout: 1, concurrency: 2,
+        cancellation: DiagnosticCancellation(), progress: { completedPortBatch.recordResult($0.port) }
+    ) { _, port, _, _ in
+        PortProbeResult(port: port, status: .closed, latency: nil)
+    }
+    try check(tcpBatch.map(\.port) == [7, 8, 9] && Set(completedPortBatch.ports) == Set([7, 8, 9]),
+              "TCP batch progress reports each completed port while results remain sorted")
+
+    let cancelledTCPBatchToken = DiagnosticCancellation()
+    let cancelledPortBatch = PortBatchFixture()
+    let startedTCPProbes = DispatchSemaphore(value: 0)
+    let tcpBatchTask = Task {
+        await TCPProbe.scan(
+            host: "fixture", ports: Array(1...8), timeout: 10, concurrency: 2,
+            cancellation: cancelledTCPBatchToken,
+            progress: { result in cancelledPortBatch.recordResult(result.port) }
+        ) { _, port, _, cancellation in
+            cancelledPortBatch.recordProbeStart()
+            startedTCPProbes.signal()
+            while !cancellation.isCancelled { usleep(1_000) }
+            return TCPProbe.probe(host: "127.0.0.1", port: port, cancellation: cancellation)
+        }
+    }
+    let bothTCPProbesStarted = await Task.detached {
+        waitForSemaphoreSignals(startedTCPProbes, count: 2, timeout: 2)
+    }.value
+    tcpBatchTask.cancel()
+    let cancelledTCPResults = await tcpBatchTask.value
+    try check(bothTCPProbesStarted && cancelledTCPBatchToken.isCancelled && cancelledTCPResults.isEmpty &&
+              cancelledPortBatch.probeCount == 2 && cancelledPortBatch.ports.isEmpty,
+              "cancelling a TCP batch cancels in-flight probes and dispatches no additional ports")
+    let initializationFailure = await ScannerView.scanIPTarget(
+        "unresolvable.fixture", timeout: 0.1, attempts: 1, cancellation: DiagnosticCancellation()
+    ) { _, _, _ in
+        throw ScannerProbeFixtureError()
+    }
+    try check(initializationFailure?.host == "unresolvable.fixture" && initializationFailure?.success == false &&
+              initializationFailure?.details == "fixture initialization failed",
+              "IP scan setup failures remain visible as failed target rows")
+    let cancelledIPScan = DiagnosticCancellation()
+    cancelledIPScan.cancel()
+    let cancelledTarget = await ScannerView.scanIPTarget(
+        "cancelled.fixture", timeout: 0.1, attempts: 1, cancellation: cancelledIPScan
+    ) { _, _, _ in
+        throw ScannerProbeFixtureError()
+    }
+    try check(cancelledTarget?.host == nil, "a cancelled IP scan does not emit a setup-failure row")
+    let runningCancellation = DiagnosticCancellation()
+    let runningScanTask = Task {
+        await ScannerView.scanIPTarget(
+            "running.fixture", timeout: 10, attempts: 1, cancellation: runningCancellation
+        ) { _, _, cancellation in
+            while !cancellation.isCancelled { usleep(1_000) }
+            return nil
+        }
+    }
+    try await Task.sleep(for: .milliseconds(20))
+    runningScanTask.cancel()
+    let cancelledRunningTarget = await runningScanTask.value
+    try check(cancelledRunningTarget?.host == nil && runningCancellation.isCancelled,
+              "cancelling an IP scan task also stops its detached blocking probe")
+    let batchProgress = ScannerBatchFixture()
+    let batchHosts = ["192.0.2.1", "192.0.2.2", "192.0.2.3", "192.0.2.4"]
+    let batchCompleted = await ScannerView.scanIPTargets(
+        batchHosts, concurrency: 2, timeout: 1, attempts: 1, cancellation: DiagnosticCancellation(),
+        probe: { _, _, _ in nil }
+    ) { completed, row in
+        batchProgress.recordProgress(completed, row?.host)
+    }
+    let progressEvents = batchProgress.events
+    try check(batchCompleted == batchHosts.count && progressEvents.map(\.0) == Array(1...batchHosts.count) &&
+              Set(progressEvents.compactMap(\.1)) == Set(batchHosts),
+              "IP batch progress advances once for every completed target")
+
+    let cancelledBatchToken = DiagnosticCancellation()
+    let cancelledBatch = ScannerBatchFixture()
+    let startedProbes = DispatchSemaphore(value: 0)
+    let batchTask = Task {
+        await ScannerView.scanIPTargets(
+            (0..<8).map { "192.0.2.\($0 + 1)" }, concurrency: 2, timeout: 10, attempts: 1,
+            cancellation: cancelledBatchToken,
+            probe: { _, _, cancellation in
+                cancelledBatch.recordProbeStart()
+                startedProbes.signal()
+                while !cancellation.isCancelled { usleep(1_000) }
+                return nil
+            }
+        ) { completed, row in
+            cancelledBatch.recordProgress(completed, row?.host)
+        }
+    }
+    let bothStarted = await Task.detached {
+        waitForSemaphoreSignals(startedProbes, count: 2, timeout: 2)
+    }.value
+    batchTask.cancel()
+    let cancelledBatchCompleted = await batchTask.value
+    try check(bothStarted && cancelledBatchToken.isCancelled && cancelledBatchCompleted == 0 &&
+              cancelledBatch.probeCount == 2 && cancelledBatch.events.isEmpty,
+              "cancelling an IP batch stops in-flight probes without dispatching more targets")
+
+    let stoppedIPBatchToken = DiagnosticCancellation()
+    let stoppedIPBatch = ScannerBatchFixture()
+    let secondIPProbeStarted = DispatchSemaphore(value: 0)
+    let stoppedIPBatchCount = await ScannerView.scanIPTargets(
+        ["fast.fixture", "slow.fixture", "never.fixture"], concurrency: 2,
+        timeout: 10, attempts: 1, cancellation: stoppedIPBatchToken,
+        probe: { host, _, cancellation in
+            stoppedIPBatch.recordProbeStart()
+            if host == "fast.fixture" {
+                _ = secondIPProbeStarted.wait(timeout: .now() + 2)
+                return ICMPReply(sequence: 1, outcome: .timeout, rtt: nil, ttl: nil, source: nil)
+            }
+            secondIPProbeStarted.signal()
+            while !cancellation.isCancelled { usleep(1_000) }
+            return nil
+        }
+    ) { completed, row in
+        stoppedIPBatch.recordProgress(completed, row?.host)
+        if row?.host == "fast.fixture" { stoppedIPBatchToken.cancel() }
+    }
+    try check(stoppedIPBatchCount == 1 && stoppedIPBatch.events.map(\.1) == ["fast.fixture"] &&
+              stoppedIPBatch.probeCount == 2,
+              "IP batches retain a completed row returned before stop and do not dispatch the next target " +
+              "(completed=\(stoppedIPBatchCount), events=\(stoppedIPBatch.events.map(\.1)), " +
+              "probes=\(stoppedIPBatch.probeCount), cancelled=\(stoppedIPBatchToken.isCancelled))")
     try check(SNMPValue.integer(7).displayValue == "7", "SNMP value")
     let echoedCommunity = "fixture-community-secret"
     let redactedSNMPValue = DiagnosticSecretRedactor.redact("returned=\(echoedCommunity)", secrets: [echoedCommunity])
@@ -730,6 +1031,8 @@ do {
     try reloadedCredentialStore.remove(credential)
     try check((try? reloadedCredentialStore.secret(for: credential)) == nil, "Keychain credential removal")
 
+    try DNSResponseChecks.run()
+    try await DNSTransportChecks.run()
     let dnsFixture = try DNSFixtureServer()
     defer { dnsFixture.stop() }
     let dnsStatus = DiagnosticStatusBox()
@@ -780,6 +1083,11 @@ do {
     } else {
         throw CheckFailure(description: "a cancelled ICMP probe should not fall back or report a timeout")
     }
+    try await DiagnosticRuntimeEvidenceChecks.run()
+    try TCPProbeChecks.run()
+    try await PingChecks.run()
+    try await ProcessRuntimeChecks.run()
+    try await SocketInventoryChecks.run()
     try await MCPClientConnectionChecks.run()
     print("NMTest: all checks passed")
 } catch {

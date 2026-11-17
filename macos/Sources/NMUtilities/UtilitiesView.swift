@@ -126,15 +126,18 @@ public struct UtilitiesView: View {
     private func run() {
         isRunning = true; error = nil; output = ""
         Task {
-            let result: CommandResult
             if kind == .traceroute {
-                result = await Shell.runTool("traceroute", ["-m", "16", host], timeout: 45)
+                let result = await DiagnosticService.runTraceroute(host: host)
+                output = result.displayOutput ?? result.detail
+                if result.status != .succeeded { error = result.summary }
             } else {
                 // The command utility intentionally runs through /bin/sh so that
                 // users can compose local diagnostics. It never runs implicitly.
-                result = await Shell.runShell(command, timeout: 30)
+                let result = await Shell.runShell(command, timeout: 30)
+                output = result.output
+                if !result.succeeded { error = result.output }
             }
-            output = result.output; if !result.succeeded { error = result.output }; isRunning = false
+            isRunning = false
         }
     }
 
