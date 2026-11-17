@@ -12,11 +12,11 @@ esac
   exit 2
 }
 
-# Use the explicit arm64 build directory, never a host-dependent shortcut.
-# Avoid invoking SwiftPM at all on a warm launch: even --show-bin-path can
-# wait for another build's package lock and consume the handshake timeout.
-BINARY="$MACOS_DIR/.build/arm64-apple-macos/$CONFIGURATION/NMCP"
-if [[ ! -x "$BINARY" ]]; then
+# SwiftPM maintains configuration links for both its native and Xcode build
+# backends. Check the architecture before using a warm binary, so an old Intel
+# cache is rebuilt while a valid arm64 launch avoids SwiftPM and its package lock.
+BINARY="$MACOS_DIR/.build/$CONFIGURATION/NMCP"
+if [[ ! -x "$BINARY" ]] || [[ "$(/usr/bin/lipo -archs "$BINARY" 2>/dev/null || true)" != "arm64" ]]; then
   # Never let a first-use build read the client's queued initialize message.
   # Rebuild explicitly after source changes.
   swift build --package-path "$MACOS_DIR" --configuration "$CONFIGURATION" --product NMCP --triple arm64-apple-macos14 </dev/null >&2
