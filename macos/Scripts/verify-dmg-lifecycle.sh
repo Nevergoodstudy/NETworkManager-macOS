@@ -92,6 +92,7 @@ MOUNT_ATTACHED=1
 
 verify_app() {
   local app="$1"
+  "$SCRIPT_DIR/verify-arm64.sh" "$app"
   /usr/bin/codesign --verify --deep --strict "$app"
   /usr/bin/codesign --verify --strict "$app/Contents/Helpers/NMCP"
   /usr/bin/plutil -lint "$app/Contents/Info.plist"

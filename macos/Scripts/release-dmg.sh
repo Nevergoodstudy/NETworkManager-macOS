@@ -4,8 +4,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MACOS_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_DIR="$(cd "$MACOS_DIR/.." && pwd)"
-VERSION="${VERSION:-2026.7.7.0}"
-ARCHITECTURE="${ARCHITECTURE:-universal}"
+VERSION="${VERSION:-$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$MACOS_DIR/Resources/Info.plist")}"
+ARCHITECTURE="${ARCHITECTURE:-arm64}"
 DIST_DIR="${DIST_DIR:-$REPO_DIR/dist/macos}"
 APP_PATH="$DIST_DIR/NETworkManager.app"
 DMG_PATH="$DIST_DIR/NETworkManager-macOS-$VERSION-$ARCHITECTURE.dmg"
@@ -30,8 +30,8 @@ Required environment:
   NOTARY_PROFILE     Profile previously created with `xcrun notarytool store-credentials`
 
 Optional environment:
-  ARCHITECTURE       universal (default), arm64, or x86_64
-  VERSION            Artifact version (default: 2026.7.7.0)
+  ARCHITECTURE       arm64 only (default; Apple Silicon required)
+  VERSION            Artifact version (default: Resources/Info.plist CFBundleVersion)
   DIST_DIR           Output directory (default: dist/macos)
   NOTARY_KEYCHAIN    Keychain path containing NOTARY_PROFILE
 
@@ -53,6 +53,8 @@ elif [[ $# -gt 0 ]]; then
   exit 2
 fi
 
+[[ "$ARCHITECTURE" == "arm64" ]] || fail "NETworkManager requires Apple Silicon (arm64); Intel and Universal builds are no longer supported."
+
 if [[ "$DRY_RUN" == "1" ]]; then
   printf 'DRY RUN: would build %s for %s, sign with Developer ID, submit to Apple Notary Service, staple, and Gatekeeper-check %s\n' \
     "$APP_PATH" "$ARCHITECTURE" "$DMG_PATH"
@@ -64,7 +66,6 @@ fi
 
 [[ -n "${CODESIGN_IDENTITY:-}" ]] || fail "Set CODESIGN_IDENTITY to an installed Developer ID Application identity."
 [[ -n "${NOTARY_PROFILE:-}" ]] || fail "Set NOTARY_PROFILE to a profile created with xcrun notarytool store-credentials."
-[[ "$ARCHITECTURE" == "universal" ]] || fail "Formal DMG release requires ARCHITECTURE=universal."
 
 for tool in swift codesign xcrun hdiutil lipo security spctl jq; do
   command -v "$tool" >/dev/null 2>&1 || fail "Required tool not found: $tool"
@@ -84,7 +85,7 @@ if ! xcrun notarytool history "${NOTARY_PREFLIGHT_ARGS[@]}" >/dev/null 2>&1; the
 fi
 
 mkdir -p "$DIST_DIR"
-printf 'Building and signing the universal app...\n'
+printf 'Building and signing the Apple Silicon app...\n'
 ARCHITECTURE="$ARCHITECTURE" VERSION="$VERSION" DIST_DIR="$DIST_DIR" \
   CREATE_DMG=1 CODESIGN_IDENTITY="$CODESIGN_IDENTITY" \
   "$SCRIPT_DIR/build-app.sh"
@@ -101,11 +102,7 @@ printf '%s\n' "$SIGNATURE_DETAILS" | grep -Fq -- "Authority=$CODESIGN_IDENTITY" 
 printf '%s\n' "$SIGNATURE_DETAILS" | grep -Eq 'flags=.*runtime' \
   || fail "App signature is missing the Hardened Runtime flag."
 
-APP_ARCHS="$(lipo -archs "$APP_PATH/Contents/MacOS/NETworkManagerMac")"
-for architecture in arm64 x86_64; do
-  [[ " $APP_ARCHS " == *" $architecture "* ]] \
-    || fail "Universal app is missing architecture $architecture (found: $APP_ARCHS)."
-done
+"$SCRIPT_DIR/verify-arm64.sh" "$APP_PATH"
 
 printf 'Submitting DMG to Apple Notary Service...\n'
 NOTARY_ARGS=(--keychain-profile "$NOTARY_PROFILE" --wait --output-format json --no-progress)

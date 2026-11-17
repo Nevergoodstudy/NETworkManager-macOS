@@ -2,6 +2,10 @@
 
 研究日期 / Research date: **2026-11-09** · 文档修订 / Documentation revision: **2026-11-14**
 
+**平台政策（2026-11-17）：** 当前 macOS 产品仅支持 Apple Silicon（arm64）Mac，最低 macOS 14。下方提案、数据和验收清单保留其 2026-11-09 研究时的 Universal/Intel 历史语境；涉及当前发布架构的内容已由本政策取代。
+
+**Platform policy (2026-11-17):** The current macOS product supports Apple Silicon (arm64) Macs only, with macOS 14 as the minimum. The proposals, data and acceptance lists below retain their historical Universal/Intel context from 2026-11-09; this policy supersedes those references for current releases.
+
 **计划基准与实施跟踪。** 方案审阅的源码是 [0944345d73df](https://github.com/Nevergoodstudy/NETworkManager-macOS/tree/0944345d73df0eafb2e7353aecca48d924398de8)，该功能提交于 2026-11-10 通过 [PR #12](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/12) 合并进 `main`。文中所列已有能力以该源码基准为准，不代表已完成真实设备互操作或正式签名公证发布。
 
 **Planning baseline and implementation tracking.** The reviewed source is [0944345d73df](https://github.com/Nevergoodstudy/NETworkManager-macOS/tree/0944345d73df0eafb2e7353aecca48d924398de8), merged into `main` through [PR #12](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/12) on 2026-11-10. Existing capabilities in the proposal refer to that baseline; they do not establish live-device interoperability or a formally signed and notarized release.

@@ -7,9 +7,11 @@ keywords: [NETworkManager, macOS, SwiftUI, AppKit, network tools, DMG]
 # macOS edition
 
 NETworkManager includes a native macOS edition in the repository's macos/
-directory. It targets macOS 14 or later and uses SwiftUI for the interface,
-AppKit for application commands and system handoffs, and native BSD sockets for
-network diagnostics.
+directory. It supports Apple Silicon (M-series, arm64) Macs only, targets
+macOS 14 or later, and uses SwiftUI for the interface, AppKit for application
+commands and system handoffs, and native BSD sockets for network diagnostics.
+Intel Macs and Rosetta execution are unsupported. M-series MacBook, iMac,
+Mac mini, Mac Studio and Mac Pro models are supported.
 
 ## Build
 
@@ -31,8 +33,8 @@ a compressed disk image:
     ./macos/Scripts/build-app.sh
     CREATE_DMG=1 ./macos/Scripts/build-app.sh
 
-Use ARCHITECTURE=arm64 or ARCHITECTURE=x86_64 for a specific architecture, or
-ARCHITECTURE=universal for one arm64+x86_64 bundle. Set CODESIGN_IDENTITY to a
+The script always creates an arm64-only app and bundled MCP helper; Intel and
+Universal architecture requests are rejected. Set CODESIGN_IDENTITY to a
 Developer ID Application identity before creating a release artifact.
 Local builds receive an ad-hoc signature; notarization requires the release
 owner's Apple Developer credentials and is intentionally kept outside the

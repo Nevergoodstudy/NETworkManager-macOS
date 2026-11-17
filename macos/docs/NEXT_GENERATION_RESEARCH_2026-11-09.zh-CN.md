@@ -7,6 +7,8 @@
 
 **状态：待实施的工程提案。** 本文审阅的源码基准是功能分支提交 [0944345d73df](https://github.com/Nevergoodstudy/NETworkManager-macOS/tree/0944345d73df0eafb2e7353aecca48d924398de8)，该提交随后通过 [PR #12](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/12) 于 2026-11-10 合并进 `main`。“当前代码具备”指该源码基准中的实现，不代表所有功能均已完成真实设备互操作或正式签名公证发布。本提案只记录后续工程建议。
 
+**架构政策更新（2026-11-17）：** 当前 macOS 发布仅面向 Apple Silicon（arm64）Mac。下文的 Universal/Intel 内容描述 2026-11-09 研究基准，当前构建和验收以本政策为准。
+
 **建议的产品目标：在 Mac 上打开一个故障，即可把资产、告警、不同观测点的测量、远程会话和操作证据连起来，并能复现检查、比较前后变化、交接给同事。**
 
 保留 SwiftUI/AppKit 原生路线，在现有 SwiftPM 模块上补齐统一执行与证据底座。优先改善诊断可信度、资产身份和故障闭环；终端、抓包、自动化与遥测采用适配器逐步接入。
@@ -35,7 +37,7 @@
 | 远程会话 | 系统 OpenSSH + SwiftTerm；严格主机密钥交互；四条 Cisco IOS 只读模板 | 站点跳板、连接计划、工作区恢复、串口、SFTP 与多厂商只读驱动 | [NMRemote/EmbeddedSSHView.swift:48-82](https://github.com/Nevergoodstudy/NETworkManager-macOS/blob/0944345d73df0eafb2e7353aecca48d924398de8/macos/Sources/NMRemote/EmbeddedSSHView.swift#L48)；[NMRemote/SSHOperations.swift:9-14](https://github.com/Nevergoodstudy/NETworkManager-macOS/blob/0944345d73df0eafb2e7353aecca48d924398de8/macos/Sources/NMRemote/SSHOperations.swift#L9) |
 | MCP | 4 个本地工具 + 3 个可选单目标诊断；stdio、取消、参数校验、结构化返回、最多 4 个并发诊断 | 证据与工作区授权、计划 schema、与 GUI 一致的错误语义；当前不保存 MCP 结果 | [macos/MCP.md:70-125](https://github.com/Nevergoodstudy/NETworkManager-macOS/blob/0944345d73df0eafb2e7353aecca48d924398de8/macos/MCP.md#L70)；[NMMCPTools/MCPToolService.swift:137-178](https://github.com/Nevergoodstudy/NETworkManager-macOS/blob/0944345d73df0eafb2e7353aecca48d924398de8/macos/Sources/NMMCPTools/MCPToolService.swift#L137) |
 | 秘密与证据 | Keychain 引用、导出脱敏、损坏数据恢复、OSLog 事件、有限操作记录 | Case/Observation、附件保留、证据版本、结构化操作结果；直接终端输入不在完整审计范围 | [NMCore/DiagnosticEvidence.swift:3-45](https://github.com/Nevergoodstudy/NETworkManager-macOS/blob/0944345d73df0eafb2e7353aecca48d924398de8/macos/Sources/NMCore/DiagnosticEvidence.swift#L3)；[NMCore/OperationsAudit.swift:22-54](https://github.com/Nevergoodstudy/NETworkManager-macOS/blob/0944345d73df0eafb2e7353aecca48d924398de8/macos/Sources/NMCore/OperationsAudit.swift#L22) |
-| 生命周期与发布 | SMAppService 主应用登录项；Universal 包和正式公证脚本 | 最低系统/Intel/实际升级验证、真实 Developer ID 与 Gatekeeper 发布验收 | [NMCore/LoginItemManager.swift:17-32,61-80](https://github.com/Nevergoodstudy/NETworkManager-macOS/blob/0944345d73df0eafb2e7353aecca48d924398de8/macos/Sources/NMCore/LoginItemManager.swift#L17)；[PORTING_STATUS.md:105-110](https://github.com/Nevergoodstudy/NETworkManager-macOS/blob/0944345d73df0eafb2e7353aecca48d924398de8/macos/PORTING_STATUS.md#L105) |
+| 生命周期与发布 | SMAppService 主应用登录项；arm64-only 包和正式公证脚本 | Apple Silicon 上的最低系统/实际升级验证、真实 Developer ID 与 Gatekeeper 发布验收 | [NMCore/LoginItemManager.swift:17-32,61-80](https://github.com/Nevergoodstudy/NETworkManager-macOS/blob/0944345d73df0eafb2e7353aecca48d924398de8/macos/Sources/NMCore/LoginItemManager.swift#L17)；[PORTING_STATUS.md:105-110](https://github.com/Nevergoodstudy/NETworkManager-macOS/blob/0944345d73df0eafb2e7353aecca48d924398de8/macos/PORTING_STATUS.md#L105) |
 
 上表除注明外，源码相对路径均位于 `macos/Sources/`。[PORTING_STATUS.md:97-110](https://github.com/Nevergoodstudy/NETworkManager-macOS/blob/0944345d73df0eafb2e7353aecca48d924398de8/macos/PORTING_STATUS.md#L97) 记录的本机/fixture 通过，不能替代现场 NetBox、Zabbix、多厂商 SNMP/SSH 互操作。
 
@@ -230,10 +232,10 @@ Linux runner 使用版本化 JSON 契约，限定 actionID、设备集、超时�
 - **存储**：1 万设备/10 万运行记录的索引分页，50 行查询 p95 目标小于 200 ms；主线程无全库编码；迁移失败/磁盘写失败/异常退出保留原数据。原始高频采样有聚合与保留上限，不无限增长。
 - **证据**：每条结果有 UTC 时间、观测点、来源、方法、参数与版本；删除资产后按保留策略仍可查看历史；相同外部 ID 改地址不重复建资产。
 - **互操作**：至少真实 NetBox/Zabbix 各一套、两类网络 OS 的 SSH/SNMPv3；按实际使用增加第三厂商与认证算法。RFC 向量不是设备兼容认证。[S29-S30]
-- **平台**：最低支持 macOS 14 与实际计划支持的较新版本分别验证；Apple Silicon/Intel、VPN开关、多网卡、双栈、睡眠唤醒、权限拒绝后恢复、Keychain 锁定、缺工具、含空格路径。
+- **平台**：最低支持 macOS 14 与实际计划支持的较新版本分别在 Apple Silicon 上验证；VPN开关、多网卡、双栈、睡眠唤醒、权限拒绝后恢复、Keychain 锁定、缺工具、含空格路径。
 - **进程与 MCP**：关闭 App、取消任务、MCP EOF、客户端断开后，无本项目孤儿任务；多个 NMCP 进程不宣称共享配额；快照读取不得越过工作区授权。
 - **秘密**：Keychain、日志、profile、证据、配置备份和导出使用 canary 验证；配置/pcap 默认视为敏感附件，摘要可脱敏不代表原件已脱敏。
-- **发布**：最终 Universal 构建、Developer ID、Hardened Runtime、公证/staple/Gatekeeper、实际旧数据升级与全新用户首次运行有证据。现有脚本与历史 ad-hoc 验证不等于正式分发已完成。[S31]
+- **发布**：最终 arm64-only 构建、Developer ID、Hardened Runtime、公证/staple/Gatekeeper、实际旧数据升级与全新用户首次运行有证据。现有脚本与历史 ad-hoc 验证不等于正式分发已完成。[S31]
 - **产品结果**：邀请目标工程师用脱敏真实案例完成“告警→三项验证→交接”；比较点击/切换次数、遗漏证据项、完成时间与误判数量。暂不凭研究给出 MTTR 改善百分比。
 
 ## 9. 架构决策与延期项

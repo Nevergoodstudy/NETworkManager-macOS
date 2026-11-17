@@ -68,7 +68,7 @@ TCP fixture 覆盖即时/异步连接、拒绝、无路由、权限、poll 与 g
 
 T01 仍需逐个把系统清单从“失败时空列表”迁到明确状态；本次没有一次改写所有 inventory 调用者。T03 仍需把多目标 TCP/scanner 作业、进度事件与更多 MCP 操作接入统一预算。旧 `streamLines` API 本次未迁移，当前仓库没有调用者。
 
-macOS 15 Intel、macOS 26、Apple-issued 身份签名后的 Local Network 允许/拒绝/未决定矩阵、真实路由器及 VPN split DNS、Developer ID 公证和 Gatekeeper 发布验收仍待记录。现有 CI 矩阵负责受支持 runner 上的构建、fixture、打包检查；本机成功不替代这些环境。
+本记录编写时，macOS 15 Intel 与 macOS 26 runner 结果、Apple-issued 身份签名后的 Local Network 允许/拒绝/未决定矩阵、真实路由器及 VPN split DNS、Developer ID 公证和 Gatekeeper 发布验收仍待记录。2026-11-17 起产品仅支持 Apple Silicon；Intel runner 不再是当前验收目标，当前 CI 只在 Apple Silicon runner 上执行构建、fixture 和打包检查。本机成功仍不替代真实权限、网络和正式分发验收。
 
 ## English
 
@@ -117,7 +117,7 @@ Process checks cover normal and nonzero exit, ENOENT/EACCES, closed stdin, simul
 
 The local linker still warns about missing CommandLineTools Developer framework search directories; builds and execution complete. Raw local test logs are omitted from the repository because they include interface addresses and temporary paths.
 
-T01 still needs explicit failure states for command-backed inventories. T03 still needs batch TCP/scanner jobs, progress events and broader MCP adoption. The unused legacy `streamLines` API is unchanged by this migration. macOS 15 Intel and macOS 26 runner results, signed-app Local Network permission states, real routers, VPN split DNS, Developer ID notarization and Gatekeeper release acceptance remain separate evidence requirements.
+T01 still needs explicit failure states for command-backed inventories. T03 still needs batch TCP/scanner jobs, progress events and broader MCP adoption. The unused legacy `streamLines` API is unchanged by this migration. At the time this record was written, macOS 15 Intel and macOS 26 runner results were outstanding. Since the 2026-11-17 Apple Silicon-only policy update, Intel runner validation is no longer a current acceptance target; CI now builds and packages on Apple Silicon runners only. Signed-app Local Network permission states, real routers, VPN split DNS, Developer ID notarization and Gatekeeper release acceptance remain separate evidence requirements.
 
 ## References / 资料
 

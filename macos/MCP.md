@@ -20,7 +20,8 @@ daemon 或特权 helper，不监听 HTTP 端口。当前 MCP 接口只提供下�
 
 ### 在应用中连接 Codex
 
-使用本轮新构建、包含 MCP 的 `NETworkManager.app`，要求 macOS 14+。安装后的
+使用本轮新构建、包含 MCP 的 `NETworkManager.app`，要求 Apple Silicon（arm64）Mac
+和 macOS 14+。Intel Mac 不受支持。安装后的
 连接流程不需要终端命令、Swift 工具链或服务器 API key：
 
 1. 把 `NETworkManager.app` 放到“应用程序”，然后打开应用。
@@ -227,8 +228,9 @@ running isolated local checks.
 
 ### Connect Codex from the app
 
-Use a newly built `NETworkManager.app` that includes MCP, on macOS 14 or later.
-The installed app needs no terminal commands, Swift toolchain, or server API key:
+Use a newly built `NETworkManager.app` that includes MCP, on an Apple Silicon
+(arm64) Mac with macOS 14 or later. Intel Macs are unsupported. The installed
+app needs no terminal commands, Swift toolchain, or server API key:
 
 1. Install `NETworkManager.app` in Applications and open it.
 2. Open **Settings → MCP**. The section shows **MCP included and ready**.

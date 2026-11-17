@@ -615,8 +615,8 @@ def verify_packaged_signatures(app, deadline):
     package_command(["/usr/bin/codesign", "--verify", "--strict", helper], deadline)
     app_architectures = set(package_command(["/usr/bin/lipo", "-archs", executable], deadline).split())
     helper_architectures = set(package_command(["/usr/bin/lipo", "-archs", helper], deadline).split())
-    check(app_architectures and helper_architectures == app_architectures,
-          "Packaged MCP helper architectures do not match the app: helper=%s app=%s" %
+    check(app_architectures == {"arm64"} and helper_architectures == {"arm64"},
+          "Packaged app and MCP helper must contain only arm64: helper=%s app=%s" %
           (sorted(helper_architectures), sorted(app_architectures)))
 
 
