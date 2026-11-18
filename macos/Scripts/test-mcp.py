@@ -202,9 +202,9 @@ class MCPProcess:
                     raise
                 stderr_tail = "".join(self.stderr).strip()[-2048:] or "<empty>"
                 raise CheckFailure(
-                    "Timed out waiting for MCP method %r after %.3fs; process exit=%r; stderr tail: %s"
+                    "Timed out waiting for MCP method %r after %.3fs; process exit=%r; stderr tail: %s; process group: %s; sample: %s"
                     % (self.request_methods.get(identifier, "unknown"), time.monotonic() - started,
-                       self.process.poll(), stderr_tail)
+                       self.process.poll(), stderr_tail, self.process_snapshot(), self.process_sample())
                 ) from error
             if "id" not in message:
                 continue
@@ -214,6 +214,41 @@ class MCPProcess:
         self.request_methods.pop(identifier, None)
         check(("result" in message) != ("error" in message), "Response must contain result or error")
         return message
+
+    def process_snapshot(self):
+        """On failure, identify a stalled launcher child without dumping arguments."""
+        try:
+            result = subprocess.run(
+                ["/bin/ps", "-ax", "-o", "pid=,ppid=,pgid=,state=,etime=,comm="],
+                capture_output=True, text=True, timeout=1,
+            )
+            rows = []
+            for line in result.stdout.splitlines():
+                fields = line.split(None, 5)
+                if len(fields) == 6 and fields[2] == str(self.process.pid):
+                    rows.append(line.strip())
+            return " | ".join(rows) or "<not available>"
+        except (OSError, subprocess.TimeoutExpired):
+            return "<snapshot failed>"
+
+    def process_sample(self):
+        """Capture a bounded macOS stack sample only after a request has failed."""
+        if sys.platform != "darwin" or self.process.poll() is not None:
+            return "<not available>"
+        try:
+            destination = Path(self.storage.name) / "timeout-sample.txt"
+            result = subprocess.run(
+                ["/usr/bin/sample", str(self.process.pid), "1", "10", "-file", str(destination)],
+                capture_output=True, text=True, timeout=3,
+            )
+            if result.returncode != 0 or not destination.is_file():
+                return "<sample failed>"
+            # The call graph precedes image metadata; it is enough to identify
+            # runtime/stdio waits without dumping the complete image inventory.
+            report = destination.read_text(errors="replace").split("Binary Images:", 1)[0]
+            return report[:16000]
+        except (OSError, subprocess.TimeoutExpired):
+            return "<sample failed>"
 
     def response_snapshot(self, identifiers):
         """Describe replies already available when an integration check fails."""
@@ -594,7 +629,15 @@ def check_launcher(launcher, deadline):
         swift = Path(directory) / "swift"
         swift.write_text('#!/bin/sh\n: > "$0.called"\nprintf "%s\\n" "Unexpected SwiftPM invocation during warm MCP launch" >&2\nexit 91\n')
         swift.chmod(0o755)
-        environment = {"PATH": directory + os.pathsep + os.environ.get("PATH", os.defpath)}
+        # Bash writes its trace to the captured stderr, preserving the actual
+        # shebang entrypoint and protocol stdout. Only failures print the tail.
+        # Include child-process state on timeout to distinguish a shell utility
+        # stalled before exec from a server that has already started.
+        environment = {
+            "PATH": directory + os.pathsep + os.environ.get("PATH", os.defpath),
+            "SHELLOPTS": "xtrace",
+            "PS4": "+ nmcp-launcher ${BASH_SOURCE}:${LINENO}: ",
+        }
         with MCPProcess(launcher, deadline, environment_overrides=environment) as client:
             check(client.initialize()["protocolVersion"] == "2025-11-25", "Launcher handshake negotiated an unexpected version")
             tools = client.result("tools/list")["tools"]
