@@ -6,6 +6,7 @@ import Darwin
 /// Application Support directory or Keychain.
 enum AssetRepositoryChecks {
     static func run() throws {
+        try AssetWorkspaceOwnershipChecks.runChildIfRequested()
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("NMAssetRepository-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -20,6 +21,8 @@ enum AssetRepositoryChecks {
         try recoveryChecks(in: directory)
         print("Storage: storeChecks")
         try storeChecks(in: directory)
+        print("Storage: workspaceOwnershipChecks")
+        try AssetWorkspaceOwnershipChecks.run(in: directory)
     }
 
     private static func fixture() -> AssetSnapshot {

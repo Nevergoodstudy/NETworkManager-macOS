@@ -38,7 +38,22 @@ public struct AssetsView: View {
     public var body: some View {
         NavigationSplitView {
             VStack(spacing: 0) {
-                if let recoveryError = store.recoveryError {
+                if let accessError = store.workspaceAccessError {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label(t("Asset workspace unavailable"), systemImage: "lock.fill")
+                            .font(.headline)
+                        Text(accessError)
+                            .font(.caption)
+                            .textSelection(.enabled)
+                        Button(t("Retry opening workspace")) { store.retryWorkspaceAccess() }
+                            .buttonStyle(.bordered)
+                            .accessibilityIdentifier("assetWorkspaceRetry")
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.orange.opacity(0.1))
+                    .accessibilityIdentifier("assetWorkspaceAccessError")
+                } else if let recoveryError = store.recoveryError {
                     VStack(alignment: .leading, spacing: 8) {
                         Label(t("Workspace recovery required"), systemImage: "exclamationmark.triangle.fill")
                             .font(.headline)
@@ -91,13 +106,13 @@ public struct AssetsView: View {
                     Menu {
                         Button { showingAddWorkspace = true } label: { Label(t("Add workspace"), systemImage: "plus") }
                         Button { showingAddSite = true } label: { Label(t("Add site"), systemImage: "mappin.and.ellipse") }
-                            .disabled(activeWorkspace == nil || store.recoveryError != nil)
+                            .disabled(activeWorkspace == nil || !store.canEditWorkspace)
                     } label: {
                         Image(systemName: "plus")
                     }
                     .help(t("Add workspace or site"))
                     .accessibilityLabel(t("Add workspace or site"))
-                    .disabled(store.recoveryError != nil)
+                    .disabled(!store.canEditWorkspace)
                 }
                 .padding(.horizontal, 10)
                 .padding(.bottom, 8)
@@ -163,8 +178,9 @@ public struct AssetsView: View {
                 ToolbarItem {
                     Menu {
                         Button { exportBackup() } label: { Label(t("Export backup"), systemImage: "square.and.arrow.up") }
-                            .disabled(store.recoveryError != nil)
+                            .disabled(!store.canEditWorkspace)
                         Button { showingBackupImporter = true } label: { Label(t("Import backup"), systemImage: "square.and.arrow.down") }
+                            .disabled(store.workspaceAccessError != nil)
                     } label: {
                         Image(systemName: "ellipsis.circle")
                     }
@@ -180,7 +196,7 @@ public struct AssetsView: View {
                     }
                     .help(t("Add asset"))
                     .accessibilityLabel(t("Add asset"))
-                    .disabled(store.recoveryError != nil || activeWorkspace == nil)
+                    .disabled(!store.canEditWorkspace || activeWorkspace == nil)
                 }
             }
             .sheet(isPresented: $showingAddDevice) {
