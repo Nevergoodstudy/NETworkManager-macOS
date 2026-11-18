@@ -7,6 +7,7 @@ import CSQLite
 public final class SQLiteAssetRepository: AssetRepository {
     public let url: URL
     private let legacyURL: URL?
+    private let ownership: AssetWorkspaceOwnership?
     private let queue = DispatchQueue(label: "NETworkManager.assets.sqlite", qos: .utility)
     private var baseline: AssetSnapshot?
     private var revision: String?
@@ -14,9 +15,10 @@ public final class SQLiteAssetRepository: AssetRepository {
     private var markerURL: URL { url.appendingPathExtension("initialized") }
     private var restoreMarkerURL: URL { url.appendingPathExtension("restore-pending") }
 
-    public init(url: URL, legacyURL: URL? = nil) {
+    public init(url: URL, legacyURL: URL? = nil, requiresExclusiveOwnership: Bool = false) {
         self.url = url
         self.legacyURL = legacyURL
+        ownership = requiresExclusiveOwnership ? AssetWorkspaceOwnership(databaseURL: url) : nil
     }
 
     public func load() throws -> AssetSnapshot? {
@@ -155,6 +157,9 @@ public final class SQLiteAssetRepository: AssetRepository {
     }
 
     private func withFileLock<T>(_ body: () throws -> T) throws -> T {
+        // Default GUI access must own the workspace before even bootstrap or
+        // startup recovery. Explicit repositories retain revision semantics.
+        try ownership?.acquire()
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         let descriptor = Darwin.open(url.path + ".lock", O_CREAT | O_RDWR | O_CLOEXEC, S_IRUSR | S_IWUSR)
         guard descriptor >= 0 else { throw posixError() }

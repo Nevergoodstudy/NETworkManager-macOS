@@ -40,9 +40,9 @@ visible app process and does not add a project-specific resolver service.
 
 ## 改进计划 / Improvement plan
 
-改进计划聚焦诊断结果、任务执行、资产身份、历史存储和故障证据。中英文设计、16 项任务和验收条件见 [改进计划索引](docs/README.md)。当前处于第一阶段 P0 实施：T01–T03 已通过 PR #20 合并，Apple Silicon 打包修复通过 PR #27 合并；[T04 Repository 与 SQLite 基础](docs/T04_SQLITE_FOUNDATION_2026-11-18.md) 位于在审的 PR #28，提交 `19b18d1` 已通过 macOS 15/26 的 push 与 PR CI。八个实施切片覆盖 T01–T04，4/16 主项有实现，整项验收仍为 **0/16**。本机验证、远端 CI 和剩余验收见 T04 实施记录。
+改进计划聚焦诊断结果、任务执行、资产身份、历史存储和故障证据。中英文设计、16 项任务和验收条件见 [改进计划索引](docs/README.md)。当前处于第一阶段 P0 实施：T01–T03 已通过 PR #20 合并，Apple Silicon 打包修复通过 PR #27 合并；[T04 Repository 与 SQLite 基础](docs/T04_SQLITE_FOUNDATION_2026-11-18.md) 已通过 PR #28 于 2026-11-18 12:37:31 UTC 合并，最终提交 `dba6168` 的 push 与 PR CI 均通过 macOS 15/26。第九个实施切片增加[默认工作区所有权保护](docs/T04_WORKSPACE_OWNERSHIP_2026-11-18.md)，本机 Debug 存储检查、完整 Release `NMTest` 与 `NMCheck` 已通过，本轮 arm64 `.app` / DMG、双实例存储、菜单退出、重试接管和真实 GUI Ping 已通过；远端 CI 待验收。九个切片覆盖 T01–T04，4/16 主项有实现，整项验收仍为 **0/16**；T04 保持开放。
 
-The improvement plan covers diagnostic results, job execution, asset identity, history storage and incident evidence. The [plan index](docs/README.md) links the Chinese/English design, 16 tasks and acceptance criteria. Work is in the first P0 stage: T01–T03 were merged through PR #20, with Apple Silicon packaging fixes in PR #27. The [T04 Repository and SQLite foundation](docs/T04_SQLITE_FOUNDATION_2026-11-18.md) is under review in PR #28; commit `19b18d1` passed push and PR CI on macOS 15/26. Eight implementation slices cover T01–T04 (4/16 main items have implementation), with **0/16 whole tasks fully accepted**. The T04 record tracks local checks, remote CI and remaining acceptance.
+The improvement plan covers diagnostic results, job execution, asset identity, history storage and incident evidence. The [plan index](docs/README.md) links the Chinese/English design, 16 tasks and acceptance criteria. Work is in the first P0 stage: T01–T03 were merged through PR #20, with Apple Silicon packaging fixes in PR #27. The [T04 Repository and SQLite foundation](docs/T04_SQLITE_FOUNDATION_2026-11-18.md) was merged through PR #28 at 2026-11-18 12:37:31 UTC; its final commit `dba6168` passed push and PR CI on macOS 15/26. The ninth slice adds [default-workspace ownership](docs/T04_WORKSPACE_OWNERSHIP_2026-11-18.md). Local Debug storage checks, full Release `NMTest` and `NMCheck` passed; the current arm64 `.app` / DMG, packaged two-instance storage, menu quit/retry takeover and actual GUI Ping checks passed; remote CI remains pending. Nine slices cover T01–T04 (4/16 main items have implementation), with **0/16 whole tasks fully accepted**. T04 remains open.
 
 ## Build and run
 
@@ -92,9 +92,12 @@ and verify the DMG lifecycle:
     hdiutil verify dist/macos/NETworkManager-macOS-2026.11.17.0-arm64.dmg
     ./macos/Scripts/verify-dmg-lifecycle.sh dist/macos/NETworkManager-macOS-2026.11.17.0-arm64.dmg
 
-The storage script copies the app into a temporary path and creates independent
-support directories for its migration and recovery cases. These local ad-hoc
-package checks do not notarize the DMG or perform Gatekeeper release acceptance.
+The storage script copies the app into two temporary application paths and uses
+isolated support directories for migration, recovery and ownership checks. Its
+persisted `running` records are fixtures; they do not represent active GUI network
+diagnostics. Release after `SIGTERM` or `SIGKILL` is distinct from quitting through
+the app menu. These local ad-hoc package checks do not notarize the DMG or perform
+Gatekeeper release acceptance.
 
 The app packaging scripts build and bundle `NMCP` at
 `NETworkManager.app/Contents/Helpers/NMCP`, together with its SwiftPM resource
@@ -146,6 +149,15 @@ SQLite startup, an existing `assets.json` is validated and imported through a
 temporary database; the original JSON remains unchanged. Once initialized,
 SQLite is authoritative. A missing, damaged or unsupported database requires
 explicit backup recovery instead of silently reusing stale JSON.
+
+The default workspace acquires exclusive process ownership before loading,
+creating, migrating or recovering the database. A second instance reports that
+the workspace is in use and disables asset reads, changes, export and import.
+After the owner exits, **Retry** can load the workspace in the existing window.
+Ownership uses a stable `assets.sqlite.owner.lock`; the operating system releases
+the lock when its repository is destroyed or the process exits. An owner reloading
+its workspace preserves its own active diagnostic. See the [ownership record and
+acceptance boundaries](docs/T04_WORKSPACE_OWNERSHIP_2026-11-18.md).
 
 Normal writes use SQLite transactions and encode only changed records on a
 serial repository queue. The current interface still waits for commit and keeps

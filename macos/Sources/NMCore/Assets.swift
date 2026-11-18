@@ -263,6 +263,7 @@ public final class AssetStore: ObservableObject {
     @Published public private(set) var devices: [AssetDevice] = []
     @Published public private(set) var diagnosticRuns: [DiagnosticRun] = []
     @Published public private(set) var recoveryError: String?
+    @Published public private(set) var workspaceAccessError: String?
     @Published public private(set) var persistenceError: String?
     @Published public private(set) var preservedCorruptFileURL: URL?
 
@@ -277,6 +278,7 @@ public final class AssetStore: ObservableObject {
     }
 
     private let repository: any AssetRepository
+    private var hasLoadedWorkspace = false
 
     public convenience init(storageURL: URL? = nil) {
         if let storageURL, storageURL.pathExtension.lowercased() == "json" {
@@ -285,14 +287,25 @@ public final class AssetStore: ObservableObject {
             let directory = SettingsStore.supportDirectory
             self.init(repository: SQLiteAssetRepository(
                 url: storageURL ?? directory.appendingPathComponent("assets.sqlite"),
-                legacyURL: storageURL == nil ? directory.appendingPathComponent("assets.json") : nil))
+                legacyURL: storageURL == nil ? directory.appendingPathComponent("assets.json") : nil,
+                requiresExclusiveOwnership: storageURL == nil))
         }
     }
 
     public init(repository: any AssetRepository) {
         self.repository = repository
         load()
-        if workspaces.isEmpty && recoveryError == nil { seedLocalWorkspace() }
+        if workspaces.isEmpty && canEditWorkspace { seedLocalWorkspace() }
+    }
+
+    public var canEditWorkspace: Bool { workspaceAccessError == nil && recoveryError == nil }
+
+    /// A blocked window can be opened after the owner quits, without replacing
+    /// the database or clearing its error before ownership has been acquired.
+    public func retryWorkspaceAccess() {
+        guard workspaceAccessError != nil else { return }
+        load()
+        if workspaces.isEmpty && canEditWorkspace { seedLocalWorkspace() }
     }
 
     private var snapshot: AssetSnapshot {
@@ -308,7 +321,8 @@ public final class AssetStore: ObservableObject {
     }
 
     public func diagnosticPage(_ query: DiagnosticPageQuery = DiagnosticPageQuery()) throws -> [DiagnosticRun] {
-        try repository.diagnosticPage(query)
+        try requireWorkspaceAccess()
+        return try repository.diagnosticPage(query)
     }
 
     public var primaryWorkspace: OperationsWorkspace? { workspaces.first }
@@ -342,10 +356,11 @@ public final class AssetStore: ObservableObject {
         }
     }
 
-    public func upsert(_ workspace: OperationsWorkspace) { replace(workspace, in: &workspaces); save() }
-    public func upsert(_ site: AssetSite) { replace(site, in: &sites); save() }
-    public func upsert(_ subnet: AssetSubnet) { replace(subnet, in: &subnets); save() }
+    public func upsert(_ workspace: OperationsWorkspace) { guard canEditWorkspace else { return }; replace(workspace, in: &workspaces); save() }
+    public func upsert(_ site: AssetSite) { guard canEditWorkspace else { return }; replace(site, in: &sites); save() }
+    public func upsert(_ subnet: AssetSubnet) { guard canEditWorkspace else { return }; replace(subnet, in: &subnets); save() }
     public func upsert(_ device: AssetDevice) {
+        guard canEditWorkspace else { return }
         var value = device
         value.updatedAt = Date()
         replace(value, in: &devices)
@@ -356,7 +371,7 @@ public final class AssetStore: ObservableObject {
     /// user-authored fields on an existing local device.
     @discardableResult
     public func mergeExternalAssets(_ snapshots: [ExternalAssetSnapshot]) -> Int {
-        guard let workspace = primaryWorkspace else { return 0 }
+        guard canEditWorkspace, let workspace = primaryWorkspace else { return 0 }
         var changed = 0
         var needsSave = false
         for snapshot in snapshots {
@@ -417,6 +432,7 @@ public final class AssetStore: ObservableObject {
 
     /// Delete a device and all diagnostic evidence attached to it.
     public func removeDevice(id: UUID) {
+        guard canEditWorkspace else { return }
         devices.removeAll { $0.id == id }
         diagnosticRuns.removeAll { $0.deviceID == id }
         save()
@@ -424,6 +440,7 @@ public final class AssetStore: ObservableObject {
 
     /// Delete a subnet and detach devices that referenced it.
     public func removeSubnet(id: UUID) {
+        guard canEditWorkspace else { return }
         subnets.removeAll { $0.id == id }
         for index in devices.indices where devices[index].subnetID == id {
             devices[index].subnetID = nil
@@ -433,6 +450,7 @@ public final class AssetStore: ObservableObject {
 
     /// Delete a site and its subnets, devices, and diagnostic evidence.
     public func removeSite(id: UUID) {
+        guard canEditWorkspace else { return }
         let subnetIDs = Set(subnets.filter { $0.siteID == id }.map(\.id))
         let deviceIDs = Set(devices.filter { device in
             device.siteID == id || device.subnetID.map(subnetIDs.contains) == true
@@ -446,6 +464,7 @@ public final class AssetStore: ObservableObject {
 
     /// Delete a workspace and all sites, subnets, devices, and evidence below it.
     public func removeWorkspace(id: UUID) {
+        guard canEditWorkspace else { return }
         let siteIDs = Set(sites.filter { $0.workspaceID == id }.map(\.id))
         let deviceIDs = Set(devices.filter { siteIDs.contains($0.siteID) }.map(\.id))
         workspaces.removeAll { $0.id == id }
@@ -459,13 +478,14 @@ public final class AssetStore: ObservableObject {
     @discardableResult
     public func beginDiagnostic(deviceID: UUID? = nil, kind: DiagnosticKind, target: String? = nil, parameters: [String: String] = [:]) -> UUID {
         let run = DiagnosticRun(deviceID: deviceID, kind: kind, parameters: parameters, target: target)
+        guard canEditWorkspace else { return run.id }
         diagnosticRuns.append(run)
         save()
         return run.id
     }
 
     public func finishDiagnostic(id: UUID, status: DiagnosticRunStatus, summary: String, detail: String = "", latency: TimeInterval? = nil, source: String = "NETworkManager", evidence: DiagnosticRuntimeEvidence? = nil) {
-        guard let index = diagnosticRuns.firstIndex(where: { $0.id == id }) else { return }
+        guard canEditWorkspace, let index = diagnosticRuns.firstIndex(where: { $0.id == id }) else { return }
         diagnosticRuns[index].status = status
         diagnosticRuns[index].finishedAt = Date()
         diagnosticRuns[index].summary = summary
@@ -478,12 +498,20 @@ public final class AssetStore: ObservableObject {
 
     public func load() {
         do {
-            guard let value = try repository.load() else { return }
-            apply(value)
+            let value = try repository.load()
+            workspaceAccessError = nil
+            workspaceAccessFailure = nil
             recoveryError = nil
+            let shouldRecoverRuns = !hasLoadedWorkspace
+            hasLoadedWorkspace = true
+            guard let value else {
+                logWorkspaceState("ready")
+                return
+            }
+            apply(value)
             var recoveredRun = false
             diagnosticRuns = diagnosticRuns.map { run in
-                guard run.status == .running else { return run }
+                guard shouldRecoverRuns, run.status == .running else { return run }
                 var recovered = run
                 recovered.status = .interrupted
                 recovered.finishedAt = Date()
@@ -492,12 +520,26 @@ public final class AssetStore: ObservableObject {
                 return recovered
             }
             if recoveredRun { save() }
+            logWorkspaceState("ready")
+        } catch let error as AssetWorkspaceAccessError {
+            workspaceAccessFailure = error
+            workspaceAccessError = error.localizedDescription
+            switch error {
+            case .inUse: logWorkspaceState("access blocked: in-use")
+            case .unavailable: logWorkspaceState("access blocked: unavailable")
+            }
         } catch {
+            // A repository error after ownership was acquired must expose
+            // recovery even when this load was a retry after contention.
+            workspaceAccessFailure = nil
+            workspaceAccessError = nil
             recoveryError = tf("Asset data could not be read. The original file was preserved. Import a valid backup to restore this workspace. (%@)", error.localizedDescription)
+            logWorkspaceState("recovery required")
         }
     }
 
     public func exportBackup() throws -> Data {
+        try requireWorkspaceAccess()
         let backup = BackupDocument(formatVersion: 1, exportedAt: Date(), workspaces: workspaces, sites: sites, subnets: subnets, devices: devices, diagnosticRuns: diagnosticRuns)
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
@@ -506,6 +548,7 @@ public final class AssetStore: ObservableObject {
     }
 
     public func importBackup(_ data: Data) throws {
+        try requireWorkspaceAccess()
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         let backup = try decoder.decode(BackupDocument.self, from: data)
@@ -514,18 +557,30 @@ public final class AssetStore: ObservableObject {
         let restored = AssetSnapshot(workspaces: backup.workspaces, sites: backup.sites, subnets: backup.subnets, devices: backup.devices, diagnosticRuns: backup.diagnosticRuns)
         preservedCorruptFileURL = try repository.restore(restored, preservingDamaged: recoveryError != nil)
         apply(restored)
+        hasLoadedWorkspace = true
         recoveryError = nil
         persistenceError = nil
     }
 
     public func save() {
-        guard recoveryError == nil else { return }
+        guard canEditWorkspace else { return }
         do {
             try repository.save(snapshot)
             persistenceError = nil
         } catch {
             persistenceError = tf("Asset workspace could not be saved: %@", error.localizedDescription)
         }
+    }
+
+    private var workspaceAccessFailure: AssetWorkspaceAccessError?
+
+    private func logWorkspaceState(_ state: String) {
+        // Stable lifecycle evidence without paths or workspace contents.
+        FileHandle.standardError.write(Data("[assets] workspace \(state)\n".utf8))
+    }
+
+    private func requireWorkspaceAccess() throws {
+        if let workspaceAccessFailure { throw workspaceAccessFailure }
     }
 
     private func seedLocalWorkspace() {
