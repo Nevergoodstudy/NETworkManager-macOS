@@ -53,9 +53,9 @@ def isolated_environment(directory, overrides=None):
 def check_no_persisted_json(directory, expected=None):
     expected = expected or {}
     files = {str(path.relative_to(directory)): path.read_bytes() for path in Path(directory).rglob("*")
-             if path.is_file() and path.suffix.lower() == ".json"}
+             if path.is_file() and (path.suffix.lower() == ".json" or path.name.startswith("assets.sqlite"))}
     changed_paths = set(files) ^ set(expected)
-    check(not changed_paths, "MCP server added or removed application JSON files: " + ", ".join(sorted(changed_paths)))
+    check(not changed_paths, "MCP server added or removed application storage files: " + ", ".join(sorted(changed_paths)))
     for path, original_bytes in expected.items():
         check(files[path] == original_bytes, "MCP server modified existing application JSON: " + path)
 
@@ -95,6 +95,7 @@ class MCPProcess:
         self.messages = queue.Queue()
         self.stderr = collections.deque(maxlen=64)
         self.pending = {}
+        self.request_methods = {}
         self.next_id = 0
         self.readers = [
             threading.Thread(target=self._read_stdout, daemon=True),
@@ -169,6 +170,7 @@ class MCPProcess:
         message = {"jsonrpc": "2.0", "id": identifier, "method": method}
         if params is not None:
             message["params"] = params
+        self.request_methods[identifier] = method
         self.send(message)
         return identifier
 
@@ -190,16 +192,63 @@ class MCPProcess:
         return value
 
     def response(self, identifier, timeout=4):
-        end = time.monotonic() + self.deadline.remaining(timeout)
+        started = time.monotonic()
+        end = started + self.deadline.remaining(timeout)
         while identifier not in self.pending:
-            message = self.receive(max(0.001, end - time.monotonic()))
+            try:
+                message = self.receive(max(0.001, end - time.monotonic()))
+            except CheckFailure as error:
+                if str(error) != "Timed out waiting for an MCP response":
+                    raise
+                stderr_tail = "".join(self.stderr).strip()[-2048:] or "<empty>"
+                raise CheckFailure(
+                    "Timed out waiting for MCP method %r after %.3fs; process exit=%r; stderr tail: %s; process group: %s; sample: %s"
+                    % (self.request_methods.get(identifier, "unknown"), time.monotonic() - started,
+                       self.process.poll(), stderr_tail, self.process_snapshot(), self.process_sample())
+                ) from error
             if "id" not in message:
                 continue
             check("result" in message or "error" in message, "Unexpected server request")
             self.pending[message["id"]] = message
         message = self.pending.pop(identifier)
+        self.request_methods.pop(identifier, None)
         check(("result" in message) != ("error" in message), "Response must contain result or error")
         return message
+
+    def process_snapshot(self):
+        """On failure, identify a stalled launcher child without dumping arguments."""
+        try:
+            result = subprocess.run(
+                ["/bin/ps", "-ax", "-o", "pid=,ppid=,pgid=,state=,etime=,comm="],
+                capture_output=True, text=True, timeout=1,
+            )
+            rows = []
+            for line in result.stdout.splitlines():
+                fields = line.split(None, 5)
+                if len(fields) == 6 and fields[2] == str(self.process.pid):
+                    rows.append(line.strip())
+            return " | ".join(rows) or "<not available>"
+        except (OSError, subprocess.TimeoutExpired):
+            return "<snapshot failed>"
+
+    def process_sample(self):
+        """Capture a bounded macOS stack sample only after a request has failed."""
+        if sys.platform != "darwin" or self.process.poll() is not None:
+            return "<not available>"
+        try:
+            destination = Path(self.storage.name) / "timeout-sample.txt"
+            result = subprocess.run(
+                ["/usr/bin/sample", str(self.process.pid), "1", "10", "-file", str(destination)],
+                capture_output=True, text=True, timeout=3,
+            )
+            if result.returncode != 0 or not destination.is_file():
+                return "<sample failed>"
+            # The call graph precedes image metadata; it is enough to identify
+            # runtime/stdio waits without dumping the complete image inventory.
+            report = destination.read_text(errors="replace").split("Binary Images:", 1)[0]
+            return report[:16000]
+        except (OSError, subprocess.TimeoutExpired):
+            return "<sample failed>"
 
     def response_snapshot(self, identifiers):
         """Describe replies already available when an integration check fails."""
@@ -580,7 +629,18 @@ def check_launcher(launcher, deadline):
         swift = Path(directory) / "swift"
         swift.write_text('#!/bin/sh\n: > "$0.called"\nprintf "%s\\n" "Unexpected SwiftPM invocation during warm MCP launch" >&2\nexit 91\n')
         swift.chmod(0o755)
-        environment = {"PATH": directory + os.pathsep + os.environ.get("PATH", os.defpath)}
+        # Bash writes its trace to the captured stderr, preserving the actual
+        # shebang entrypoint and protocol stdout. Only failures print the tail.
+        # Include child-process state on timeout to distinguish a shell utility
+        # stalled before exec from a server that has already started.
+        environment = {
+            "PATH": directory + os.pathsep + os.environ.get("PATH", os.defpath),
+            # A warm executable must not depend on Xcode selection. In
+            # particular /usr/bin/lipo is an xcrun shim on macOS, unlike file.
+            "DEVELOPER_DIR": str(Path(directory) / "missing-developer-directory"),
+            "SHELLOPTS": "xtrace",
+            "PS4": "+ nmcp-launcher ${BASH_SOURCE}:${LINENO}: ",
+        }
         with MCPProcess(launcher, deadline, environment_overrides=environment) as client:
             check(client.initialize()["protocolVersion"] == "2025-11-25", "Launcher handshake negotiated an unexpected version")
             tools = client.result("tools/list")["tools"]
@@ -594,7 +654,7 @@ def check_launcher(launcher, deadline):
             result = run_cli(launcher, argument, deadline, timeout=4, environment_overrides=environment)
             check(result.returncode == 0 and result.stdout.strip(), "Launcher " + argument + " did not return useful output")
         check(not swift.with_name("swift.called").exists(), "Warm launcher invoked SwiftPM")
-    print("PASS: warm launcher without SwiftPM, handshake within 4 seconds, offline inventory, subnet, protocol stdout, EOF, CLI")
+    print("PASS: warm launcher without SwiftPM or Xcode selection, handshake within 4 seconds, offline inventory, subnet, protocol stdout, EOF, CLI")
 
 
 def package_command(arguments, deadline):
@@ -678,12 +738,16 @@ def relocated_packaged_server(app, deadline):
 
 
 def check_server(server, deadline, launcher=None):
-    check_offline(server, deadline)
-    check_network(server, deadline)
-    check_corrupt_preferences(server, deadline)
-    check_versions_and_cli(server, deadline)
+    for check_case in [check_offline, check_network, check_corrupt_preferences, check_versions_and_cli]:
+        try:
+            check_case(server, deadline)
+        except CheckFailure as error:
+            raise CheckFailure(check_case.__name__ + ": " + str(error)) from error
     if launcher:
-        check_launcher(launcher, deadline)
+        try:
+            check_launcher(launcher, deadline)
+        except CheckFailure as error:
+            raise CheckFailure("check_launcher: " + str(error)) from error
 
 
 def main():

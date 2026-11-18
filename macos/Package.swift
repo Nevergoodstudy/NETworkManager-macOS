@@ -15,8 +15,10 @@ let package = Package(
         .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", exact: "0.12.1")
     ],
     targets: [
+        .systemLibrary(name: "CSQLite"),
         .target(
             name: "NMCore",
+            dependencies: ["CSQLite"],
             resources: [.copy("Resources")]
         ),
         .target(name: "NMMCPTools", dependencies: ["NMCore", .product(name: "MCP", package: "swift-sdk")]),

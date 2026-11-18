@@ -66,6 +66,7 @@ jobs:
       - name: Package app and launch GUI smoke test
         env:
           CREATE_DMG: "1"
+          NETWORKMANAGER_SUPPORT_DIRECTORY: ${{ runner.temp }}/networkmanager-gui-smoke
         run: ./script/build_and_run.sh --verify
 
       - name: Verify app bundle and DMG
@@ -84,6 +85,9 @@ jobs:
         env:
           LIBDISPATCH_COOPERATIVE_POOL_STRICT: "1"
         run: python3 macos/Scripts/test-mcp.py --app dist/macos/NETworkManager.app
+
+      - name: Test packaged storage migration and relaunch
+        run: python3 macos/Scripts/test-packaged-storage.py --app dist/macos/NETworkManager.app
 
       - name: Test DMG install, upgrade, and uninstall
         env:

@@ -23,7 +23,7 @@ INSTALL_APP="$INSTALL_DIR/NETworkManager.app"
 INSTALL_EXECUTABLE="$INSTALL_APP/Contents/MacOS/NETworkManagerMac"
 MOUNT_ATTACHED=0
 mkdir -p "$MOUNT_DIR" "$INSTALL_DIR"
-mkdir -p "$TEMP_ROOT/home"
+mkdir -p "$TEMP_ROOT/support"
 
 app_pids() {
   local executable="$1"
@@ -70,8 +70,9 @@ wait_for_app() {
 
 launch_app() {
   local executable="$1"
-  CFFIXED_USER_HOME="$TEMP_ROOT/home" HOME="$TEMP_ROOT/home" "$executable" >/dev/null 2>&1 &
-  disown "$!"
+  local app="${executable%/Contents/MacOS/NETworkManagerMac}"
+  /usr/bin/open -n --env "NETWORKMANAGER_SUPPORT_DIRECTORY=$TEMP_ROOT/support" \
+    --stdout "$TEMP_ROOT/app.stdout.log" --stderr "$TEMP_ROOT/app.stderr.log" "$app"
 }
 
 cleanup() {
