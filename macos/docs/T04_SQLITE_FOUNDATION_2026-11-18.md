@@ -54,6 +54,8 @@ SQLite 的专用串行队列负责编码和 I/O；文件锁协调 repository 实
 | 当前提交远端 CI / 合并 | PR #28 已创建；macOS 15 与 macOS 26 CI 正在运行。通过后按既有授权合并；历史 CI 不代表当前提交 |
 <!-- T04_PACKAGE_VALIDATION_END -->
 
+远端首轮：提交 `9d0c54b` 的 push/macOS 15 和 PR/macOS 26 完整通过；PR/macOS 15 与 push/macOS 26 在 MCP launcher 检查中出现响应超时，原日志未区分具体请求。本机 strict-pool 下 10 次 launcher 检查与额外 5 次完整 MCP 检查均通过，尚未确认根因。随后仅增强现有测试的阶段、请求名、耗时、进程退出状态及 stderr 超时诊断；保留 4 秒请求预算、30 秒套件期限和全部断言，等待最新提交 CI。不能将复跑通过表述为确定修复了该间歇问题。
+
 <!-- T04_BENCHMARK_START -->
 ### 规模基准
 
@@ -114,6 +116,8 @@ The UI still retains full arrays and synchronously waits for commits. Delta enco
 Existing T01–T03 network/platform/controlled-UI/runtime gates remain open. The runtime audit found no deterministic production defect requiring a change in this slice; unused `Shell.streamLines` cleanup remains separate. Minimum-OS coverage, real devices, Developer ID/notarization/Gatekeeper and strict concurrency remain T15/T16 work. Fixture, local-arm64 and ad-hoc evidence does not complete those gates.
 
 ## 复现 / Reproduce
+
+Initial remote checks at `9d0c54b`: push/macOS 15 and PR/macOS 26 passed the full job. PR/macOS 15 and push/macOS 26 timed out in the MCP launcher group without identifying the request. Ten focused launcher iterations and five additional complete strict-pool MCP runs passed locally. The next test-only change adds stage/method/elapsed/process/stderr diagnostics, retaining the four-second request budget, 30-second suite deadline and every assertion. The root cause remains unconfirmed; a passing rerun alone is not a demonstrated runtime fix.
 
 Run sequentially from the repository root on an Apple Silicon Mac. Package checks use the current build and temporary support directories, leaving the operator's normal application data untouched:
 

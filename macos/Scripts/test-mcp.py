@@ -95,6 +95,7 @@ class MCPProcess:
         self.messages = queue.Queue()
         self.stderr = collections.deque(maxlen=64)
         self.pending = {}
+        self.request_methods = {}
         self.next_id = 0
         self.readers = [
             threading.Thread(target=self._read_stdout, daemon=True),
@@ -169,6 +170,7 @@ class MCPProcess:
         message = {"jsonrpc": "2.0", "id": identifier, "method": method}
         if params is not None:
             message["params"] = params
+        self.request_methods[identifier] = method
         self.send(message)
         return identifier
 
@@ -190,14 +192,26 @@ class MCPProcess:
         return value
 
     def response(self, identifier, timeout=4):
-        end = time.monotonic() + self.deadline.remaining(timeout)
+        started = time.monotonic()
+        end = started + self.deadline.remaining(timeout)
         while identifier not in self.pending:
-            message = self.receive(max(0.001, end - time.monotonic()))
+            try:
+                message = self.receive(max(0.001, end - time.monotonic()))
+            except CheckFailure as error:
+                if str(error) != "Timed out waiting for an MCP response":
+                    raise
+                stderr_tail = "".join(self.stderr).strip()[-2048:] or "<empty>"
+                raise CheckFailure(
+                    "Timed out waiting for MCP method %r after %.3fs; process exit=%r; stderr tail: %s"
+                    % (self.request_methods.get(identifier, "unknown"), time.monotonic() - started,
+                       self.process.poll(), stderr_tail)
+                ) from error
             if "id" not in message:
                 continue
             check("result" in message or "error" in message, "Unexpected server request")
             self.pending[message["id"]] = message
         message = self.pending.pop(identifier)
+        self.request_methods.pop(identifier, None)
         check(("result" in message) != ("error" in message), "Response must contain result or error")
         return message
 
@@ -678,12 +692,16 @@ def relocated_packaged_server(app, deadline):
 
 
 def check_server(server, deadline, launcher=None):
-    check_offline(server, deadline)
-    check_network(server, deadline)
-    check_corrupt_preferences(server, deadline)
-    check_versions_and_cli(server, deadline)
+    for check_case in [check_offline, check_network, check_corrupt_preferences, check_versions_and_cli]:
+        try:
+            check_case(server, deadline)
+        except CheckFailure as error:
+            raise CheckFailure(check_case.__name__ + ": " + str(error)) from error
     if launcher:
-        check_launcher(launcher, deadline)
+        try:
+            check_launcher(launcher, deadline)
+        except CheckFailure as error:
+            raise CheckFailure("check_launcher: " + str(error)) from error
 
 
 def main():
