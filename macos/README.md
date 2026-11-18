@@ -40,9 +40,9 @@ visible app process and does not add a project-specific resolver service.
 
 ## 改进计划 / Improvement plan
 
-改进计划聚焦诊断结果、任务执行、资产身份、历史存储和故障证据。中英文设计、16 项任务和验收条件见 [改进计划索引](docs/README.md)。当前处于第一阶段 P0 实施：T01–T03 已通过 PR #20 合并，Apple Silicon 打包修复通过 PR #27 合并；本轮推进 [T04 Repository 与 SQLite 基础](docs/T04_SQLITE_FOUNDATION_2026-11-18.md)。八个实施切片覆盖 T01–T04，整项验收仍为 **0/16**；实现、本机验证、远端 CI 与整项验收分别记录。
+改进计划聚焦诊断结果、任务执行、资产身份、历史存储和故障证据。中英文设计、16 项任务和验收条件见 [改进计划索引](docs/README.md)。当前处于第一阶段 P0 实施：T01–T03 已通过 PR #20 合并，Apple Silicon 打包修复通过 PR #27 合并；[T04 Repository 与 SQLite 基础](docs/T04_SQLITE_FOUNDATION_2026-11-18.md) 位于在审的 PR #28，提交 `19b18d1` 已通过 macOS 15/26 的 push 与 PR CI。八个实施切片覆盖 T01–T04，4/16 主项有实现，整项验收仍为 **0/16**。本机验证、远端 CI 和剩余验收见 T04 实施记录。
 
-The improvement plan covers diagnostic results, job execution, asset identity, history storage and incident evidence. The [plan index](docs/README.md) links the Chinese/English design, 16 tasks and acceptance criteria. Work is in the first P0 stage: T01–T03 were merged through PR #20, with Apple Silicon packaging fixes in PR #27. This batch advances the [T04 Repository and SQLite foundation](docs/T04_SQLITE_FOUNDATION_2026-11-18.md). Eight implementation slices cover T01–T04, with **0/16 whole tasks fully accepted**. Implementation, local checks, remote CI and whole-task acceptance are tracked separately.
+The improvement plan covers diagnostic results, job execution, asset identity, history storage and incident evidence. The [plan index](docs/README.md) links the Chinese/English design, 16 tasks and acceptance criteria. Work is in the first P0 stage: T01–T03 were merged through PR #20, with Apple Silicon packaging fixes in PR #27. The [T04 Repository and SQLite foundation](docs/T04_SQLITE_FOUNDATION_2026-11-18.md) is under review in PR #28; commit `19b18d1` passed push and PR CI on macOS 15/26. Eight implementation slices cover T01–T04 (4/16 main items have implementation), with **0/16 whole tasks fully accepted**. The T04 record tracks local checks, remote CI and remaining acceptance.
 
 ## Build and run
 
