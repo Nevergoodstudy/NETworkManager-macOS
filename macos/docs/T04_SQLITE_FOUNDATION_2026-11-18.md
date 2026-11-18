@@ -2,7 +2,7 @@
 
 日期 / Date: **2026-11-18 · Asia/Shanghai**
 
-交付分支 / Delivery branch: `codex/t04-sqlite-foundation` · [T04 #17](https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/17) · [总跟踪 / Overall #13](https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/13)
+交付分支 / Delivery branch: `codex/t04-sqlite-foundation` · [PR #28](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/28) · [T04 #17](https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/17) · [总跟踪 / Overall #13](https://github.com/Nevergoodstudy/NETworkManager-macOS/issues/13)
 
 [计划索引 / Plan index](README.md) · [原任务与验收 / Backlog and acceptance](NEXT_GENERATION_BACKLOG_2026-11-09.md) · [此前打包验收 / Previous package validation](APPLE_SILICON_VALIDATION_2026-11-18.md)
 
@@ -51,7 +51,7 @@ SQLite 的专用串行队列负责编码和 I/O；文件锁协调 repository 实
 | 已打包应用存储验收 | `test-packaged-storage.py` 通过；覆盖完整迁移、原 JSON 字节保留、running 记录重启恢复、WAL/完整性/外键、重启 revision 一致和损坏 JSON 保护 |
 | 实际 GUI 资产与 JSON 往返 | 导入 `/tmp/networkmanager-t04-ui-backup.json` 后工作区、站点、子网、设备、中文备注及原 DNS 历史显示正确；设备 `127.0.0.1` Ping 成功（约 0.1 ms），历史由 1 条增至 2 条。应用导出 `/tmp/networkmanager-t04-ui-export-2026-11-18.json`，并核实包含旧 DNS、新 `succeeded` Ping 和全部关系 |
 | 签名/分发边界 | 当前本机包为 ad-hoc 签名；未进行 Developer ID 正式签名、公证或 Gatekeeper 发布验收 |
-| 当前提交远端 CI / 合并 | 待推送后验证；历史 CI 不代表当前提交，也未在本记录中声称已合并 |
+| 当前提交远端 CI / 合并 | PR #28 已创建；macOS 15 与 macOS 26 CI 正在运行。通过后按既有授权合并；历史 CI 不代表当前提交 |
 <!-- T04_PACKAGE_VALIDATION_END -->
 
 <!-- T04_BENCHMARK_START -->
@@ -105,9 +105,9 @@ Focused storage checks and full Release NMTest passed; Debug NMCheck and the arm
 
 The current Release package built and launched successfully with `CREATE_DMG=1 ./script/build_and_run.sh --verify` under an isolated `NETWORKMANAGER_SUPPORT_DIRECTORY`. `dist/macos/NETworkManager.app` and `dist/macos/NETworkManager-macOS-2026.11.17.0-arm64.dmg` are arm64-only and ad-hoc signed. Deep strict code-signature verification, Info.plist lint, `hdiutil verify` and `verify-dmg-lifecycle.sh` passed, including install, replacement upgrade, bundled MCP, LaunchServices launch and uninstall. `test-packaged-storage.py` passed packaged legacy migration, exact source JSON-byte preservation, interrupted `running` recovery, WAL/quick-check/foreign-key validation, revision consistency after relaunch and protection of damaged JSON data.
 
-In the visible GUI, `/tmp/networkmanager-t04-ui-backup.json` imported with workspace, site, subnet, device, Chinese notes and prior DNS history displayed correctly. A device Ping to `127.0.0.1` succeeded at approximately 0.1 ms and history increased from one to two records. The app exported `/tmp/networkmanager-t04-ui-export-2026-11-18.json`; inspection confirmed the prior DNS record, the new `succeeded` Ping and all relationships. These local ad-hoc package checks do not establish Developer ID signing, notarization, Gatekeeper acceptance or current-commit remote CI; remote CI and merge remain pending push.
+In the visible GUI, `/tmp/networkmanager-t04-ui-backup.json` imported with workspace, site, subnet, device, Chinese notes and prior DNS history displayed correctly. A device Ping to `127.0.0.1` succeeded at approximately 0.1 ms and history increased from one to two records. The app exported `/tmp/networkmanager-t04-ui-export-2026-11-18.json`; inspection confirmed the prior DNS record, the new `succeeded` Ping and all relationships. These local ad-hoc package checks do not establish Developer ID signing, notarization, Gatekeeper acceptance. PR #28's current-commit macOS 15 and macOS 26 CI is running; merge remains pending.
 
-The current-batch Release (`-O`, with testable modules for existing `@testable` imports) benchmark completed at 2026-11-18 18:16:17 +08:00 on Apple M4 Pro (Mac16,8), macOS 27.2.1 (26B131). Its fixture uses 10,000 devices and 100,000 runs, 50-row pages, five warmups and 100 distributed offsets per scope. All-history pages measured p50/p95/max of 2.57/4.17/5.57 ms; workspace pages measured 47.94/89.18/92.82 ms. Both measured p95 values are below 200 ms. Initial import, full reload and single-row update measured 1,465.86, 798.23 and 107.15 ms respectively. These are repository measurements on a synthetic local fixture; they do not establish GUI responsiveness or real-user-dataset performance. Current-batch local package and MCP results are recorded above; current-commit remote CI and merge remain pending push. Historical package checks and CI are not evidence for a new commit.
+The current-batch Release (`-O`, with testable modules for existing `@testable` imports) benchmark completed at 2026-11-18 18:16:17 +08:00 on Apple M4 Pro (Mac16,8), macOS 27.2.1 (26B131). Its fixture uses 10,000 devices and 100,000 runs, 50-row pages, five warmups and 100 distributed offsets per scope. All-history pages measured p50/p95/max of 2.57/4.17/5.57 ms; workspace pages measured 47.94/89.18/92.82 ms. Both measured p95 values are below 200 ms. Initial import, full reload and single-row update measured 1,465.86, 798.23 and 107.15 ms respectively. These are repository measurements on a synthetic local fixture; they do not establish GUI responsiveness or real-user-dataset performance. Current-batch local package and MCP results are recorded above; PR #28's current-commit macOS 15 and macOS 26 CI is running; merge remains pending. Historical package checks and CI are not evidence for a new commit.
 
 The UI still retains full arrays and synchronously waits for commits. Delta encoding runs on the repository queue, but caller waiting and full-snapshot comparison remain; asynchronous UI integration and history pagination are future work. Trigger-injected failures and interrupted-state fixtures do not complete the physical-full-disk, permission, killed-migration/restore and abnormal-exit matrix. Duplicate writable GUI/store ownership is also open: loading another store during a live diagnostic can mark its run interrupted and cause revision conflict for the original writer.
 

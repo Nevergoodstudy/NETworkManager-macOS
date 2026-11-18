@@ -2,11 +2,11 @@
 
 [中文方案](NEXT_GENERATION_RESEARCH_2026-11-09.zh-CN.md) · [English proposal](NEXT_GENERATION_RESEARCH_2026-11-09.en.md) · [Index / 索引](README.md)
 
-研究基准 / Research baseline: 2026-11-09. 修订 / Revised: 2026-11-14.
+研究基准 / Research baseline: 2026-11-09. 修订 / Revised: 2026-11-18.
 
-以下保留原始任务提案、估算与验收范围。当前七个实现切片覆盖 T01/T02/T03，0/16 主项满足全部验收；最新推进见 [Ping 总预算记录](T03_PING_BUDGET_2026-11-14.md)与[同日 DNS 记录](PROGRESS_2026-11-14.md)，远端状态见 PR #20。估算为开发人日，依赖表示实施顺序；P0/P1/P2 表示优先级，不等于固定日历阶段。T15 从第一周持续推进，最终发布前需复核。
+以下保留原始任务提案、估算与验收范围。当前八个实施切片覆盖 T01–T04（4/16 主项有实现），**0/16 主项满足全部验收**。T01–T03 切片通过 [PR #20](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/20) 合并，Apple Silicon 打包与界面修复通过 [PR #27](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/27) 合并；T04 提交 `ba2e6a0` 已推送至 [PR #28](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/28)，macOS 15 与 macOS 26 CI 正在运行；合并状态见 PR。T04 本机验证及剩余验收见 [SQLite 基础实施记录](T04_SQLITE_FOUNDATION_2026-11-18.md)。估算为开发人日，依赖表示实施顺序；P0/P1/P2 表示优先级，不等于固定日历阶段。T15 从第一周持续推进，最终发布前需复核。
 
-The original proposals, estimates and acceptance scope are retained below. Seven implementation slices cover T01/T02/T03, with 0/16 fully accepted; see the [Ping budget record](T03_PING_BUDGET_2026-11-14.md), [same-day DNS record](PROGRESS_2026-11-14.md) and PR #20 for current delivery status. Estimates are engineering person-days; dependencies describe ordering. Priorities do not set calendar dates. T15 runs throughout the work and must be checked again against the final release build.
+The original proposals, estimates and acceptance scope are retained below. Eight implementation slices cover T01–T04 (4/16 main tasks have implementation), with **0/16 fully accepted**. T01–T03 slices were merged through [PR #20](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/20), and Apple Silicon packaging/UI fixes through [PR #27](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/27). T04 commit `ba2e6a0` is in [PR #28](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/28); macOS 15 and macOS 26 CI are running. See the PR for merge status. See the [T04 SQLite foundation record](T04_SQLITE_FOUNDATION_2026-11-18.md) for local checks and remaining acceptance. The [Ping budget record](T03_PING_BUDGET_2026-11-14.md) and [same-day DNS record](PROGRESS_2026-11-14.md) retain their historical reports. Estimates are engineering person-days; dependencies describe ordering. Priorities do not set calendar dates. T15 runs throughout the work and must be checked again against the final release build.
 
 完整任务集不构成 90 天交付承诺。两名工程师和共享 QA/实验环境是阶段估算的前提；单人应收敛至 P0 和一个完整排障流程。
 
