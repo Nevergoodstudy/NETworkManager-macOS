@@ -53,9 +53,9 @@ def isolated_environment(directory, overrides=None):
 def check_no_persisted_json(directory, expected=None):
     expected = expected or {}
     files = {str(path.relative_to(directory)): path.read_bytes() for path in Path(directory).rglob("*")
-             if path.is_file() and path.suffix.lower() == ".json"}
+             if path.is_file() and (path.suffix.lower() == ".json" or path.name.startswith("assets.sqlite"))}
     changed_paths = set(files) ^ set(expected)
-    check(not changed_paths, "MCP server added or removed application JSON files: " + ", ".join(sorted(changed_paths)))
+    check(not changed_paths, "MCP server added or removed application storage files: " + ", ".join(sorted(changed_paths)))
     for path, original_bytes in expected.items():
         check(files[path] == original_bytes, "MCP server modified existing application JSON: " + path)
 

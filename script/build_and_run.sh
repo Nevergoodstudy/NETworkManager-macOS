@@ -61,12 +61,20 @@ stop_existing_app() {
 stop_existing_app
 "$ROOT_DIR/macos/Scripts/build-app.sh"
 
+launch_app() {
+  local args=(-n)
+  if [[ -n "${NETWORKMANAGER_SUPPORT_DIRECTORY:-}" ]]; then
+    args+=(--env "NETWORKMANAGER_SUPPORT_DIRECTORY=$NETWORKMANAGER_SUPPORT_DIRECTORY")
+  fi
+  /usr/bin/open "${args[@]}" "$APP_PATH"
+}
+
 case "$MODE" in
   run)
-    /usr/bin/open -n "$APP_PATH"
+    launch_app
     ;;
   verify)
-    /usr/bin/open -n "$APP_PATH"
+    launch_app
     for _ in {1..20}; do
       if [[ -n "$(app_pids)" ]]; then
         echo "NETworkManagerMac is running from $APP_PATH"
@@ -81,11 +89,11 @@ case "$MODE" in
     lldb -- "$APP_PATH/Contents/MacOS/NETworkManagerMac"
     ;;
   logs)
-    /usr/bin/open -n "$APP_PATH"
+    launch_app
     /usr/bin/log stream --info --style compact --predicate 'process == "NETworkManagerMac"'
     ;;
   telemetry)
-    /usr/bin/open -n "$APP_PATH"
+    launch_app
     /usr/bin/log stream --info --style compact --predicate 'process == "NETworkManagerMac"'
     ;;
 esac

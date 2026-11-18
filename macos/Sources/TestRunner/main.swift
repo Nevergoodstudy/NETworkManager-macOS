@@ -247,6 +247,28 @@ final class LoopbackWhoisFixture: @unchecked Sendable {
     }
 }
 
+if let benchmarkIndex = CommandLine.arguments.firstIndex(of: "--storage-benchmark") {
+    do {
+        let path = CommandLine.arguments.dropFirst(benchmarkIndex + 1).first
+        try AssetRepositoryBenchmark.run(reportURL: path.map { URL(fileURLWithPath: $0) })
+        exit(0)
+    } catch {
+        fputs("NMTest: FAILED: \(error)\n", stderr)
+        exit(1)
+    }
+}
+
+if CommandLine.arguments.contains("--storage-only") {
+    do {
+        try AssetRepositoryChecks.run()
+        print("NMTest: storage checks passed")
+        exit(0)
+    } catch {
+        fputs("NMTest: FAILED: \(error)\n", stderr)
+        exit(1)
+    }
+}
+
 if CommandLine.arguments.contains("--ping-only") {
     do {
         try await PingChecks.run()
@@ -1083,6 +1105,7 @@ do {
     } else {
         throw CheckFailure(description: "a cancelled ICMP probe should not fall back or report a timeout")
     }
+    try AssetRepositoryChecks.run()
     try await DiagnosticRuntimeEvidenceChecks.run()
     try TCPProbeChecks.run()
     try await PingChecks.run()

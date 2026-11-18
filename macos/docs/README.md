@@ -1,6 +1,6 @@
 # macOS 改进计划 / macOS improvement plan
 
-研究日期 / Research date: **2026-11-09** · 文档修订 / Documentation revision: **2026-11-14**
+研究日期 / Research date: **2026-11-09** · 文档修订 / Documentation revision: **2026-11-18**
 
 **平台政策（2026-11-17）：** 当前 macOS 产品仅支持 Apple Silicon（arm64）Mac，最低 macOS 14。下方提案、数据和验收清单保留其 2026-11-09 研究时的 Universal/Intel 历史语境；涉及当前发布架构的内容已由本政策取代。
 
@@ -12,6 +12,7 @@
 
 | 内容 / Material | 入口 / Entry |
 |---|---|
+| T04 Repository 与 SQLite 基础（2026-11-18） / Repository and SQLite foundation (2026-11-18) | [迁移、事务、备份、验证与剩余验收 / Migration, transactions, backups, checks and remaining gates](T04_SQLITE_FOUNDATION_2026-11-18.md) |
 | Apple Silicon 打包应用验收（2026-11-18） / Apple Silicon packaged-app validation (2026-11-18) | [本机运行、UI 与测试范围 / Local runtime, UI and test coverage](APPLE_SILICON_VALIDATION_2026-11-18.md) |
 | T03 单次 Ping 总预算与取消 / Single-Ping budget and cancellation | [双语实施、回环验证与剩余验收 / Implementation, loopback checks and remaining gates](T03_PING_BUDGET_2026-11-14.md) |
 | 2026-11-14 阶段跟进 / Stage follow-up | [DNS 可靠性、UI 验证与 CoreWLAN 评估 / DNS reliability, UI checks and CoreWLAN assessment](PROGRESS_2026-11-14.md) |
@@ -28,9 +29,13 @@
 | 机器可读任务 / Machine-readable tasks | [JSON, schemaVersion 2](NEXT_GENERATION_BACKLOG_2026-11-09.json) |
 | 交互路线看板 / Interactive roadmap | [Offline HTML](NEXT_GENERATION_ROADMAP_2026-11-09.html) |
 
-2026-11-14 的阶段跟进完成 DNS 响应与传输加固、主要 Lookup 界面状态验证及 CoreWLAN 字段能力评估；后续补齐单次 Ping 的共享总预算、取消与 IPv6 系统回退，并同步 MCP 超时契约。交付入口为 [PR #20](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/20)。当前处于 P0 基础诊断实施与 PR 审阅阶段；本机验证、远端 CI 与整项验收分别记录。T01/T02/T03 已有实现，仍为七个切片，整项验收为 0/16；剩余项见上表最新记录。
+当前处于改进计划的**第一阶段：P0 基础能力实施**。T01–T03 的七个实施切片已通过 [PR #20](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/20) 于 2026-11-17 16:47:33 UTC 合并；Apple Silicon 打包与界面修复通过 [PR #27](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/27) 于 2026-11-18 03:38:45 UTC 合并。本轮新增 T04 Repository、SQLite 迁移、事务、增量写入与分页查询基础，累计八个切片覆盖 T01–T04（4/16 主项有实现），**整项验收仍为 0/16**。本机验证、远端 CI、合并与整项验收分别记录；实际交付状态和剩余项见上表 T04 最新记录。
 
-The 2026-11-14 follow-up hardens DNS parsing/transport, verifies the main Lookup UI states and assesses CoreWLAN fields. A subsequent batch completes the single-Ping shared budget, cancellation and IPv6 system fallback, and updates MCP timeout contracts in [PR #20](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/20). The project is in P0 diagnostic implementation and PR review. Local validation, remote CI and acceptance are tracked separately. Seven slices cover T01/T02/T03, with 0/16 whole tasks fully accepted; the latest record above lists the remaining gates.
+The project is in the **first stage: P0 foundation implementation**. Seven T01–T03 slices were merged through [PR #20](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/20) at 2026-11-17 16:47:33 UTC. Apple Silicon packaging and UI fixes were merged through [PR #27](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/27) at 2026-11-18 03:38:45 UTC. This batch adds the T04 Repository, SQLite migration, transactions, incremental writes and paginated-query foundation. Eight slices now cover T01–T04 (4/16 main items with implementation), with **0/16 whole tasks fully accepted**. Local checks, remote CI, merge and whole-task acceptance remain separate; the T04 record above contains delivery status and remaining gates.
+
+2026-11-14 的历史跟进记录了 DNS 响应与传输加固、主要 Lookup 界面状态验证及 CoreWLAN 字段能力评估；后续补齐单次 Ping 共享总预算、取消与 IPv6 系统回退，并同步 MCP 超时契约。下方历史记录保留当时的验证范围和未完成项。
+
+The historical 2026-11-14 follow-up records DNS parsing/transport hardening, main Lookup UI states and CoreWLAN field assessment. The subsequent Ping work adds a shared total budget, cancellation, IPv6 system fallback and matching MCP timeout contracts. Historical records below retain their original validation scope and open gates.
 
 2026-11-10 开始实施 T01 的 TCP 结果语义和 T03 的进程适配器切片，代码、兼容性和本机验证见上表实施记录；两项完整验收继续由 #14 与 #16 跟踪。
 

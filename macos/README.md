@@ -40,9 +40,9 @@ visible app process and does not add a project-specific resolver service.
 
 ## 改进计划 / Improvement plan
 
-下一阶段方案聚焦诊断结果、任务执行、资产身份、历史存储和故障证据。中英文设计、16 项任务和验收条件见 [改进计划索引](docs/README.md)。方案为待实施提案，源码基准为 2026-11-10 经 PR #12 合并的提交。
+改进计划聚焦诊断结果、任务执行、资产身份、历史存储和故障证据。中英文设计、16 项任务和验收条件见 [改进计划索引](docs/README.md)。当前处于第一阶段 P0 实施：T01–T03 已通过 PR #20 合并，Apple Silicon 打包修复通过 PR #27 合并；本轮推进 [T04 Repository 与 SQLite 基础](docs/T04_SQLITE_FOUNDATION_2026-11-18.md)。八个实施切片覆盖 T01–T04，整项验收仍为 **0/16**；实现、本机验证、远端 CI 与整项验收分别记录。
 
-The next-stage proposal covers diagnostic results, job execution, asset identity, history storage and incident evidence. The [plan index](docs/README.md) links the Chinese/English design, 16 tasks and acceptance criteria. This is proposed work based on the source commit merged through PR #12 on 2026-11-10.
+The improvement plan covers diagnostic results, job execution, asset identity, history storage and incident evidence. The [plan index](docs/README.md) links the Chinese/English design, 16 tasks and acceptance criteria. Work is in the first P0 stage: T01–T03 were merged through PR #20, with Apple Silicon packaging fixes in PR #27. This batch advances the [T04 Repository and SQLite foundation](docs/T04_SQLITE_FOUNDATION_2026-11-18.md). Eight implementation slices cover T01–T04, with **0/16 whole tasks fully accepted**. Implementation, local checks, remote CI and whole-task acceptance are tracked separately.
 
 ## Build and run
 
@@ -54,7 +54,7 @@ bundle, signs it locally, and launches it through Launch Services so Dock
 activation, bundle metadata, and login-item behavior match an installed app.
 
 For isolated GUI checks, set `NETWORKMANAGER_SUPPORT_DIRECTORY` to an absolute
-directory before launching the app. All application-support JSON stores use
+directory before launching the app. Application-support stores use
 that directory; macOS Keychain access remains tied to the current user.
 
     ./script/build_and_run.sh
@@ -72,6 +72,29 @@ To run the checks against optimized Release modules:
 
 `NMTest` uses `@testable import NMCore`, so Release builds must explicitly enable
 testability for the test invocation. The distributable app does not need that flag.
+
+For focused storage correctness checks and the optional isolated scale benchmark:
+
+    swift run --package-path macos NMTest --storage-only
+    swift run --package-path macos -c release -Xswiftc -enable-testing NMTest --storage-benchmark /tmp/networkmanager-storage-benchmark.json
+
+The benchmark uses 10,000 fixture devices and 100,000 diagnostic runs. It measures
+the repository's 50-row queries; it does not measure GUI responsiveness.
+
+For packaged-storage acceptance on macOS, build and launch with an isolated
+support directory, then run the migration/relaunch checks against the built app
+and verify the DMG lifecycle:
+
+    NETWORKMANAGER_SUPPORT_DIRECTORY="$(mktemp -d /tmp/networkmanager-t04-app.XXXXXX)" CREATE_DMG=1 ./script/build_and_run.sh --verify
+    python3 macos/Scripts/test-packaged-storage.py --app dist/macos/NETworkManager.app
+    codesign --verify --deep --strict dist/macos/NETworkManager.app
+    plutil -lint dist/macos/NETworkManager.app/Contents/Info.plist
+    hdiutil verify dist/macos/NETworkManager-macOS-2026.11.17.0-arm64.dmg
+    ./macos/Scripts/verify-dmg-lifecycle.sh dist/macos/NETworkManager-macOS-2026.11.17.0-arm64.dmg
+
+The storage script copies the app into a temporary path and creates independent
+support directories for its migration and recovery cases. These local ad-hoc
+package checks do not notarize the DMG or perform Gatekeeper release acceptance.
 
 The app packaging scripts build and bundle `NMCP` at
 `NETworkManager.app/Contents/Helpers/NMCP`, together with its SwiftPM resource
@@ -118,11 +141,28 @@ handoff is owned by that external tool.
 
 The **Assets** workspace stores a local, user-owned inventory of workspaces,
 sites, subnets, devices, and diagnostic runs in
-`~/Library/Application Support/NETworkManager/assets.json`. It is an offline
-working set and does not replace an external source of truth. A device detail
+`~/Library/Application Support/NETworkManager/assets.sqlite`. On the first
+SQLite startup, an existing `assets.json` is validated and imported through a
+temporary database; the original JSON remains unchanged. Once initialized,
+SQLite is authoritative. A missing, damaged or unsupported database requires
+explicit backup recovery instead of silently reusing stale JSON.
+
+Normal writes use SQLite transactions and encode only changed records on a
+serial repository queue. The current interface still waits for commit and keeps
+the complete working set in memory; repository pagination is not yet connected
+to the history UI. The existing user-facing JSON backup format remains version 1.
+Import validates relationships before commit, and recovery preserves the damaged
+original. Database-level backups use SQLite's online backup mechanism to include
+committed WAL data; copying only a live `assets.sqlite` file is insufficient.
+MCP does not implicitly read or write this asset repository.
+
+The inventory is an offline working set and does not replace an external source
+of truth. A device detail
 view can run Ping in the visible app and stores the result, timestamp, latency,
 status, and source for later review. Credentials are not stored in this asset
-file.
+database; device records contain only credential reference IDs. See the
+[T04 implementation and remaining gates](docs/T04_SQLITE_FOUNDATION_2026-11-18.md)
+for migration, backup, concurrency and scale limits.
 
 Credential labels, account names, kinds, and Keychain references are stored in
 `~/Library/Application Support/NETworkManager/credentials.json`; secret values

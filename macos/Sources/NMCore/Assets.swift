@@ -253,7 +253,7 @@ public struct DiagnosticRun: Identifiable, Codable, Hashable, Sendable {
     }
 }
 
-/// JSON-backed local store for the P1 asset and diagnostic slice.
+/// Observable workspace facade; default storage is the SQLite repository.
 public final class AssetStore: ObservableObject {
     public static let shared = AssetStore()
 
@@ -266,14 +266,6 @@ public final class AssetStore: ObservableObject {
     @Published public private(set) var persistenceError: String?
     @Published public private(set) var preservedCorruptFileURL: URL?
 
-    private struct Payload: Codable {
-        var workspaces: [OperationsWorkspace]
-        var sites: [AssetSite]
-        var subnets: [AssetSubnet]
-        var devices: [AssetDevice]
-        var diagnosticRuns: [DiagnosticRun]
-    }
-
     public struct BackupDocument: Codable, Sendable {
         public var formatVersion: Int
         public var exportedAt: Date
@@ -284,12 +276,39 @@ public final class AssetStore: ObservableObject {
         public var diagnosticRuns: [DiagnosticRun]
     }
 
-    private let storageURL: URL
+    private let repository: any AssetRepository
 
-    public init(storageURL: URL? = nil) {
-        self.storageURL = storageURL ?? SettingsStore.supportDirectory.appendingPathComponent("assets.json")
+    public convenience init(storageURL: URL? = nil) {
+        if let storageURL, storageURL.pathExtension.lowercased() == "json" {
+            self.init(repository: JSONAssetRepository(url: storageURL))
+        } else {
+            let directory = SettingsStore.supportDirectory
+            self.init(repository: SQLiteAssetRepository(
+                url: storageURL ?? directory.appendingPathComponent("assets.sqlite"),
+                legacyURL: storageURL == nil ? directory.appendingPathComponent("assets.json") : nil))
+        }
+    }
+
+    public init(repository: any AssetRepository) {
+        self.repository = repository
         load()
         if workspaces.isEmpty && recoveryError == nil { seedLocalWorkspace() }
+    }
+
+    private var snapshot: AssetSnapshot {
+        AssetSnapshot(workspaces: workspaces, sites: sites, subnets: subnets, devices: devices, diagnosticRuns: diagnosticRuns)
+    }
+
+    private func apply(_ snapshot: AssetSnapshot) {
+        workspaces = snapshot.workspaces
+        sites = snapshot.sites
+        subnets = snapshot.subnets
+        devices = snapshot.devices
+        diagnosticRuns = snapshot.diagnosticRuns
+    }
+
+    public func diagnosticPage(_ query: DiagnosticPageQuery = DiagnosticPageQuery()) throws -> [DiagnosticRun] {
+        try repository.diagnosticPage(query)
     }
 
     public var primaryWorkspace: OperationsWorkspace? { workspaces.first }
@@ -458,42 +477,24 @@ public final class AssetStore: ObservableObject {
     }
 
     public func load() {
-        guard FileManager.default.fileExists(atPath: storageURL.path) else { return }
-        let data: Data
         do {
-            data = try Data(contentsOf: storageURL)
+            guard let value = try repository.load() else { return }
+            apply(value)
+            recoveryError = nil
+            var recoveredRun = false
+            diagnosticRuns = diagnosticRuns.map { run in
+                guard run.status == .running else { return run }
+                var recovered = run
+                recovered.status = .interrupted
+                recovered.finishedAt = Date()
+                recovered.summary = t("Interrupted when app closed")
+                recoveredRun = true
+                return recovered
+            }
+            if recoveredRun { save() }
         } catch {
             recoveryError = tf("Asset data could not be read. The original file was preserved. Import a valid backup to restore this workspace. (%@)", error.localizedDescription)
-            return
         }
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        let payload: Payload
-        do {
-            payload = try decoder.decode(Payload.self, from: data)
-        } catch {
-            do {
-                payload = try JSONDecoder().decode(Payload.self, from: data)
-            } catch {
-                recoveryError = t("Asset data is damaged or from an unsupported format. The original file was preserved. Import a valid backup to restore this workspace.")
-                return
-            }
-        }
-        workspaces = payload.workspaces
-        sites = payload.sites
-        subnets = payload.subnets
-        devices = payload.devices
-        var recoveredRun = false
-        diagnosticRuns = payload.diagnosticRuns.map { run in
-            guard run.status == .running else { return run }
-            var recovered = run
-            recovered.status = .interrupted
-            recovered.finishedAt = Date()
-            recovered.summary = t("Interrupted when app closed")
-            recoveredRun = true
-            return recovered
-        }
-        if recoveredRun { save() }
     }
 
     public func exportBackup() throws -> Data {
@@ -510,35 +511,17 @@ public final class AssetStore: ObservableObject {
         let backup = try decoder.decode(BackupDocument.self, from: data)
         guard backup.formatVersion == 1 else { throw AssetBackupError.unsupportedVersion(backup.formatVersion) }
         guard !backup.workspaces.isEmpty else { throw AssetBackupError.emptyWorkspace }
-        let payload = Payload(workspaces: backup.workspaces, sites: backup.sites, subnets: backup.subnets, devices: backup.devices, diagnosticRuns: backup.diagnosticRuns)
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        let restoredData = try encoder.encode(payload)
-        if recoveryError != nil, FileManager.default.fileExists(atPath: storageURL.path) {
-            let timestamp = ISO8601DateFormatter().string(from: Date()).replacingOccurrences(of: ":", with: "-")
-            let preservedURL = storageURL.deletingLastPathComponent()
-                .appendingPathComponent("\(storageURL.lastPathComponent).corrupt-\(timestamp)")
-            try FileManager.default.copyItem(at: storageURL, to: preservedURL)
-            preservedCorruptFileURL = preservedURL
-        }
-        try restoredData.write(to: storageURL, options: .atomic)
-        workspaces = backup.workspaces
-        sites = backup.sites
-        subnets = backup.subnets
-        devices = backup.devices
-        diagnosticRuns = backup.diagnosticRuns
+        let restored = AssetSnapshot(workspaces: backup.workspaces, sites: backup.sites, subnets: backup.subnets, devices: backup.devices, diagnosticRuns: backup.diagnosticRuns)
+        preservedCorruptFileURL = try repository.restore(restored, preservingDamaged: recoveryError != nil)
+        apply(restored)
         recoveryError = nil
         persistenceError = nil
     }
 
     public func save() {
         guard recoveryError == nil else { return }
-        let payload = Payload(workspaces: workspaces, sites: sites, subnets: subnets, devices: devices, diagnosticRuns: diagnosticRuns)
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
         do {
-            let data = try encoder.encode(payload)
-            try data.write(to: storageURL, options: .atomic)
+            try repository.save(snapshot)
             persistenceError = nil
         } catch {
             persistenceError = tf("Asset workspace could not be saved: %@", error.localizedDescription)
