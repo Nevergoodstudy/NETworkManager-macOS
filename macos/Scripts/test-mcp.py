@@ -635,6 +635,9 @@ def check_launcher(launcher, deadline):
         # stalled before exec from a server that has already started.
         environment = {
             "PATH": directory + os.pathsep + os.environ.get("PATH", os.defpath),
+            # A warm executable must not depend on Xcode selection. In
+            # particular /usr/bin/lipo is an xcrun shim on macOS, unlike file.
+            "DEVELOPER_DIR": str(Path(directory) / "missing-developer-directory"),
             "SHELLOPTS": "xtrace",
             "PS4": "+ nmcp-launcher ${BASH_SOURCE}:${LINENO}: ",
         }
@@ -651,7 +654,7 @@ def check_launcher(launcher, deadline):
             result = run_cli(launcher, argument, deadline, timeout=4, environment_overrides=environment)
             check(result.returncode == 0 and result.stdout.strip(), "Launcher " + argument + " did not return useful output")
         check(not swift.with_name("swift.called").exists(), "Warm launcher invoked SwiftPM")
-    print("PASS: warm launcher without SwiftPM, handshake within 4 seconds, offline inventory, subnet, protocol stdout, EOF, CLI")
+    print("PASS: warm launcher without SwiftPM or Xcode selection, handshake within 4 seconds, offline inventory, subnet, protocol stdout, EOF, CLI")
 
 
 def package_command(arguments, deadline):

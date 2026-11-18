@@ -13,10 +13,21 @@ esac
 }
 
 # SwiftPM maintains configuration links for both its native and Xcode build
-# backends. Check the architecture before using a warm binary, so an old Intel
-# cache is rebuilt while a valid arm64 launch avoids SwiftPM and its package lock.
+# backends. Use the system file inspector for warm launches so architecture
+# checks do not depend on the selected Xcode developer directory.
 BINARY="$MACOS_DIR/.build/$CONFIGURATION/NMCP"
-if [[ ! -x "$BINARY" ]] || [[ "$(/usr/bin/lipo -archs "$BINARY" 2>/dev/null || true)" != "arm64" ]]; then
+BUILD_REQUIRED=0
+if [[ ! -x "$BINARY" ]]; then
+  BUILD_REQUIRED=1
+else
+  if ! BINARY_TYPE="$(LC_ALL=C /usr/bin/file -Lb "$BINARY" </dev/null)"; then
+    printf 'Unable to inspect cached NMCP binary: %s\n' "$BINARY" >&2
+    exit 2
+  fi
+  [[ "$BINARY_TYPE" == "Mach-O 64-bit executable arm64" ]] || BUILD_REQUIRED=1
+fi
+
+if [[ "$BUILD_REQUIRED" == "1" ]]; then
   # Never let a first-use build read the client's queued initialize message.
   # Rebuild explicitly after source changes.
   swift build --package-path "$MACOS_DIR" --configuration "$CONFIGURATION" --product NMCP --triple arm64-apple-macos14 </dev/null >&2
@@ -24,8 +35,12 @@ if [[ ! -x "$BINARY" ]] || [[ "$(/usr/bin/lipo -archs "$BINARY" 2>/dev/null || t
   BINARY="$BIN_DIR/NMCP"
 fi
 
-[[ "$(/usr/bin/lipo -archs "$BINARY")" == "arm64" ]] || {
-  printf '%s\n' 'NMCP requires an arm64-only binary. Rebuild NMCP for Apple Silicon.' >&2
+if ! BINARY_TYPE="$(LC_ALL=C /usr/bin/file -Lb "$BINARY" </dev/null)"; then
+  printf 'Unable to inspect built NMCP binary: %s\n' "$BINARY" >&2
+  exit 2
+fi
+[[ "$BINARY_TYPE" == "Mach-O 64-bit executable arm64" ]] || {
+  printf 'NMCP requires a thin arm64 executable; found: %s\n' "$BINARY_TYPE" >&2
   exit 2
 }
 
