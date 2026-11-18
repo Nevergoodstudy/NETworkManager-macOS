@@ -77,7 +77,10 @@ public struct AssetsView: View {
                 .padding(10)
                 HStack(spacing: 8) {
                     Image(systemName: "square.grid.2x2").foregroundStyle(.secondary)
-                    Picker(t("Workspace"), selection: $selectedWorkspaceID) {
+                    Picker(t("Workspace"), selection: workspaceSelection) {
+                        if store.workspaces.isEmpty {
+                            Text(t("No workspace available")).tag("")
+                        }
                         ForEach(store.workspaces) { workspace in
                             Text(workspace.name).tag(workspace.id.uuidString)
                         }
@@ -170,7 +173,7 @@ public struct AssetsView: View {
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
-                        Button { showingAddDevice = true } label: { Label(t("Add device"), systemImage: "desktopcomputer.badge.plus") }
+                        Button { showingAddDevice = true } label: { Label(t("Add device"), systemImage: "desktopcomputer") }
                         Button { showingAddSite = true } label: { Label(t("Add site"), systemImage: "mappin.and.ellipse") }
                     } label: {
                         Label(t("Add asset"), systemImage: "plus")
@@ -205,8 +208,6 @@ public struct AssetsView: View {
             .sheet(item: $editingSubnet) { subnet in
                 SubnetEditorSheet(subnet: subnet, siteID: subnet.siteID) { store.upsert($0) }
             }
-            .onAppear { selectDefaultWorkspaceIfNeeded() }
-            .onChange(of: store.workspaces) { _, _ in selectDefaultWorkspaceIfNeeded() }
         } detail: {
             if let id = selectedDeviceID, let device = store.devices.first(where: { $0.id == id }) {
                 DeviceInspector(device: device)
@@ -255,6 +256,18 @@ public struct AssetsView: View {
         store.workspaces.first { $0.id.uuidString == selectedWorkspaceID } ?? store.primaryWorkspace
     }
 
+    private var workspaceSelection: Binding<String> {
+        Binding(
+            get: {
+                if store.workspaces.contains(where: { $0.id.uuidString == selectedWorkspaceID }) {
+                    return selectedWorkspaceID
+                }
+                return store.primaryWorkspace?.id.uuidString ?? ""
+            },
+            set: { selectedWorkspaceID = $0 }
+        )
+    }
+
     private var pendingDeletionMessage: String {
         guard let pendingDeletion else { return "" }
         switch pendingDeletion {
@@ -266,11 +279,6 @@ public struct AssetsView: View {
         case .subnet:
             return t("Deleting a subnet keeps its devices and clears their subnet association.")
         }
-    }
-
-    private func selectDefaultWorkspaceIfNeeded() {
-        if store.workspaces.contains(where: { $0.id.uuidString == selectedWorkspaceID }) { return }
-        selectedWorkspaceID = store.primaryWorkspace?.id.uuidString ?? ""
     }
 
     private func deviceSubtitle(_ device: AssetDevice) -> String {

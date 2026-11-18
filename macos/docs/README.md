@@ -12,6 +12,7 @@
 
 | 内容 / Material | 入口 / Entry |
 |---|---|
+| Apple Silicon 打包应用验收（2026-11-18） / Apple Silicon packaged-app validation (2026-11-18) | [本机运行、UI 与测试范围 / Local runtime, UI and test coverage](APPLE_SILICON_VALIDATION_2026-11-18.md) |
 | T03 单次 Ping 总预算与取消 / Single-Ping budget and cancellation | [双语实施、回环验证与剩余验收 / Implementation, loopback checks and remaining gates](T03_PING_BUDGET_2026-11-14.md) |
 | 2026-11-14 阶段跟进 / Stage follow-up | [DNS 可靠性、UI 验证与 CoreWLAN 评估 / DNS reliability, UI checks and CoreWLAN assessment](PROGRESS_2026-11-14.md) |
 | T01 连接与监听端口的本地实施 / Local connections and listeners implementation | [双语结果契约与验证记录 / Result contract and validation](T01_SOCKET_INVENTORY_2026-11-10.md) |

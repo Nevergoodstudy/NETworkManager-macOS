@@ -26,13 +26,27 @@ struct NETworkManagerMacApp: App {
         _selectedTool = NMStateCompat(wrappedValue: LaunchOptions.current.tool ?? SettingsStore.shared.lastTool ?? "dashboard")
     }
 
+    private var selectedToolBinding: Binding<String?> {
+        Binding(
+            get: { selectedTool },
+            set: { value in
+                DispatchQueue.main.async { selectedTool = value }
+            }
+        )
+    }
+
     var body: some Scene {
         WindowGroup(t("NETworkManager")) {
-            ContentView(selectedTool: $selectedTool)
+            ContentView(selectedTool: selectedToolBinding)
                 .environmentObject(theme)
                 .environmentObject(localization)
                 .themedRoot()
-                .onChange(of: selectedTool) { _, value in SettingsStore.shared.lastTool = value }
+                .onChange(of: selectedTool) { _, value in
+                    DispatchQueue.main.async {
+                        guard selectedTool == value else { return }
+                        SettingsStore.shared.lastTool = value
+                    }
+                }
                 .onAppear {
                     if resetSettingsWasDeferred {
                         let alert = NSAlert()
@@ -134,7 +148,7 @@ private struct ContentView: View {
             ToolItem(id: "geolocation", title: "IP Geolocation", icon: "globe.americas"),
             ToolItem(id: "sntp", title: "SNTP Lookup", icon: "clock"),
             ToolItem(id: "subnet", title: "Subnet Calculator", icon: "function"),
-            ToolItem(id: "bit", title: "Bit Calculator", icon: "binary"),
+            ToolItem(id: "bit", title: "Bit Calculator", icon: "function"),
             ToolItem(id: "firewall", title: "Firewall", icon: "firewall")
         ]),
         ToolGroup(title: "Operate", items: [

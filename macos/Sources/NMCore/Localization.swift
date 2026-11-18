@@ -553,6 +553,7 @@ public final class Loc: ObservableObject {
             "NETworkManager runs as a visible app and exits when its last window closes. It does not install a separate daemon.": "NETworkManager 以可见应用运行，并在最后一个窗口关闭时退出；不会安装独立守护进程。",
             "Assets": "资产",
             "Workspace": "工作区",
+            "No workspace available": "暂无可用工作区",
             "All workspaces": "所有工作区",
             "Add workspace": "添加工作区",
             "Add workspace or site": "添加工作区或站点",
