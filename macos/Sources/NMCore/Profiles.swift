@@ -77,6 +77,7 @@ public struct Profile: Identifiable, Codable, Hashable, Sendable {
 
 /// Profile storage compatible with an export/import flow and optional password
 /// based encryption (AES-GCM, key derived with HKDF-SHA256).
+@MainActor
 public final class ProfileStore: ObservableObject {
     public static let shared = ProfileStore()
 

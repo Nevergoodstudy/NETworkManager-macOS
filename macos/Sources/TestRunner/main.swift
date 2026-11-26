@@ -1,10 +1,11 @@
 import Foundation
 import Darwin
 import CryptoKit
+import Combine
 @testable import NMCore
 @testable import NMScanners
 import NMCalculators
-import NMRemote
+@testable import NMRemote
 import NMIntegrations
 
 struct CheckFailure: Error, CustomStringConvertible {
@@ -123,20 +124,20 @@ private final class AddressResolutionStatusBox: @unchecked Sendable {
 
 private func checkAddressResolutionCancellation() throws {
     let cancellation = DiagnosticCancellation()
-    let session = AddressResolutionSessionFixture()
     let result = AddressResolutionStatusBox()
     let finished = DispatchSemaphore(value: 0)
     DispatchQueue.global().async {
+        let session = AddressResolutionSessionFixture()
         do {
             _ = try SocketAddressResolver.collectAddresses(from: session, timeout: 10, cancellation: cancellation)
         } catch SocketAddressResolutionError.cancelled {
-            result.markCancelled()
+            if session.didCancel { result.markCancelled() }
         } catch {}
         finished.signal()
     }
     usleep(50_000)
     cancellation.cancel()
-    guard finished.wait(timeout: .now() + 1) == .success, result.wasCancelled, session.didCancel else {
+    guard finished.wait(timeout: .now() + 1) == .success, result.wasCancelled else {
         throw CheckFailure(description: "Host resolution cancellation should release the DNS request promptly")
     }
 
@@ -258,10 +259,442 @@ if let benchmarkIndex = CommandLine.arguments.firstIndex(of: "--storage-benchmar
     }
 }
 
+if let index = CommandLine.arguments.firstIndex(of: "--case") {
+    do {
+        guard CommandLine.arguments.count == index + 2, index == 1 else {
+            throw CheckFailure(description: "Use NMTest --case <one-name>; exactly one case is allowed.")
+        }
+        let name = CommandLine.arguments[index + 1]
+        switch name {
+        case "tcp-outcomes": try TCPProbeChecks.run()
+        case "scan-partial-cancellation":
+            let ipToken = DiagnosticCancellation()
+            let ipBatch = ScannerBatchFixture()
+            let secondIPStarted = DispatchSemaphore(value: 0)
+            let releaseSecondIP = DispatchSemaphore(value: 0)
+            let finishedIPs = await ScannerView.scanIPTargets(
+                ["first.fixture", "second.fixture", "queued.fixture"], concurrency: 2, timeout: 1, attempts: 1,
+                cancellation: ipToken, probe: { host, _, _ in
+                    ipBatch.recordProbeStart()
+                    if host == "first.fixture" { _ = secondIPStarted.wait(timeout: .now() + 2) }
+                    if host == "second.fixture" {
+                        secondIPStarted.signal()
+                        _ = releaseSecondIP.wait(timeout: .now() + 2)
+                    }
+                    return ICMPReply(sequence: 1, outcome: .timeout, rtt: nil, ttl: nil, source: nil)
+                }
+            ) { completed, row in
+                ipBatch.recordProgress(completed, row?.host)
+                if completed == 1 {
+                    ipToken.cancel()
+                    releaseSecondIP.signal()
+                }
+            }
+
+            let tcpToken = DiagnosticCancellation()
+            let tcpBatch = PortBatchFixture()
+            let secondPortStarted = DispatchSemaphore(value: 0)
+            let releaseSecondPort = DispatchSemaphore(value: 0)
+            let finishedPorts = await TCPProbe.scan(
+                host: "fixture", ports: [8, 7, 9], timeout: 1, concurrency: 2, cancellation: tcpToken,
+                progress: { result in
+                    tcpBatch.recordResult(result.port)
+                    if result.port == 8 {
+                        tcpToken.cancel()
+                        releaseSecondPort.signal()
+                    }
+                }
+            ) { _, port, _, _ in
+                tcpBatch.recordProbeStart()
+                if port == 8 { _ = secondPortStarted.wait(timeout: .now() + 2) }
+                if port == 7 {
+                    secondPortStarted.signal()
+                    _ = releaseSecondPort.wait(timeout: .now() + 2)
+                }
+                return PortProbeResult(port: port, status: .closed, latency: nil)
+            }
+            let ipProgress = ipBatch.events.compactMap(\.1)
+            try check(finishedIPs == 2 && ipProgress == ["first.fixture", "second.fixture"] && ipBatch.probeCount == 2 &&
+                      finishedPorts.map(\.port) == [7, 8] && tcpBatch.ports == [8, 7] && tcpBatch.probeCount == 2,
+                      "Stopping a scan keeps completed results without launching queued work (IP: \(ipProgress), TCP: \(tcpBatch.ports))")
+        case "scan-cancellation-responsiveness":
+            let cancellation = DiagnosticCancellation()
+            let firstProbeStarted = DispatchSemaphore(value: 0)
+            let width = min(128, ProcessInfo.processInfo.activeProcessorCount * 2)
+            let fixtureDeadline = ProcessInfo.processInfo.systemUptime + 4
+            let scan = Task.detached(priority: .userInitiated) {
+                await TCPProbe.scan(host: "fixture", ports: Array(1...width), timeout: 3, concurrency: width,
+                                    cancellation: cancellation, progress: nil) { _, port, _, token in
+                    firstProbeStarted.signal()
+                    while !token.isCancelled && ProcessInfo.processInfo.systemUptime < fixtureDeadline { usleep(5_000) }
+                    if token.isCancelled { return TCPProbe.probe(host: "127.0.0.1", port: port, cancellation: token) }
+                    return PortProbeResult(port: port, status: .noResponse, latency: nil)
+                }
+            }
+            let started = await runBlockingDiagnostic {
+                guard firstProbeStarted.wait(timeout: .now() + 2) == .success else { return false }
+                usleep(200_000)
+                return true
+            }
+            let cancelStart = ProcessInfo.processInfo.systemUptime
+            await Task.detached(priority: .userInitiated) { scan.cancel() }.value
+            let results = await scan.value
+            let elapsed = ProcessInfo.processInfo.systemUptime - cancelStart
+            try check(started && cancellation.isCancelled && results.isEmpty && elapsed < 1.5,
+                      "TCP batch cancellation was delayed by active probes (elapsed: \(elapsed)s, results: \(results.count))")
+        case "ip-scan-cancellation-responsiveness":
+            let cancellation = DiagnosticCancellation()
+            let firstProbeStarted = DispatchSemaphore(value: 0)
+            let width = min(32, ProcessInfo.processInfo.activeProcessorCount * 2)
+            let fixtureDeadline = ProcessInfo.processInfo.systemUptime + 4
+            let scan = Task.detached(priority: .utility) {
+                await ScannerView.scanIPTargets(
+                    (1...width).map { "host-\($0).fixture" }, concurrency: width, timeout: 3, attempts: 1,
+                    cancellation: cancellation, probe: { _, _, token in
+                        firstProbeStarted.signal()
+                        while !token.isCancelled && ProcessInfo.processInfo.systemUptime < fixtureDeadline { usleep(5_000) }
+                        guard !token.isCancelled else { return nil }
+                        return ICMPReply(sequence: 1, outcome: .timeout, rtt: nil, ttl: nil, source: nil)
+                    }
+                ) { _, _ in }
+            }
+            let started = await runBlockingDiagnostic {
+                guard firstProbeStarted.wait(timeout: .now() + 2) == .success else { return false }
+                usleep(200_000)
+                return true
+            }
+            let cancelStart = ProcessInfo.processInfo.systemUptime
+            await Task.detached(priority: .utility) { scan.cancel() }.value
+            let finished = await scan.value
+            let elapsed = ProcessInfo.processInfo.systemUptime - cancelStart
+            try check(started && cancellation.isCancelled && finished == 0 && elapsed < 1.5,
+                      "IP batch cancellation was delayed by active probes (elapsed: \(elapsed)s, results: \(finished))")
+        case "process-runtime": try await ProcessRuntimeChecks.run()
+        case "resolver-cancellation": try checkAddressResolutionCancellation()
+        case "asset-network-inventory": try await AssetNetworkInventoryChecks.run()
+        case "librenms-device-links": try await AssetNetworkInventoryChecks.libreNMSLinks()
+        case "netbox-ip-change": try await AssetNetworkInventoryChecks.refreshIdentityOverHTTP()
+        case "pcapng-summary": try PacketCaptureChecks.run()
+        case "pcapng-cancellation": try await PacketCaptureChecks.inFlightCancellation()
+        case "pcapng-case-attachment": try PacketCaptureChecks.caseAttachment()
+        case "configuration-comparison": try ConfigurationComparisonChecks.run()
+        case "configuration-capture": try await ConfigurationComparisonChecks.capture()
+        case "diagnostic-history-page": try await AssetRepositoryChecks.historyPage()
+        case "asset-backup-restore": try await AssetRepositoryChecks.backgroundRestore()
+        case "asset-background-migration": try await AssetRepositoryChecks.backgroundMigration()
+        case "asset-background-save": try await AssetRepositoryChecks.backgroundSave()
+        case "asset-backup-export":
+            let directory = try FileManager.default.url(for: .itemReplacementDirectory, in: .userDomainMask,
+                                                        appropriateFor: FileManager.default.temporaryDirectory, create: true)
+            defer { try? FileManager.default.removeItem(at: directory) }
+            let store = AssetStore(storageURL: directory.appendingPathComponent("assets.sqlite"))
+            let runID = store.beginDiagnostic(deviceID: nil, kind: .tcp, target: "192.0.2.1")
+            store.finishDiagnostic(id: runID, status: .failed, summary: "Backup export fixture")
+            let backup = try await store.exportBackupInBackground()
+            let restored = AssetStore(storageURL: directory.appendingPathComponent("restored.sqlite"))
+            try restored.importBackup(backup)
+            try check(restored.workspaces.map(\.id) == store.workspaces.map(\.id) &&
+                      restored.diagnosticRuns.first?.id == runID && restored.diagnosticRuns.first?.status == .failed,
+                      "The background backup export round-trips through the existing import format")
+        case "localization-registration":
+            try await MainActor.run {
+                let localization = Loc()
+                let key = "Localization registration fixture"
+                let translation = "Registered fixture translation"
+                var observedTranslation: String?
+                let observation = localization.objectWillChange.sink {
+                    observedTranslation = localization.t(key)
+                }
+                localization.register(zh: [key: translation], en: [key: translation])
+                withExtendedLifetime(observation) {}
+                try check(observedTranslation == translation, "Localization observers can read the registered translation")
+            }
+        case "reference-cache-concurrency":
+            let store = DataStore()
+            let results = await withTaskGroup(of: Bool.self, returning: [Bool].self) { group in
+                for _ in 0..<16 {
+                    group.addTask {
+                        store.vendor(forMACAddress: "E8:0A:B9:00:00:01")?.localizedCaseInsensitiveContains("Cisco") == true &&
+                            store.portInfo(number: 443).contains { $0.name.localizedCaseInsensitiveContains("https") } &&
+                            store.whoisServer(for: "example.com") == "whois.verisign-grs.com"
+                    }
+                }
+                var results: [Bool] = []
+                for await result in group { results.append(result) }
+                return results
+            }
+            try check(results.count == 16 && results.allSatisfy { $0 }, "Parallel reference cache lookups disagreed")
+        case "gnmi-interface-origin":
+            let unknownValue = Data("\"UNKNOWN\"".utf8).base64EncodedString()
+            for (prefix, path, accepted) in [("", "", true), ("openconfig", "", true), ("", "openconfig", true),
+                                             ("native", "", false), ("", "native", false),
+                                             ("openconfig", "native", false), ("openconfig", "openconfig", false)] {
+                let json = """
+                {"notification":[{"timestamp":"1795493000000000000",
+                "prefix":{"origin":"\(prefix)","elem":[{"name":"interfaces"},{"name":"interface","key":{"name":"Ethernet1"}}]},
+                "update":[{"path":{"origin":"\(path)","elem":[{"name":"state"},{"name":"oper-status"}]},
+                "val":{"jsonIetfVal":"\(unknownValue)"}}]}]}
+                """
+                do {
+                    let state = try GNMICapabilities.decodeInterfaceState(Data(json.utf8), interface: "Ethernet1")
+                    try check(accepted && state.status == .unknown, "Unexpected gNMI state for origin \(prefix)/\(path)")
+                } catch GNMICapabilities.Failure.invalidReport {
+                    try check(!accepted, "Rejected OpenConfig origin \(prefix)/\(path)")
+                }
+            }
+            do {
+                _ = try GNMICapabilities.decodeInterfaceState(Data(#"{"notification":[]}"#.utf8), interface: "Ethernet1")
+                throw CheckFailure(description: "gNMI absence must not be presented as the operational status UNKNOWN")
+            } catch GNMICapabilities.Failure.missingInterfaceState {}
+        case "gnmi-capabilities", "gnmi-interface-state", "gnmi-interface-failures":
+            let environment = ProcessInfo.processInfo.environment
+            guard let client = environment["NM_GNMI_FIXTURE_CLIENT"],
+                  let certificate = environment["NM_GNMI_FIXTURE_CA"],
+                  let port = environment["NM_GNMI_FIXTURE_PORT"].flatMap(Int.init) else {
+                throw CheckFailure(description: "Set the gNMI fixture client, CA and loopback port.")
+            }
+            let host = "127.0.0.1"
+            if name == "gnmi-interface-failures" {
+                let authority = URL(fileURLWithPath: certificate)
+                for interface in ["Unsupported1", "Disconnect1"] {
+                    do {
+                        _ = try await GNMICapabilities.readInterfaceState(host: host, port: port, interface: interface,
+                                                                          client: client, certificateAuthority: authority)
+                        throw CheckFailure(description: "gNMI returned interface state after a failed Get for \(interface)")
+                    } catch GNMICapabilities.Failure.requestFailed {}
+                }
+                break
+            }
+            if name == "gnmi-interface-state" {
+                let authority = URL(fileURLWithPath: certificate)
+                let state = try await GNMICapabilities.readInterfaceState(host: host, port: port, interface: "Ethernet1",
+                                                                           client: client, certificateAuthority: authority)
+                try check(state.interface == "Ethernet1" && state.status == .up &&
+                          state.sampledAt == Date(timeIntervalSince1970: 1_795_493_000), "gNMI Get preserves the exact interface and sample time")
+                do {
+                    _ = try await GNMICapabilities.readInterfaceState(host: host, port: port, interface: "Ethernet2",
+                                                                      client: client, certificateAuthority: authority)
+                    throw CheckFailure(description: "gNMI accepted a response for the wrong interface")
+                } catch GNMICapabilities.Failure.invalidReport {}
+                do {
+                    _ = try await GNMICapabilities.readInterfaceState(host: host, port: port, interface: "*",
+                                                                      client: client, certificateAuthority: authority)
+                    throw CheckFailure(description: "gNMI accepted a wildcard interface")
+                } catch GNMICapabilities.Failure.invalidInterface {}
+                break
+            }
+            let response = try await GNMICapabilities.read(host: host, port: port, client: client,
+                                                          certificateAuthority: URL(fileURLWithPath: certificate))
+            try check(response.gNMIVersion == "0.10.0" && response.supportedModels?.first?.name == "openconfig-interfaces" &&
+                      response.supportedEncodings == ["JSON_IETF"], "gNMI capabilities returned unexpected typed data")
+            do {
+                _ = try await GNMICapabilities.read(host: host, port: port, client: client)
+                throw CheckFailure(description: "An untrusted gNMI certificate was accepted")
+            } catch GNMICapabilities.Failure.requestFailed {}
+        case "inspection-project": try FieldInspectionChecks.run()
+        case "case-export": try FieldIncidentExportChecks.run()
+        case "incident-retest-preparation": try FieldRetestChecks.incidentPreparation()
+        case "ticket-trace": try FieldCaseLibraryChecks.ticketTrace()
+        case "zabbix-metric-history": try await ZabbixHTTPChecks.metricHistory()
+        case "zabbix-metric-persistence": try await ZabbixHTTPChecks.metricHistory(testPersistence: true)
+        case "zabbix-alert-ping": try await ZabbixHTTPChecks.run()
+        case "iperf-interface-context":
+            for host in ["server.example%en0", "192.0.2.8%en0", "2001:db8::1%en0", "fe80::1%",
+                         "fe80::1%en0%en1", "[fe80::1%en0]", "fe80::1%en0,other"] {
+                do {
+                    _ = try await Iperf3.measure(host: host, port: 5201, direction: .forward,
+                                                seconds: 1, bitsPerSecond: 1_000_000)
+                    throw CheckFailure(description: "iperf3 accepted an invalid scoped server address: \(host)")
+                } catch Iperf3.Failure.invalidRequest {}
+            }
+            let interfaces = [
+                NetworkInterfaceInfo(name: "en0", address: "fe80:0:0:0:0:0:0:1%en0", family: "IPv6", netmask: "", isUp: true, isLoopback: false),
+                NetworkInterfaceInfo(name: "en1", address: "fe80::1%en1", family: "IPv6", netmask: "", isUp: true, isLoopback: false),
+                NetworkInterfaceInfo(name: "lo0", address: "127.0.0.1", family: "IPv4", netmask: "", isUp: true, isLoopback: true)
+            ]
+            for (address, expected) in [("fe80::1", ["en0", "en1"]), ("::ffff:127.0.0.1", ["lo0"]), ("192.0.2.99", [])] {
+                let report = """
+                {"start":{"version":"iperf 3.22.1","connected":[{"local_host":"\(address)","remote_host":"192.0.2.8","remote_port":5201}],
+                "test_start":{"protocol":"TCP","num_streams":1,"reverse":0}},
+                "end":{"sum_sent":{"bytes":1024,"seconds":1,"bits_per_second":8192},
+                "sum_received":{"bytes":1024,"seconds":1,"bits_per_second":8192}}}
+                """
+                let measurement = try Iperf3.decodeReport(report, host: "192.0.2.8", port: 5201, direction: .forward,
+                                                          seconds: 1, bitsPerSecond: 1_000_000, interfaces: interfaces)
+                try check(measurement.localAddressInterfaces == expected, "iperf3 interface candidates for \(address)")
+            }
+        case "ssh-session-layout":
+            try await MainActor.run {
+                let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+                try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+                defer { try? FileManager.default.removeItem(at: directory) }
+                let url = directory.appendingPathComponent("ssh-session-layout.json")
+                let store = SSHSessionLayoutStore(storageURL: url)
+                try check(store.layout == SSHSessionLayout(), "SSH layout is empty on first launch")
+                let first = SSHSessionTab(host: "router.example", port: 2200, username: "netops",
+                                          jumpHost: "ops@[::1]:2222", credentialID: UUID())
+                let second = SSHSessionTab(host: "switch.example", port: 22, username: "",
+                                           jumpHost: "", credentialID: nil)
+                let layout = SSHSessionLayout(tabs: [first, second], selectedID: first.id)
+                store.save(layout)
+                try check(store.persistenceError == nil, "SSH layout saves successfully")
+                try check(SSHSessionLayoutStore(storageURL: url).layout == layout,
+                          "SSH layout restores connection fields, order and selected tab")
+                let data = try Data(contentsOf: url)
+                let saved = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+                let tabs = saved?["tabs"] as? [[String: Any]]
+                try check(tabs?.first.map { Set($0.keys) } == ["id", "host", "port", "username", "jumpHost", "credentialID"],
+                          "Saved SSH tab contains only the ID, connection fields and credential reference")
+                store.save(SSHSessionLayout(tabs: [second], selectedID: first.id))
+                let reopened = SSHSessionLayoutStore(storageURL: url)
+                try check(reopened.layout.selectedID == second.id, "Restoring a stale selection selects the remaining tab")
+                reopened.save(SSHSessionLayout())
+                try check(SSHSessionLayoutStore(storageURL: url).layout == SSHSessionLayout(),
+                          "Closing the last SSH tab stays empty after restart")
+            }
+        case "ssh-local-forward":
+            let destination = try SSHCommandBuilder.build(host: "router.example", port: 2200, username: "netops",
+                                                             identityFile: "/tmp/destination key", jumpHost: "ops@[::1]:2222")
+            let arguments = try SSHCommandBuilder.localForward(connection: destination, localPort: 8080,
+                                                                 targetHost: " [2001:db8::2] ", targetPort: 443)
+            try check(arguments.contains("127.0.0.1:8080:[2001:db8::2]:443") &&
+                      arguments.contains("StrictHostKeyChecking=yes") &&
+                      arguments.contains("ExitOnForwardFailure=yes") &&
+                      arguments.contains("-N") && !arguments.contains("-tt") &&
+                      arguments.suffix(4) == ["-J", "ops@[::1]:2222", "--", "router.example"],
+                      "Forward activates one loopback listener with host-key verification and the selected jump")
+            for invalid in ["", "*", "-o", "host:443", "x/y", "[host]", "host name"] {
+                do {
+                    _ = try SSHCommandBuilder.localForward(connection: destination, localPort: 8080,
+                                                           targetHost: invalid, targetPort: 443)
+                    throw CheckFailure(description: "Forward accepted invalid host \(invalid.debugDescription)")
+                } catch SSHCommandBuilder.ValidationError.invalidHost {}
+            }
+            let cancellation = DiagnosticCancellation()
+            let job = ProcessJobSpec(operation: .command, targetScope: "forward readiness fixture",
+                                     deadline: Date().addingTimeInterval(3), cancellation: cancellation)
+            let result = await Shell.run("/bin/sh", ["-c", "printf 'rea'; sleep 0.05; printf 'dy\\n'; sleep 10"],
+                                         job: job, environment: nil, readiness: (Data("ready\n".utf8), 2)) {
+                cancellation.cancel()
+            }
+            try check(result.cancelled && result.cleanupCompleted && result.stdout == "ready\n",
+                      "Split stdout readiness is recognized while active and the owned process group is reaped")
+            let startupJob = ProcessJobSpec(operation: .command, targetScope: "forward startup timeout fixture",
+                                            deadline: Date().addingTimeInterval(3))
+            let expired = await Shell.run("/bin/sleep", ["10"], job: startupJob,
+                                          environment: nil, readiness: (Data("ready\n".utf8), 0.1)) {}
+            try check(expired.timedOut && expired.cleanupCompleted && expired.stdout.isEmpty,
+                      "A process that never signals readiness is terminated and reaped")
+        case "ssh-proxy-jump":
+            let direct = try SSHCommandBuilder.build(host: "router.example", port: 2200, username: "netops",
+                                                     identityFile: "/tmp/destination key", jumpHost: " ")
+            let via = try SSHCommandBuilder.build(host: "router.example", port: 2200, username: "netops",
+                                                  identityFile: "/tmp/destination key",
+                                                  jumpHost: " ops@[2001:db8::1]:2222 ")
+            try check(direct.arguments.starts(with: ["-tt", "-o", "StrictHostKeyChecking=ask"]),
+                      "App SSH destinations prompt for an unknown host key and reject changed keys")
+            try check(direct.jumpHost == nil && !direct.arguments.contains("-J"), "SSH preserves direct argv with blank jump input")
+            try check(via.jumpHost == "ops@[2001:db8::1]:2222", "SSH retains the normalized jump endpoint for review")
+            try check(via.arguments == Array(direct.arguments.dropLast(2)) +
+                      ["-J", "ops@[2001:db8::1]:2222", "--", "router.example"], "SSH passes ProxyJump separately from the destination")
+            try check(via.auditTarget == "router.example", "SSH audit target excludes jump and destination usernames")
+            for (host, expected) in [("::1", "::1"), ("[::1]", "::1"), ("[fe80::1%lo0]", "fe80::1%lo0")] {
+                let configuration = try SSHCommandBuilder.build(host: host, port: 2222, jumpHost: "ops@[::1]:2200")
+                try check(configuration.arguments.suffix(4) == ["-J", "ops@[::1]:2200", "--", expected],
+                          "OpenSSH receives a bare IPv6 destination and a bracketed IPv6 ProxyJump endpoint")
+            }
+            for host in ["[router.example]", "[192.0.2.1]", "[::1", "[::1]:2222", "[fe80::1%]", "[fe80::1%lo0%lo1]"] {
+                do {
+                    _ = try SSHCommandBuilder.build(host: host, port: 22)
+                    throw CheckFailure(description: "SSH accepted invalid bracketed destination \(host)")
+                } catch SSHCommandBuilder.ValidationError.invalidHost {}
+            }
+            for jump in ["bastion.example", "192.0.2.1", "ops@bastion.example:2222"] {
+                let configuration = try SSHCommandBuilder.build(host: "router.example", port: 22, jumpHost: jump)
+                try check(configuration.jumpHost == jump, "SSH accepts jump endpoint \(jump)")
+            }
+            for jump in ["none", "a,b", "ssh://bastion", "-bastion", "-ops@bastion", "ops@@bastion",
+                         "bastion:0", "bastion:65536", "ops@bastion:", "2001:db8::1", "[dead:beef]",
+                         "[fe80::1%en0]", "bad\nname", "jump;name", "jump%h"] {
+                do {
+                    _ = try SSHCommandBuilder.build(host: "router.example", port: 22, jumpHost: jump)
+                    throw CheckFailure(description: "SSH accepted invalid jump endpoint \(jump.debugDescription)")
+                } catch SSHCommandBuilder.ValidationError.invalidJumpHost {}
+            }
+        default: try await ServiceProbeChecks.run(name)
+        }
+        print("NMTest: case \(name) passed")
+        exit(0)
+    } catch {
+        fputs("NMTest: FAILED: \(error)\n", stderr)
+        exit(1)
+    }
+}
+
+if CommandLine.arguments.contains("--next-development-only") {
+    do {
+        try AssetIdentityChecks.run()
+        try await AssetNetworkInventoryChecks.run()
+        try FieldProjectChecks.run()
+        try FieldAcceptanceChecks.run()
+        try FieldRetestChecks.run()
+        try FieldIncidentChecks.run()
+        try FieldIncidentSearchChecks.run()
+        try FieldCaseLibraryChecks.run()
+        print("NMTest: next development checks passed")
+        exit(0)
+    } catch {
+        fputs("NMTest: FAILED: \(error)\n", stderr)
+        exit(1)
+    }
+}
+
+if CommandLine.arguments.contains("--asset-identity-only") {
+    do {
+        try AssetIdentityChecks.run()
+        print("NMTest: asset identity checks passed")
+        exit(0)
+    } catch {
+        fputs("NMTest: FAILED: \(error)\n", stderr)
+        exit(1)
+    }
+}
+
+let includeWorkspaceOwnership = !CommandLine.arguments.contains("--single-instance")
+
 if CommandLine.arguments.contains("--storage-only") {
     do {
-        try AssetRepositoryChecks.run()
+        try AssetRepositoryChecks.run(includeWorkspaceOwnership: includeWorkspaceOwnership)
         print("NMTest: storage checks passed")
+        exit(0)
+    } catch {
+        fputs("NMTest: FAILED: \(error)\n", stderr)
+        exit(1)
+    }
+}
+
+if CommandLine.arguments.contains("--field-project-only") {
+    do {
+        try FieldProjectChecks.run()
+        try FieldAcceptanceChecks.run()
+        try FieldRetestChecks.run()
+        try FieldIncidentChecks.run()
+        print("NMTest: field project checks passed")
+        exit(0)
+    } catch {
+        fputs("NMTest: FAILED: \(error)\n", stderr)
+        exit(1)
+    }
+}
+
+if let fixtureIndex = CommandLine.arguments.firstIndex(of: "--field-acceptance-fixtures") {
+    do {
+        guard let path = CommandLine.arguments.dropFirst(fixtureIndex + 1).first,
+              path.hasPrefix("/") else {
+            throw CheckFailure(description: "Supply an existing absolute directory for synthetic field fixtures.")
+        }
+        try FieldAcceptanceChecks.writeFixtures(to: URL(fileURLWithPath: path, isDirectory: true))
+        print("NMTest: synthetic v1 and v2 field project fixtures written")
         exit(0)
     } catch {
         fputs("NMTest: FAILED: \(error)\n", stderr)
@@ -440,9 +873,11 @@ do {
     try check(unsupportedSystemDNS.status == .failed && unsupportedSystemDNS.summary == DNSError.systemResolverRecordType.localizedDescription,
               "system DNS mode rejects record types unavailable through address resolution")
     let tcpFixture = try LoopbackTCPListener()
+    let tcpFixturePort = tcpFixture.port
     let resolvedTCP = try awaitNetBoxFixture {
-        await DiagnosticService.runTCP(host: "localhost", port: tcpFixture.port, timeout: 1)
+        await DiagnosticService.runTCP(host: "localhost", port: tcpFixturePort, timeout: 1)
     }
+    withExtendedLifetime(tcpFixture) {}
     try check(resolvedTCP.status == .succeeded, "TCP diagnostic connects through the cancellable localhost resolver")
     let refusedPort = try LoopbackTCPListener()
     let refusedNumber = refusedPort.port
@@ -899,8 +1334,9 @@ do {
     defer { close(socketPair[0]); close(socketPair[1]) }
     let cancellation = DiagnosticCancellation()
     let cancellationFinished = DispatchSemaphore(value: 0)
+    let readDescriptor = socketPair[0]
     DispatchQueue.global().async {
-        _ = cancellation.waitForReadiness(fd: socketPair[0], events: Int16(POLLIN), timeout: 10)
+        _ = cancellation.waitForReadiness(fd: readDescriptor, events: Int16(POLLIN), timeout: 10)
         cancellationFinished.signal()
     }
     usleep(50_000)
@@ -1074,7 +1510,7 @@ do {
         await DiagnosticService.runDNS(host: "fixture.test", server: "127.0.0.1", serverPort: dnsResponseFixture.port, timeout: 3)
     }
     try check(dnsResponse.status == .succeeded, "DNS local response status \(String(describing: dnsResponse.status)): \(dnsResponse.summary) [\(dnsResponse.detail)]")
-    try check(dnsResponse.summary == "1 record(s)", "DNS service formats successful record counts")
+    try check(dnsResponse.summary == tf("%d record(s)", 1), "DNS service formats successful record counts")
     try check(dnsResponse.detail.contains("127.0.0.42"), "DNS service reports the parsed loopback fixture answer")
 
     let preCancelledTCPStatus = DiagnosticStatusBox()
@@ -1090,7 +1526,7 @@ do {
 
     try NetBoxOfflineChecks.run()
     try NetBoxHTTPChecks.run()
-    try ZabbixHTTPChecks.run()
+    try await ZabbixHTTPChecks.run()
     if let pinger = try? ICMPPinger(host: "127.0.0.1", timeout: 0.8) {
         try check(pinger.ping().outcome.isSuccess, "localhost ICMP")
     }
@@ -1105,7 +1541,15 @@ do {
     } else {
         throw CheckFailure(description: "a cancelled ICMP probe should not fall back or report a timeout")
     }
-    try AssetRepositoryChecks.run()
+    try AssetRepositoryChecks.run(includeWorkspaceOwnership: includeWorkspaceOwnership)
+    try AssetIdentityChecks.run()
+    try await AssetNetworkInventoryChecks.run()
+    try FieldProjectChecks.run()
+    try FieldAcceptanceChecks.run()
+    try FieldRetestChecks.run()
+    try FieldIncidentChecks.run()
+    try FieldIncidentSearchChecks.run()
+    try FieldCaseLibraryChecks.run()
     try await DiagnosticRuntimeEvidenceChecks.run()
     try TCPProbeChecks.run()
     try await PingChecks.run()

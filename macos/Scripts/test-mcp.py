@@ -17,6 +17,7 @@ import json
 import os
 from pathlib import Path
 import queue
+import select
 import shlex
 import signal
 import socket
@@ -97,6 +98,8 @@ class MCPProcess:
         self.pending = {}
         self.request_methods = {}
         self.next_id = 0
+        self.read_responses = threading.Event()
+        self.read_responses.set()
         self.readers = [
             threading.Thread(target=self._read_stdout, daemon=True),
             threading.Thread(target=self._read_stderr, daemon=True),
@@ -107,6 +110,7 @@ class MCPProcess:
     def _read_stdout(self):
         try:
             while True:
+                self.read_responses.wait()
                 line = self.process.stdout.readline(MAX_LINE_BYTES + 1)
                 if not line:
                     self.messages.put(("eof", None))
@@ -136,6 +140,7 @@ class MCPProcess:
             print("Server stderr:\n" + "".join(self.stderr), file=sys.stderr)
 
     def cleanup(self):
+        self.read_responses.set()
         try:
             if self.process.stdin and not self.process.stdin.closed:
                 self.process.stdin.close()
@@ -465,6 +470,171 @@ def check_offline(server, deadline):
     print("PASS: default capabilities, offline tools, /24 /31 /32 subnets, strict inputs, resources, protocol errors, EOF")
 
 
+def check_case_snapshot(server, deadline):
+    query = "evidence_query"
+    summary_tool = "case_summary"
+    summary_uri = "networkmanager://case-summary"
+    with MCPProcess(server, deadline) as client:
+        client.initialize()
+        check({tool["name"] for tool in client.result("tools/list")["tools"]} == OFFLINE_TOOLS,
+              "Snapshot changed the default tool list")
+        for tool in (query, summary_tool):
+            response = client.request("tools/call", {"name": tool, "arguments": {}})
+            check("error" in response, "Case tool ran without an explicitly selected snapshot")
+        client.eof()
+
+    timestamp = "2026-11-24T04:00:00Z"
+    case_id = "A1B2C3D4-5555-4444-9999-123456789ABC"
+    observations = [
+        {"id": "11111111-1111-1111-1111-111111111111", "kind": "note",
+         "occurredAt": timestamp, "recordedAt": timestamp, "author": "private-operator",
+         "detail": "Link restored; token=fixture-secret"},
+        {"id": "22222222-2222-2222-2222-222222222222", "kind": "metricObserved",
+         "occurredAt": timestamp, "recordedAt": timestamp, "detail": "a\u0301" * 1100,
+         "metricObservation": {"samples": ["private-sample"]}},
+    ]
+    with tempfile.TemporaryDirectory(prefix="nmcp-case-query-") as directory:
+        path = Path(directory) / "case.json"
+        for version in (1, 2):
+            source = {"schemaVersion": version, "generatedAt": timestamp, "observations": observations[:version],
+                      "case": {"id": case_id, "title": "Branch uplink", "status": "monitoring",
+                               "createdAt": timestamp}}
+            original = json.dumps(source).encode()
+            path.write_bytes(original)
+            with MCPProcess(server, deadline, f"--case-snapshot={path}") as client:
+                client.initialize()
+                tools = client.result("tools/list")["tools"]
+                check({tool["name"] for tool in tools} == OFFLINE_TOOLS | {query, summary_tool},
+                      "Selecting a snapshot changed unrelated tools")
+                resource = client.result("resources/read", {"uri": summary_uri})["contents"][0]
+                summary = tool_data(client.call(summary_tool, {}))["summary"]
+                check(summary == json.loads(resource["text"]) and summary["status"] == "monitoring"
+                      and summary["caseID"] == case_id and summary["observationCount"] == version,
+                      "Case summary tool and resource disagreed")
+                scope_error = tool_data(client.call(summary_tool, {"caseID": "other"}), error=True)
+                check(scope_error["error"]["code"] == "invalid_arguments", "Summary accepted a Case override")
+                first = tool_data(client.call(query, {"limit": 1}))
+                check(first["caseID"] == case_id and first["snapshotGeneratedAt"] == timestamp
+                      and first["total"] == version and first["nextOffset"] == (1 if version == 2 else None),
+                      "Unexpected first page or Case identity")
+                note = first["observations"][0]
+                check(note == {"id": observations[0]["id"], "kind": "note", "occurredAt": timestamp,
+                               "recordedAt": timestamp, "detail": "Link restored; token=[REDACTED]",
+                               "detailTruncated": False}, "Observation metadata or redaction changed")
+                following = tool_data(client.call(query, {"offset": 1}))
+                filtered = tool_data(client.call(query, {"kind": "metricObserved"}))
+                check(following["observations"] == filtered["observations"]
+                      and filtered["total"] == version - 1 and following["nextOffset"] is None,
+                      "Filtering and subsequent page disagreed")
+                if version == 2:
+                    metric = filtered["observations"][0]
+                    check(metric["id"] == observations[1]["id"] and metric["detailTruncated"]
+                          and len(metric["detail"]) == 2048 and "metricObservation" not in metric,
+                          "Observation preview exceeded its scope")
+                for invalid in ({"path": str(path)}, {"kind": "invalid"}, {"limit": 21}, {"offset": -1}):
+                    result = tool_data(client.call(query, invalid), error=True)
+                    check(result["error"]["code"] == "invalid_arguments", "Invalid query lacked an error code")
+                client.eof()
+            check(path.read_bytes() == original, "Observation query modified the source snapshot")
+    print("PASS: opt-in Case summary and observations, both schemas, pagination, redaction, strict input and EOF")
+
+
+def check_approved_diagnostic(server, deadline):
+    with tempfile.TemporaryDirectory(prefix="nmcp-approved-check-") as directory:
+        path = Path(directory) / "case.json"
+        case_id = "A1B2C3D4-5555-4444-9999-123456789ABC"
+        timestamp = "2026-11-24T04:00:00Z"
+        path.write_text(json.dumps({
+            "schemaVersion": 2, "generatedAt": timestamp, "observations": [],
+            "case": {"id": case_id, "title": "Local service", "status": "monitoring", "createdAt": timestamp},
+        }))
+        snapshot = f"--case-snapshot={path}"
+        with MCPProcess(server, deadline, snapshot) as client:
+            client.initialize()
+            response = client.request("tools/call", {"name": "diagnostic_plan", "arguments": {}})
+            check("error" in response, "Selecting a snapshot alone enabled approved diagnostics")
+            client.eof()
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
+            listener.bind(("127.0.0.1", 0))
+            listener.listen()
+            listener.setblocking(False)
+            port = listener.getsockname()[1]
+            with MCPProcess(server, deadline, snapshot, f"--approved-loopback-tcp={port},30") as client:
+                client.initialize()
+                expected = OFFLINE_TOOLS | {"case_summary", "evidence_query", "diagnostic_plan", "diagnostic_execute"}
+                check({tool["name"] for tool in client.result("tools/list")["tools"]} == expected,
+                      "Scoped approval exposed unrestricted diagnostics")
+                plan = tool_data(client.call("diagnostic_plan", {}))
+                check(plan["caseID"] == case_id and plan["target"] == "127.0.0.1" and plan["port"] == port
+                      and plan["maximumTimeoutSeconds"] == 2, "The described plan changed the launch approval")
+                parameters = {"planID": plan["planID"], "timeout": 0.5}
+                for invalid, code in [
+                    (dict(parameters, host="192.0.2.1"), "invalid_arguments"),
+                    (dict(parameters, planID="00000000-0000-4000-8000-000000000000"), "outside_scope"),
+                    (dict(parameters, timeout=2.1), "budget_exceeded"),
+                ]:
+                    failure = tool_data(client.call("diagnostic_execute", invalid), error=True)
+                    check(failure["error"]["code"] == code, "Execution rejected a plan with the wrong reason")
+                check(not select.select([listener], [], [], 0)[0], "An unapproved execution reached the TCP listener")
+                call = {"name": "diagnostic_execute", "arguments": parameters}
+                requests = [client.begin("tools/call", call) for _ in range(2)]
+                responses = [client.response(request)["result"] for request in requests]
+                successes = [tool_data(response) for response in responses if not response.get("isError")]
+                failures = [tool_data(response, error=True) for response in responses if response.get("isError")]
+                check(len(successes) == 1 and len(failures) == 1 and failures[0]["error"]["code"] == "budget_exhausted",
+                      "Concurrent execution did not consume the approval exactly once")
+                run = successes[0]["run"]
+                check(run["kind"] == "tcp" and run["status"] == "succeeded" and run["target"] == plan["target"]
+                      and run["parameters"]["port"] == str(port) and run["startedAt"] <= run["finishedAt"]
+                      and len(run["evidence"]["tcpAttempts"]) == 1, "Execution omitted shared diagnostic run evidence")
+                connection, _ = listener.accept()
+                connection.close()
+                check(not select.select([listener], [], [], 0)[0], "The plan made more than one connection")
+                client.eof()
+            with MCPProcess(server, deadline, snapshot, f"--approved-loopback-tcp={port},1") as client:
+                client.initialize()
+                expired = tool_data(client.call("diagnostic_plan", {}))
+                time.sleep(1.05)
+                failure = tool_data(client.call("diagnostic_execute", {"planID": expired["planID"]}), error=True)
+                check(failure["error"]["code"] == "expired" and not select.select([listener], [], [], 0)[0],
+                      "Expired approval reached the TCP listener")
+                client.eof()
+        with socket.socket(socket.AF_INET6, socket.SOCK_STREAM) as listener:
+            listener.bind(("::1", 0))
+            listener.listen()
+            listener.setblocking(False)
+            port = listener.getsockname()[1]
+            approval = f"--approved-tcp=::1,{port},30"
+            invalid_options = [
+                (snapshot, f"--approved-tcp=localhost,{port},30"),
+                (snapshot, f"--approved-tcp=::,{port},30"),
+                (approval,),
+                (snapshot, approval, "--allow-network"),
+                (snapshot, approval, f"--approved-loopback-tcp={port},30"),
+            ]
+            for options in invalid_options:
+                result = subprocess.run([str(server), *options], stdin=subprocess.DEVNULL,
+                                        capture_output=True, timeout=deadline.remaining(5))
+                check(result.returncode == 2, "Invalid endpoint approval was accepted")
+            with MCPProcess(server, deadline, snapshot, approval) as client:
+                client.initialize()
+                plan = tool_data(client.call("diagnostic_plan", {}))
+                check(plan["caseID"] == case_id and plan["target"] == "::1" and plan["port"] == port,
+                      "The described plan changed the approved IPv6 endpoint")
+                parameters = {"planID": plan["planID"], "timeout": 0.5}
+                failure = tool_data(client.call("diagnostic_execute", dict(parameters, target="127.0.0.1")), error=True)
+                check(failure["error"]["code"] == "invalid_arguments" and not select.select([listener], [], [], 0)[0],
+                      "An endpoint override reached the TCP listener")
+                run = tool_data(client.call("diagnostic_execute", parameters))["run"]
+                check(run["status"] == "succeeded" and run["target"] == "::1" and
+                      len(run["evidence"]["tcpAttempts"]) == 1, "Approval did not use the fixed IPv6 endpoint")
+                connection, _ = listener.accept()
+                connection.close()
+                check(not select.select([listener], [], [], 0)[0], "IPv6 plan made more than one connection")
+                client.eof()
+    print("PASS: scoped Case plans, exact IPv4/IPv6 endpoints, budget and expiry rejection, shared run evidence and EOF")
+
+
 def check_network(server, deadline):
     with MCPProcess(server, deadline, "--allow-network") as client:
         client.initialize()
@@ -737,8 +907,33 @@ def relocated_packaged_server(app, deadline):
               "source/build reads denied, no developer tools")
 
 
+def check_slow_reader(server, deadline):
+    with MCPProcess(server, deadline) as client:
+        client.initialize()
+        client.read_responses.clear()
+        requests = [client.begin("tools/list") for _ in range(64)]
+        time.sleep(0.6)
+        check(client.process.poll() is None, "MCP exited while the client paused reading stdout")
+        client.read_responses.set()
+        for identifier in requests:
+            response = client.response(identifier)
+            tools = response.get("result", {}).get("tools", [])
+            check({tool["name"] for tool in tools} == OFFLINE_TOOLS,
+                  "A slow-reader response lost tool metadata")
+        check(not client.pending, "Unexpected extra replies while resuming stdout reads")
+        check("tools" in client.result("tools/list"), "MCP did not handle requests after output resumed")
+        client.read_responses.clear()
+        for _ in requests:
+            client.begin("tools/list")
+        time.sleep(0.6)
+        check(client.process.poll() is None, "MCP exited before stdin closed while stdout reads were paused")
+        client.eof()
+    print("PASS: intact stdio replies after paused reads, subsequent request and stdin EOF with reads paused")
+
+
 def check_server(server, deadline, launcher=None):
-    for check_case in [check_offline, check_network, check_corrupt_preferences, check_versions_and_cli]:
+    for check_case in [check_offline, check_slow_reader, check_case_snapshot, check_approved_diagnostic, check_network,
+                       check_corrupt_preferences, check_versions_and_cli]:
         try:
             check_case(server, deadline)
         except CheckFailure as error:

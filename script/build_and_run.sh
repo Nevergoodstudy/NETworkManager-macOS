@@ -2,7 +2,10 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP_PATH="$ROOT_DIR/dist/macos/NETworkManager.app"
+DIST_DIR="${DIST_DIR:-$ROOT_DIR/dist/macos}"
+mkdir -p "$DIST_DIR"
+DIST_DIR="$(cd "$DIST_DIR" && pwd -P)"
+APP_PATH="$DIST_DIR/NETworkManager.app"
 APP_EXECUTABLE="$APP_PATH/Contents/MacOS/NETworkManagerMac"
 
 MODE="run"

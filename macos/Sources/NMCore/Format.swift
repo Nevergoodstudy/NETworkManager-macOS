@@ -115,6 +115,7 @@ public enum CSV {
         return lines.joined(separator: "\r\n") + "\r\n"
     }
 
+    @MainActor
     @discardableResult
     public static func write(_ content: String, suggestedName: String) -> URL? {
         let panel = NSSavePanel()

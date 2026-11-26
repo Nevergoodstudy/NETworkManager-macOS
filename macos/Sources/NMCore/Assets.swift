@@ -110,14 +110,21 @@ public struct AssetDevice: Identifiable, Codable, Hashable, Sendable {
     public var source: String?
     /// Time the external source record was last fetched successfully.
     public var sourceFetchedAt: Date?
+    public var externalIdentity: ExternalAssetIdentity?
+    /// Last address received from the source, independent of an engineer's local override.
+    public var sourceAddress: String?
+    public var sourcePrimaryAddresses: [AssetIPAddress]?
+    public var networkInventory: AssetNetworkInventory?
+    package var libreNMSLinks: LibreNMSLinkSnapshot? = nil
     public var createdAt: Date
     public var updatedAt: Date
 
     private enum CodingKeys: String, CodingKey {
-        case id, siteID, subnetID, name, address, kind, vendor, role, notes, credentialRefID, source, sourceFetchedAt, createdAt, updatedAt
+        case id, siteID, subnetID, name, address, kind, vendor, role, notes, credentialRefID, source, sourceFetchedAt, externalIdentity, sourceAddress, sourcePrimaryAddresses, networkInventory, createdAt, updatedAt
+        case libreNMSLinks
     }
 
-    public init(id: UUID = UUID(), siteID: UUID, subnetID: UUID? = nil, name: String, address: String, kind: AssetDeviceKind = .other, vendor: String = "", role: String = "", notes: String = "", credentialRefID: UUID? = nil, source: String? = nil, sourceFetchedAt: Date? = nil, createdAt: Date = Date(), updatedAt: Date = Date()) {
+    public init(id: UUID = UUID(), siteID: UUID, subnetID: UUID? = nil, name: String, address: String, kind: AssetDeviceKind = .other, vendor: String = "", role: String = "", notes: String = "", credentialRefID: UUID? = nil, source: String? = nil, sourceFetchedAt: Date? = nil, externalIdentity: ExternalAssetIdentity? = nil, sourceAddress: String? = nil, sourcePrimaryAddresses: [AssetIPAddress]? = nil, networkInventory: AssetNetworkInventory? = nil, createdAt: Date = Date(), updatedAt: Date = Date()) {
         self.id = id
         self.siteID = siteID
         self.subnetID = subnetID
@@ -130,6 +137,10 @@ public struct AssetDevice: Identifiable, Codable, Hashable, Sendable {
         self.credentialRefID = credentialRefID
         self.source = source
         self.sourceFetchedAt = sourceFetchedAt
+        self.externalIdentity = externalIdentity
+        self.sourceAddress = sourceAddress
+        self.sourcePrimaryAddresses = sourcePrimaryAddresses
+        self.networkInventory = networkInventory
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
@@ -148,6 +159,11 @@ public struct AssetDevice: Identifiable, Codable, Hashable, Sendable {
         credentialRefID = try values.decodeIfPresent(UUID.self, forKey: .credentialRefID)
         source = try values.decodeIfPresent(String.self, forKey: .source)
         sourceFetchedAt = try values.decodeIfPresent(Date.self, forKey: .sourceFetchedAt)
+        externalIdentity = try values.decodeIfPresent(ExternalAssetIdentity.self, forKey: .externalIdentity)
+        sourceAddress = try values.decodeIfPresent(String.self, forKey: .sourceAddress)
+        sourcePrimaryAddresses = try values.decodeIfPresent([AssetIPAddress].self, forKey: .sourcePrimaryAddresses)
+        networkInventory = try values.decodeIfPresent(AssetNetworkInventory.self, forKey: .networkInventory)
+        libreNMSLinks = try values.decodeIfPresent(LibreNMSLinkSnapshot.self, forKey: .libreNMSLinks)
         createdAt = try values.decode(Date.self, forKey: .createdAt)
         updatedAt = try values.decode(Date.self, forKey: .updatedAt)
     }
@@ -166,8 +182,11 @@ public struct ExternalAssetSnapshot: Sendable, Hashable {
     public var kind: AssetDeviceKind
     public var role: String
     public var vendor: String
+    public var externalIdentity: ExternalAssetIdentity?
+    public var sourcePrimaryAddresses: [AssetIPAddress]?
+    public var networkInventory: AssetNetworkInventory?
 
-    public init(source: String, fetchedAt: Date, siteName: String, siteLocation: String = "", deviceName: String, address: String, kind: AssetDeviceKind = .other, role: String = "", vendor: String = "") {
+    public init(source: String, fetchedAt: Date, siteName: String, siteLocation: String = "", deviceName: String, address: String, kind: AssetDeviceKind = .other, role: String = "", vendor: String = "", externalIdentity: ExternalAssetIdentity? = nil, sourcePrimaryAddresses: [AssetIPAddress]? = nil, networkInventory: AssetNetworkInventory? = nil) {
         self.source = source
         self.fetchedAt = fetchedAt
         self.siteName = siteName
@@ -177,10 +196,16 @@ public struct ExternalAssetSnapshot: Sendable, Hashable {
         self.kind = kind
         self.role = role
         self.vendor = vendor
+        self.externalIdentity = externalIdentity
+        self.sourcePrimaryAddresses = sourcePrimaryAddresses
+        self.networkInventory = networkInventory
     }
 
     public func hasSameIdentity(as other: ExternalAssetSnapshot) -> Bool {
-        source == other.source &&
+        if externalIdentity != nil || other.externalIdentity != nil {
+            return externalIdentity != nil && externalIdentity == other.externalIdentity
+        }
+        return source == other.source &&
         siteName.caseInsensitiveCompare(other.siteName) == .orderedSame &&
         siteLocation == other.siteLocation &&
         address.caseInsensitiveCompare(other.address) == .orderedSame
@@ -202,6 +227,8 @@ public enum DiagnosticKind: String, Codable, CaseIterable, Identifiable, Sendabl
     case ping
     case dns
     case tcp
+    case tls
+    case http
     case traceroute
     case snmp
     case whois
@@ -213,6 +240,8 @@ public enum DiagnosticKind: String, Codable, CaseIterable, Identifiable, Sendabl
         case .ping: return "PING"
         case .dns: return "DNS"
         case .tcp: return "TCP"
+        case .tls: return "TLS"
+        case .http: return "HTTP"
         case .traceroute: return "TRACEROUTE"
         case .snmp: return "SNMP"
         case .whois: return "WHOIS"
@@ -255,17 +284,28 @@ public struct DiagnosticRun: Identifiable, Codable, Hashable, Sendable {
 
 /// Observable workspace facade; default storage is the SQLite repository.
 public final class AssetStore: ObservableObject {
-    public static let shared = AssetStore()
+    @MainActor
+    public static let shared: AssetStore = {
+        let store = AssetStore(openingInBackground: sqliteRepository())
+        initializedShared = store
+        return store
+    }()
+
+    @MainActor package private(set) static var initializedShared: AssetStore?
 
     @Published public private(set) var workspaces: [OperationsWorkspace] = []
     @Published public private(set) var sites: [AssetSite] = []
     @Published public private(set) var subnets: [AssetSubnet] = []
     @Published public private(set) var devices: [AssetDevice] = []
     @Published public private(set) var diagnosticRuns: [DiagnosticRun] = []
+    @Published package private(set) var diagnosticHistoryRevision = 0
     @Published public private(set) var recoveryError: String?
     @Published public private(set) var workspaceAccessError: String?
     @Published public private(set) var persistenceError: String?
     @Published public private(set) var preservedCorruptFileURL: URL?
+    @Published public private(set) var isLoadingWorkspace = false
+    @Published public private(set) var isRestoringBackup = false
+    @Published package private(set) var isSavingWorkspace = false
 
     public struct BackupDocument: Codable, Sendable {
         public var formatVersion: Int
@@ -278,34 +318,66 @@ public final class AssetStore: ObservableObject {
     }
 
     private let repository: any AssetRepository
+    private var scheduleBackgroundSave: ((AssetSnapshot) -> Void)?
+    @MainActor private var openingTask: Task<Void, Never>?
+    @MainActor private var restoreTask: Task<Void, Error>?
+    @MainActor private var saveTask: Task<Void, Never>?
+    @MainActor private var pendingSnapshot: AssetSnapshot?
     private var hasLoadedWorkspace = false
+    private var deferredDiagnosticCompletions: [UUID: DiagnosticRun] = [:]
 
     public convenience init(storageURL: URL? = nil) {
         if let storageURL, storageURL.pathExtension.lowercased() == "json" {
             self.init(repository: JSONAssetRepository(url: storageURL))
         } else {
-            let directory = SettingsStore.supportDirectory
-            self.init(repository: SQLiteAssetRepository(
-                url: storageURL ?? directory.appendingPathComponent("assets.sqlite"),
-                legacyURL: storageURL == nil ? directory.appendingPathComponent("assets.json") : nil,
-                requiresExclusiveOwnership: storageURL == nil))
+            self.init(repository: Self.sqliteRepository(storageURL: storageURL))
         }
     }
 
-    public init(repository: any AssetRepository) {
-        self.repository = repository
-        load()
-        if workspaces.isEmpty && canEditWorkspace { seedLocalWorkspace() }
+    private static func sqliteRepository(storageURL: URL? = nil) -> SQLiteAssetRepository {
+        let directory = SettingsStore.resolvedSupportDirectory()
+        return SQLiteAssetRepository(
+            url: storageURL ?? directory.appendingPathComponent("assets.sqlite"),
+            legacyURL: storageURL == nil ? directory.appendingPathComponent("assets.json") : nil,
+            requiresExclusiveOwnership: storageURL == nil)
     }
 
-    public var canEditWorkspace: Bool { workspaceAccessError == nil && recoveryError == nil }
+    public convenience init(repository: any AssetRepository) {
+        self.init(repository: repository, loading: false)
+        load(seedIfEmpty: true)
+    }
+
+    @MainActor
+    package convenience init(openingInBackground repository: any AssetRepository) {
+        self.init(repository: repository, loading: true)
+        let enqueue: @MainActor @Sendable (AssetSnapshot) -> Void = { [weak self] value in
+            self?.enqueueSave(value)
+        }
+        scheduleBackgroundSave = { value in MainActor.assumeIsolated { enqueue(value) } }
+        startOpeningWorkspace()
+    }
+
+    private init(repository: any AssetRepository, loading: Bool) {
+        self.repository = repository
+        isLoadingWorkspace = loading
+    }
+
+    public var canEditWorkspace: Bool {
+        workspaceAccessError == nil && recoveryError == nil && !isLoadingWorkspace && !isRestoringBackup
+    }
 
     /// A blocked window can be opened after the owner quits, without replacing
     /// the database or clearing its error before ownership has been acquired.
     public func retryWorkspaceAccess() {
         guard workspaceAccessError != nil else { return }
-        load()
-        if workspaces.isEmpty && canEditWorkspace { seedLocalWorkspace() }
+        load(seedIfEmpty: true)
+    }
+
+    @MainActor
+    public func retryWorkspaceAccessInBackground() async {
+        guard workspaceAccessError != nil, !isLoadingWorkspace else { return }
+        isLoadingWorkspace = true
+        await startOpeningWorkspace().value
     }
 
     private var snapshot: AssetSnapshot {
@@ -322,7 +394,37 @@ public final class AssetStore: ObservableObject {
 
     public func diagnosticPage(_ query: DiagnosticPageQuery = DiagnosticPageQuery()) throws -> [DiagnosticRun] {
         try requireWorkspaceAccess()
+        guard !isRestoringBackup else { throw AssetBackupError.restoreInProgress }
+        guard !isSavingWorkspace else { throw WorkspaceBusy(message: t("Save")) }
         return try repository.diagnosticPage(query)
+    }
+
+    @MainActor
+    package func diagnosticHistoryPage(_ filter: DiagnosticHistorySearch.Filter, offset: Int) async throws -> [DiagnosticRun] {
+        try requireWorkspaceAccess()
+        if filter.usesIndex && persistenceError == nil && !isRestoringBackup && !isSavingWorkspace {
+            let query = DiagnosticPageQuery(scope: filter.workspaceID.map(DiagnosticPageQuery.Scope.workspace) ?? .all,
+                                            limit: 51, offset: offset)
+            let revision = diagnosticHistoryRevision
+            let repository = self.repository
+            let runs = try await Task.detached(priority: .userInitiated) { try repository.diagnosticPage(query) }.value
+            if !isRestoringBackup && revision == diagnosticHistoryRevision { return runs }
+        }
+        let snapshot = self.snapshot
+        return await Task.detached(priority: .userInitiated) {
+            Array(filter.matchingRuns(in: snapshot).dropFirst(offset).prefix(51))
+        }.value
+    }
+
+    @MainActor
+    package func exportDiagnosticHistory(_ filter: DiagnosticHistorySearch.Filter, markdown: Bool) async throws -> Data {
+        try requireWorkspaceAccess()
+        let snapshot = self.snapshot
+        return try await Task.detached(priority: .userInitiated) {
+            let runs = filter.matchingRuns(in: snapshot)
+            if markdown { return Data(DiagnosticEvidenceExporter.markdown(runs: runs, devices: snapshot.devices).utf8) }
+            return try DiagnosticEvidenceExporter.json(runs: runs, devices: snapshot.devices)
+        }.value
     }
 
     public var primaryWorkspace: OperationsWorkspace? { workspaces.first }
@@ -342,16 +444,16 @@ public final class AssetStore: ObservableObject {
     }
 
     public func containsExternalAsset(_ snapshot: ExternalAssetSnapshot) -> Bool {
-        guard let workspace = primaryWorkspace,
-              let site = matchingSite(for: snapshot, workspaceID: workspace.id) else { return false }
-        return devices.contains { matchesExternalDevice($0, snapshot: snapshot, siteID: site.id) }
+        guard let workspace = primaryWorkspace else { return false }
+        return externalDeviceIndex(for: snapshot, workspaceID: workspace.id) != nil
     }
 
     public func searchDevices(_ query: String) -> [AssetDevice] {
         let value = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !value.isEmpty else { return devices }
         return devices.filter { device in
-            [device.name, device.address, device.vendor, device.role, device.kind.displayName]
+            ([device.name, device.address, device.vendor, device.role, device.kind.displayName] +
+             (device.sourcePrimaryAddresses ?? []).map(\.cidr) + (device.networkInventory?.addresses ?? []).map(\.cidr))
                 .contains { $0.localizedCaseInsensitiveContains(value) }
         }
     }
@@ -367,6 +469,15 @@ public final class AssetStore: ObservableObject {
         save()
     }
 
+    @discardableResult
+    package func applyLibreNMSLinks(_ snapshot: LibreNMSLinkSnapshot, to deviceID: UUID) -> Bool {
+        guard canEditWorkspace, let index = devices.firstIndex(where: { $0.id == deviceID }),
+              devices[index].libreNMSLinks.map({ $0.fetchedAt <= snapshot.fetchedAt }) ?? true else { return false }
+        devices[index].libreNMSLinks = snapshot
+        save()
+        return true
+    }
+
     /// Merge read-only records from an external source without overwriting
     /// user-authored fields on an existing local device.
     @discardableResult
@@ -375,6 +486,30 @@ public final class AssetStore: ObservableObject {
         var changed = 0
         var needsSave = false
         for snapshot in snapshots {
+            guard snapshot.externalIdentity?.isValid != false else { continue }
+            guard snapshot.sourcePrimaryAddresses.map({ $0.count <= 2 && $0.allSatisfy(\.isValid) }) != false,
+                  snapshot.networkInventory.map({ $0.isValid && $0.deviceIdentity == snapshot.externalIdentity }) != false else { continue }
+            if let index = externalDeviceIndex(for: snapshot, workspaceID: workspace.id) {
+                // Expanded inventory can arrive after the basic preview with the same source date.
+                if let inventory = snapshot.networkInventory,
+                   devices[index].networkInventory.map({ inventory.fetchedAt > $0.fetchedAt }) ?? true {
+                    devices[index].networkInventory = inventory
+                    needsSave = true
+                }
+                guard devices[index].sourceFetchedAt.map({ snapshot.fetchedAt > $0 }) ?? true else { continue }
+                if snapshot.externalIdentity != nil {
+                    if devices[index].address == devices[index].sourceAddress {
+                        devices[index].address = snapshot.address
+                    }
+                    devices[index].sourceAddress = snapshot.address
+                }
+                devices[index].sourceFetchedAt = snapshot.fetchedAt
+                if let primary = snapshot.sourcePrimaryAddresses { devices[index].sourcePrimaryAddresses = primary }
+                if devices[index].vendor.isEmpty { devices[index].vendor = snapshot.vendor }
+                if devices[index].role.isEmpty { devices[index].role = snapshot.role }
+                needsSave = true
+                continue
+            }
             let site = matchingSite(for: snapshot, workspaceID: workspace.id)
                 ?? AssetSite(workspaceID: workspace.id, name: snapshot.siteName, location: snapshot.siteLocation)
             if !sites.contains(where: { $0.id == site.id }) {
@@ -382,21 +517,7 @@ public final class AssetStore: ObservableObject {
                 needsSave = true
             }
 
-            if let index = devices.firstIndex(where: { matchesExternalDevice($0, snapshot: snapshot, siteID: site.id) }) {
-                if devices[index].sourceFetchedAt.map({ snapshot.fetchedAt > $0 }) ?? true {
-                    devices[index].sourceFetchedAt = snapshot.fetchedAt
-                    needsSave = true
-                }
-                if devices[index].vendor.isEmpty && !snapshot.vendor.isEmpty {
-                    devices[index].vendor = snapshot.vendor
-                    needsSave = true
-                }
-                if devices[index].role.isEmpty && !snapshot.role.isEmpty {
-                    devices[index].role = snapshot.role
-                    needsSave = true
-                }
-            } else {
-                devices.append(AssetDevice(
+            devices.append(AssetDevice(
                     siteID: site.id,
                     name: snapshot.deviceName,
                     address: snapshot.address,
@@ -405,12 +526,15 @@ public final class AssetStore: ObservableObject {
                     role: snapshot.role,
                     source: snapshot.source,
                     sourceFetchedAt: snapshot.fetchedAt,
+                    externalIdentity: snapshot.externalIdentity,
+                    sourceAddress: snapshot.externalIdentity == nil ? nil : snapshot.address,
+                    sourcePrimaryAddresses: snapshot.sourcePrimaryAddresses,
+                    networkInventory: snapshot.networkInventory,
                     createdAt: snapshot.fetchedAt,
                     updatedAt: snapshot.fetchedAt
-                ))
-                changed += 1
-                needsSave = true
-            }
+            ))
+            changed += 1
+            needsSave = true
         }
         if needsSave { save() }
         return changed
@@ -424,10 +548,18 @@ public final class AssetStore: ObservableObject {
         }
     }
 
-    private func matchesExternalDevice(_ device: AssetDevice, snapshot: ExternalAssetSnapshot, siteID: UUID) -> Bool {
-        device.siteID == siteID &&
-        device.address.caseInsensitiveCompare(snapshot.address) == .orderedSame &&
-        device.source == snapshot.source
+    private func externalDeviceIndex(for snapshot: ExternalAssetSnapshot, workspaceID: UUID) -> Int? {
+        let workspaceSites = Set(sites(in: workspaceID).map(\.id))
+        let site = matchingSite(for: snapshot, workspaceID: workspaceID)
+        return devices.firstIndex { device in
+            guard workspaceSites.contains(device.siteID) else { return false }
+            if let identity = snapshot.externalIdentity {
+                return device.externalIdentity == identity
+            }
+            return device.externalIdentity == nil && device.siteID == site?.id &&
+                device.address.caseInsensitiveCompare(snapshot.address) == .orderedSame &&
+                device.source == snapshot.source
+        }
     }
 
     /// Delete a device and all diagnostic evidence attached to it.
@@ -485,62 +617,132 @@ public final class AssetStore: ObservableObject {
     }
 
     public func finishDiagnostic(id: UUID, status: DiagnosticRunStatus, summary: String, detail: String = "", latency: TimeInterval? = nil, source: String = "NETworkManager", evidence: DiagnosticRuntimeEvidence? = nil) {
-        guard canEditWorkspace, let index = diagnosticRuns.firstIndex(where: { $0.id == id }) else { return }
-        diagnosticRuns[index].status = status
-        diagnosticRuns[index].finishedAt = Date()
-        diagnosticRuns[index].summary = summary
-        diagnosticRuns[index].detail = detail
-        diagnosticRuns[index].latency = latency
-        diagnosticRuns[index].source = source
-        diagnosticRuns[index].evidence = evidence
+        guard workspaceAccessError == nil, recoveryError == nil,
+              let index = diagnosticRuns.firstIndex(where: { $0.id == id }) else { return }
+        var run = diagnosticRuns[index]
+        run.status = status
+        run.finishedAt = Date()
+        run.summary = summary
+        run.detail = detail
+        run.latency = latency
+        run.source = source
+        run.evidence = evidence
+        if isRestoringBackup {
+            deferredDiagnosticCompletions[id] = run
+            return
+        }
+        diagnosticRuns[index] = run
         save()
     }
 
-    public func load() {
+    public func load() { load(seedIfEmpty: false) }
+
+    private func load(seedIfEmpty: Bool) {
+        guard !isLoadingWorkspace, !isRestoringBackup, !isSavingWorkspace else { return }
+        defer { diagnosticHistoryRevision += 1 }
         do {
-            let value = try repository.load()
-            workspaceAccessError = nil
-            workspaceAccessFailure = nil
-            recoveryError = nil
-            let shouldRecoverRuns = !hasLoadedWorkspace
-            hasLoadedWorkspace = true
-            guard let value else {
-                logWorkspaceState("ready")
-                return
+            let (value, saveError) = try Self.readWorkspace(repository, firstOpen: !hasLoadedWorkspace, seedIfEmpty: seedIfEmpty)
+            publishOpenedWorkspace(value, saveError: saveError)
+        } catch {
+            publishOpenFailure(error)
+        }
+    }
+
+    @MainActor
+    @discardableResult
+    private func startOpeningWorkspace() -> Task<Void, Never> {
+        let task = Task {
+            await openWorkspaceInBackground()
+            openingTask = nil
+        }
+        openingTask = task
+        return task
+    }
+
+    @MainActor
+    private func openWorkspaceInBackground() async {
+        defer {
+            isLoadingWorkspace = false
+            diagnosticHistoryRevision += 1
+        }
+        let repository = self.repository
+        let firstOpen = !hasLoadedWorkspace
+        do {
+            let (value, saveError) = try await Task.detached(priority: .userInitiated) {
+                try Self.readWorkspace(repository, firstOpen: firstOpen, seedIfEmpty: true)
+            }.value
+            publishOpenedWorkspace(value, saveError: saveError)
+        } catch {
+            publishOpenFailure(error)
+        }
+    }
+
+    private static func readWorkspace(_ repository: any AssetRepository, firstOpen: Bool, seedIfEmpty: Bool) throws -> (AssetSnapshot?, String?) {
+        var value = try repository.load()
+        var needsSave = false
+        if seedIfEmpty && (value?.workspaces.isEmpty ?? true) {
+            var seed = localWorkspaceSnapshot()
+            seed.diagnosticRuns = value?.diagnosticRuns ?? []
+            value = seed
+            needsSave = true
+        }
+        guard var value else { return (nil, nil) }
+        if firstOpen {
+            for index in value.diagnosticRuns.indices where value.diagnosticRuns[index].status == .running {
+                value.diagnosticRuns[index].status = .interrupted
+                value.diagnosticRuns[index].finishedAt = Date()
+                value.diagnosticRuns[index].summary = t("Interrupted when app closed")
+                needsSave = true
             }
-            apply(value)
-            var recoveredRun = false
-            diagnosticRuns = diagnosticRuns.map { run in
-                guard shouldRecoverRuns, run.status == .running else { return run }
-                var recovered = run
-                recovered.status = .interrupted
-                recovered.finishedAt = Date()
-                recovered.summary = t("Interrupted when app closed")
-                recoveredRun = true
-                return recovered
-            }
-            if recoveredRun { save() }
-            logWorkspaceState("ready")
-        } catch let error as AssetWorkspaceAccessError {
+        }
+        return (value, needsSave ? Self.commit(value, to: repository) : nil)
+    }
+
+    private func publishOpenedWorkspace(_ value: AssetSnapshot?, saveError: String?) {
+        workspaceAccessError = nil
+        workspaceAccessFailure = nil
+        recoveryError = nil
+        persistenceError = saveError
+        hasLoadedWorkspace = true
+        if let value { apply(value) }
+        logWorkspaceState("ready")
+    }
+
+    private func publishOpenFailure(_ error: Error) {
+        if let error = error as? AssetWorkspaceAccessError {
             workspaceAccessFailure = error
             workspaceAccessError = error.localizedDescription
             switch error {
             case .inUse: logWorkspaceState("access blocked: in-use")
             case .unavailable: logWorkspaceState("access blocked: unavailable")
             }
-        } catch {
-            // A repository error after ownership was acquired must expose
-            // recovery even when this load was a retry after contention.
-            workspaceAccessFailure = nil
-            workspaceAccessError = nil
-            recoveryError = tf("Asset data could not be read. The original file was preserved. Import a valid backup to restore this workspace. (%@)", error.localizedDescription)
-            logWorkspaceState("recovery required")
+            return
         }
+        // A retry after contention can acquire ownership and then encounter damage.
+        workspaceAccessFailure = nil
+        workspaceAccessError = nil
+        recoveryError = tf("Asset data could not be read. The original file was preserved. Import a valid backup to restore this workspace. (%@)", error.localizedDescription)
+        logWorkspaceState("recovery required")
     }
 
     public func exportBackup() throws -> Data {
+        try Self.encodeBackup(backupForExport())
+    }
+
+    @MainActor
+    public func exportBackupInBackground() async throws -> Data {
+        let backup = try backupForExport()
+        return try await Task.detached(priority: .userInitiated) {
+            try Self.encodeBackup(backup)
+        }.value
+    }
+
+    private func backupForExport() throws -> BackupDocument {
         try requireWorkspaceAccess()
-        let backup = BackupDocument(formatVersion: 1, exportedAt: Date(), workspaces: workspaces, sites: sites, subnets: subnets, devices: devices, diagnosticRuns: diagnosticRuns)
+        return BackupDocument(formatVersion: 1, exportedAt: Date(), workspaces: workspaces, sites: sites, subnets: subnets, devices: devices, diagnosticRuns: diagnosticRuns)
+    }
+
+    private static func encodeBackup(_ backup: BackupDocument) throws -> Data {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -549,26 +751,114 @@ public final class AssetStore: ObservableObject {
 
     public func importBackup(_ data: Data) throws {
         try requireWorkspaceAccess()
+        guard !isRestoringBackup else { throw AssetBackupError.restoreInProgress }
+        guard !isSavingWorkspace else { throw WorkspaceBusy(message: t("Save")) }
+        let restored = try Self.decodeBackup(data)
+        let preserved = try repository.restore(restored, preservingDamaged: recoveryError != nil)
+        publishRestoredBackup(restored, preserved: preserved)
+    }
+
+    @MainActor
+    public func importBackupInBackground(from url: URL) async throws {
+        try requireWorkspaceAccess()
+        guard !isRestoringBackup else { throw AssetBackupError.restoreInProgress }
+        isRestoringBackup = true
+        let task = Task {
+            defer { restoreTask = nil }
+            await saveTask?.value
+            try await restoreBackup(from: url)
+        }
+        restoreTask = task
+        try await task.value
+    }
+
+    @MainActor
+    private func restoreBackup(from url: URL) async throws {
+        let repository = self.repository
+        let preservingDamaged = recoveryError != nil
+        do {
+            let (restored, preserved) = try await Task.detached(priority: .userInitiated) {
+                let access = url.startAccessingSecurityScopedResource()
+                defer { if access { url.stopAccessingSecurityScopedResource() } }
+                let snapshot = try Self.decodeBackup(Data(contentsOf: url))
+                return (snapshot, try repository.restore(snapshot, preservingDamaged: preservingDamaged))
+            }.value
+            // The imported snapshot replaces the old workspace, including its diagnostic history.
+            deferredDiagnosticCompletions.removeAll()
+            publishRestoredBackup(restored, preserved: preserved)
+            isRestoringBackup = false
+        } catch {
+            let completions = deferredDiagnosticCompletions
+            deferredDiagnosticCompletions.removeAll()
+            isRestoringBackup = false
+            if !completions.isEmpty {
+                diagnosticRuns = diagnosticRuns.map { completions[$0.id] ?? $0 }
+                save()
+            }
+            throw error
+        }
+    }
+
+    private static func decodeBackup(_ data: Data) throws -> AssetSnapshot {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         let backup = try decoder.decode(BackupDocument.self, from: data)
         guard backup.formatVersion == 1 else { throw AssetBackupError.unsupportedVersion(backup.formatVersion) }
         guard !backup.workspaces.isEmpty else { throw AssetBackupError.emptyWorkspace }
-        let restored = AssetSnapshot(workspaces: backup.workspaces, sites: backup.sites, subnets: backup.subnets, devices: backup.devices, diagnosticRuns: backup.diagnosticRuns)
-        preservedCorruptFileURL = try repository.restore(restored, preservingDamaged: recoveryError != nil)
+        return AssetSnapshot(workspaces: backup.workspaces, sites: backup.sites, subnets: backup.subnets, devices: backup.devices, diagnosticRuns: backup.diagnosticRuns)
+    }
+
+    private func publishRestoredBackup(_ restored: AssetSnapshot, preserved: URL?) {
+        preservedCorruptFileURL = preserved
         apply(restored)
         hasLoadedWorkspace = true
         recoveryError = nil
         persistenceError = nil
+        diagnosticHistoryRevision += 1
     }
 
     public func save() {
         guard canEditWorkspace else { return }
+        defer { diagnosticHistoryRevision += 1 }
+        let value = snapshot
+        if let scheduleBackgroundSave {
+            scheduleBackgroundSave(value)
+            return
+        }
+        persistenceError = Self.commit(value, to: repository)
+    }
+
+    @MainActor
+    package func waitForWorkspaceWrites() async {
+        while isLoadingWorkspace || isRestoringBackup || isSavingWorkspace {
+            await openingTask?.value
+            _ = await restoreTask?.result
+            await saveTask?.value
+        }
+    }
+
+    @MainActor
+    private func enqueueSave(_ value: AssetSnapshot) {
+        pendingSnapshot = value
+        guard saveTask == nil else { return }
+        isSavingWorkspace = true
+        let repository = self.repository
+        saveTask = Task {
+            while let value = pendingSnapshot {
+                pendingSnapshot = nil
+                persistenceError = await Task.detached(priority: .userInitiated) { Self.commit(value, to: repository) }.value
+            }
+            saveTask = nil
+            isSavingWorkspace = false
+        }
+    }
+
+    private static func commit(_ value: AssetSnapshot, to repository: any AssetRepository) -> String? {
         do {
-            try repository.save(snapshot)
-            persistenceError = nil
+            try repository.save(value)
+            return nil
         } catch {
-            persistenceError = tf("Asset workspace could not be saved: %@", error.localizedDescription)
+            return tf("Asset workspace could not be saved: %@", error.localizedDescription)
         }
     }
 
@@ -580,17 +870,20 @@ public final class AssetStore: ObservableObject {
     }
 
     private func requireWorkspaceAccess() throws {
+        if isLoadingWorkspace { throw WorkspaceBusy(message: t("Loading…")) }
         if let workspaceAccessFailure { throw workspaceAccessFailure }
     }
 
-    private func seedLocalWorkspace() {
+    private struct WorkspaceBusy: LocalizedError {
+        let message: String
+        var errorDescription: String? { message }
+    }
+
+    private static func localWorkspaceSnapshot() -> AssetSnapshot {
         let workspace = OperationsWorkspace(name: "Local operations")
         let site = AssetSite(workspaceID: workspace.id, name: "This Mac", location: Host.current().localizedName ?? ProcessInfo.processInfo.hostName)
         let device = AssetDevice(siteID: site.id, name: site.location, address: "127.0.0.1", kind: .workstation, vendor: "Apple", role: "Operator workstation")
-        workspaces = [workspace]
-        sites = [site]
-        devices = [device]
-        save()
+        return AssetSnapshot(workspaces: [workspace], sites: [site], devices: [device])
     }
 
     private func replace<T: Identifiable>(_ value: T, in values: inout [T]) where T.ID: Equatable {
@@ -601,11 +894,13 @@ public final class AssetStore: ObservableObject {
 public enum AssetBackupError: LocalizedError, Sendable {
     case unsupportedVersion(Int)
     case emptyWorkspace
+    case restoreInProgress
 
     public var errorDescription: String? {
         switch self {
         case .unsupportedVersion(let version): return "Unsupported asset backup version: \(version)."
         case .emptyWorkspace: return "Asset backup does not contain a workspace."
+        case .restoreInProgress: return t("Local workspace is unavailable")
         }
     }
 }

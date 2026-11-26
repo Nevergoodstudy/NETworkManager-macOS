@@ -1,7 +1,7 @@
 import SwiftUI
 
 @propertyWrapper
-public struct NMStateCompat<Value>: DynamicProperty {
+public struct NMStateCompat<Value>: @MainActor DynamicProperty {
     private final class Box: ObservableObject {
         @Published var value: Value
 

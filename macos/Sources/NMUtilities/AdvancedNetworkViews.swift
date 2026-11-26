@@ -80,6 +80,7 @@ public struct IPGeolocationView: View {
 
 public struct SNMPView: View {
     @Environment(\.palette) private var palette
+    @ObservedObject private var assets = AssetStore.shared
     @ObservedObject private var credentials = CredentialStore.shared
     @NMStateCompat private var host = "127.0.0.1"
     @NMStateCompat private var port = "161"
@@ -98,6 +99,7 @@ public struct SNMPView: View {
     @NMStateCompat private var output = ""
     @NMStateCompat private var error: String?
     @NMStateCompat private var isRunning = false
+    @NMStateCompat private var cancellation: DiagnosticCancellation?
 
     public init() {}
 
@@ -156,8 +158,13 @@ public struct SNMPView: View {
                             if operation == "SET" { TextField(t("Value"), text: $value).textFieldStyle(.roundedBorder) }
                             Button(isRunning ? t("Running…") : t("Run")) { run() }
                                 .buttonStyle(.borderedProminent)
-                                .disabled(isRunning)
+                                .disabled(isRunning || assets.isLoadingWorkspace)
                                 .accessibilityIdentifier("snmpRun")
+                            if let cancellation {
+                                Button(t("Cancel")) { cancellation.cancel() }
+                                    .buttonStyle(.bordered)
+                                    .accessibilityIdentifier("snmpCancel")
+                            }
                             Button(t("Clear")) { rows.removeAll(); output = ""; error = nil }
                                 .buttonStyle(.bordered)
                         }
@@ -181,6 +188,7 @@ public struct SNMPView: View {
             .frame(maxWidth: 1100, alignment: .leading)
         }
         .background(palette.background)
+        .onDisappear { cancellation?.cancel() }
         .onChange(of: version) { _, newVersion in
             if newVersion == "v3", operation == "SET" { operation = "GET" }
         }
@@ -251,19 +259,23 @@ public struct SNMPView: View {
         let selectedAuthenticationProtocol = authenticationProtocol
         let selectedSecurityLevel = securityLevel
         let selectedCredential = snmpCredentials.first { $0.id.uuidString == selectedCredentialID }
-        let runID = AssetStore.shared.beginDiagnostic(
+        let cancellation = DiagnosticCancellation()
+        guard ProcessRuntime.registerDiagnostic(cancellation) else { return }
+        let runID = assets.beginDiagnostic(
             kind: .snmp,
             target: target,
             parameters: ["operation": selectedOperation, "version": selectedVersion, "oid": selectedOID, "port": String(selectedPort)]
         )
         let startedAt = Date()
+        self.cancellation = cancellation
         isRunning = true; error = nil; output = ""; rows = []
         Task {
+            defer { ProcessRuntime.finishDiagnostic(cancellation) }
             var runStatus: DiagnosticRunStatus = .failed
             var runSummary = ""
             var runDetail = ""
             var runLatency: TimeInterval?
-            var runSource = "SNMP \(selectedVersion)"
+            let runSource = "SNMP \(selectedVersion)"
             do {
                 let secret = try selectedCredential.map { try credentials.secret(for: $0) }
                 if selectedVersion == "v3" {
@@ -280,17 +292,22 @@ public struct SNMPView: View {
                     )
                     let client = try SNMPv3Client(configuration: configuration,
                                                   authenticationPassword: resolvedAuthenticationPassword,
-                                                  privacyPassword: level == .authPriv ? resolvedPrivacyPassword : nil)
+                                                  privacyPassword: level == .authPriv ? resolvedPrivacyPassword : nil,
+                                                  transport: SNMPv3UDPTransport(cancellation: cancellation))
                     let activeSecrets: [String?] = [resolvedAuthenticationPassword, resolvedPrivacyPassword]
                     if selectedOperation == "WALK" {
-                        let values = try await Task.detached { try client.walk(selectedOID) }.value
+                        let values = try await runBlockingDiagnostic {
+                            Result { try client.walk(selectedOID) }
+                        }.get()
                         let safeValues = redactedVarBinds(values, secrets: activeSecrets)
                         rows = safeValues
                         output = tf("Completed: %d result(s)", values.count)
                         runSummary = tf("SNMP walk completed with %d result(s)", values.count)
                         runDetail = safeValues.map { "\($0.oid)=\($0.value.displayValue)" }.joined(separator: "\n")
                     } else {
-                        let response = try await Task.detached { try client.get(selectedOID) }.value
+                        let response = try await runBlockingDiagnostic {
+                            Result { try client.get(selectedOID) }
+                        }.get()
                         let safeValues = redactedVarBinds(response.varBinds, secrets: activeSecrets)
                         rows = safeValues
                         output = tf("Response in %@", Fmt.duration(response.elapsed))
@@ -304,31 +321,35 @@ public struct SNMPView: View {
                     let client = SNMPClient(host: target, community: resolvedCommunity, version: selectedSNMPVersion, port: selectedPort)
                     let activeSecrets: [String?] = [resolvedCommunity]
                     if selectedOperation == "WALK" {
-                        let values = try await Task.detached { try client.walk(selectedOID) }.value
+                        let values = try await runBlockingDiagnostic {
+                            Result { try client.walk(selectedOID, cancellation: cancellation) }
+                        }.get()
                         let safeValues = redactedVarBinds(values, secrets: activeSecrets)
                         rows = safeValues
                         output = tf("Completed: %d result(s)", values.count)
                         runSummary = tf("SNMP walk completed with %d result(s)", values.count)
                         runDetail = safeValues.map { "\($0.oid)=\($0.value.displayValue)" }.joined(separator: "\n")
                     } else {
-                    let response = try await Task.detached {
-                        if selectedOperation == "SET" { return try client.set(selectedOID, value: .string(selectedValue)) }
-                        return try client.get(selectedOID)
-                    }.value
-                    let safeValues = redactedVarBinds(response.varBinds, secrets: activeSecrets)
-                    rows = safeValues
-                    output = tf("Response in %@", Fmt.duration(response.elapsed))
-                    runSummary = selectedOperation == "SET" ? t("SNMP write completed") : t("SNMP responded")
-                    runDetail = safeValues.map { "\($0.oid)=\($0.value.displayValue)" }.joined(separator: "\n")
-                    runLatency = response.elapsed
+                        let response = try await runBlockingDiagnostic {
+                            Result {
+                                if selectedOperation == "SET" {
+                                    return try client.set(selectedOID, value: .string(selectedValue), cancellation: cancellation)
+                                }
+                                return try client.get(selectedOID, cancellation: cancellation)
+                            }
+                        }.get()
+                        let safeValues = redactedVarBinds(response.varBinds, secrets: activeSecrets)
+                        rows = safeValues
+                        output = tf("Response in %@", Fmt.duration(response.elapsed))
+                        runSummary = selectedOperation == "SET" ? t("SNMP write completed") : t("SNMP responded")
+                        runDetail = safeValues.map { "\($0.oid)=\($0.value.displayValue)" }.joined(separator: "\n")
+                        runLatency = response.elapsed
                     }
                 }
                 runStatus = .succeeded
                 runLatency = runLatency ?? Date().timeIntervalSince(startedAt)
             } catch {
-                self.error = error.localizedDescription
-                runSummary = error.localizedDescription
-                runSource = "SNMP \(selectedVersion)"
+                runSummary = cancellation.isCancelled ? t("Diagnostic cancelled") : error.localizedDescription
                 if let snmpError = error as? SNMPError {
                     switch snmpError {
                     case .timeout: runStatus = .timedOut
@@ -336,10 +357,15 @@ public struct SNMPView: View {
                     default: break
                     }
                 }
+                if case SNMPv3Error.timeout = error { runStatus = .timedOut }
+                if cancellation.isCancelled { runStatus = .cancelled }
+                self.error = runStatus == .cancelled ? nil : runSummary
+                if runStatus == .cancelled { output = runSummary }
                 runLatency = Date().timeIntervalSince(startedAt)
             }
-            AssetStore.shared.finishDiagnostic(id: runID, status: runStatus, summary: runSummary,
-                                               detail: runDetail, latency: runLatency, source: runSource)
+            assets.finishDiagnostic(id: runID, status: runStatus, summary: runSummary,
+                                    detail: runDetail, latency: runLatency, source: runSource)
+            self.cancellation = nil
             isRunning = false
         }
     }

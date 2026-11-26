@@ -55,7 +55,7 @@ public enum AppAccent: String, CaseIterable, Codable, Identifiable, Sendable {
 // MARK: - Palette
 
 /// Semantic color palette resolved for a given appearance.
-public struct NMPalette {
+public struct NMPalette: Sendable {
     public let isDark: Bool
     public let background: Color
     public let sidebar: Color
@@ -108,6 +108,7 @@ public struct NMPalette {
 
 // MARK: - Theme store
 
+@MainActor
 public final class Theme: ObservableObject {
     public static let shared = Theme()
 

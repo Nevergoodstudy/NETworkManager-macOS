@@ -5,18 +5,24 @@ import NMCore
 public struct RemoteView: View {
     @Environment(\.palette) private var palette
     @ObservedObject private var credentials = CredentialStore.shared
+    @ObservedObject private var sshLayout = SSHSessionLayoutStore.shared
     @NMStateCompat private var proto: ConnectionProtocol = .ssh
     @NMStateCompat private var host = ""
     @NMStateCompat private var port = "22"
     @NMStateCompat private var username = ""
+    @NMStateCompat private var jumpHost = ""
     @NMStateCompat private var selectedSSHCredentialID = "none"
     @NMStateCompat private var status = ""
-    @NMStateCompat private var sshSessions: [SSHSession] = []
-    @NMStateCompat private var selectedSSHSessionID: UUID?
+    @NMStateCompat private var forwardLocalPort = ""
+    @NMStateCompat private var forwardTargetHost = ""
+    @NMStateCompat private var forwardTargetPort = ""
+    @NMStateCompat private var forwardCancellation: DiagnosticCancellation?
+    @NMStateCompat private var forwardStatus = ""
+    @NMStateCompat private var sshSessions: [UUID: SSHSession] = [:]
     @NMStateCompat private var selectedTemplateID = SSHCommandTemplate.readOnly[0].id
     @NMStateCompat private var commandText = SSHCommandTemplate.readOnly[0].command
     @NMStateCompat private var readySSHSessionIDs: Set<UUID> = []
-    @NMStateCompat private var queuedCommand: String?
+    @NMStateCompat private var queuedCommand: PendingSSHCommand?
     @NMStateCompat private var showCommandConfirmation = false
     @StateObject private var auditLog = OperationsAuditLog.shared
 
@@ -28,6 +34,7 @@ public struct RemoteView: View {
             GroupBox(t("Connection")) {
                 VStack(alignment: .leading, spacing: 12) {
                     Picker(t("Protocol"), selection: $proto) { ForEach(ConnectionProtocol.allCases) { Text($0.displayName).tag($0) } }.pickerStyle(.segmented)
+                        .disabled(forwardCancellation != nil)
                     HStack {
                         TextField(t("Host"), text: $host).textFieldStyle(.roundedBorder)
                         TextField(t("Port"), text: $port).textFieldStyle(.roundedBorder).frame(width: 90)
@@ -47,6 +54,10 @@ public struct RemoteView: View {
                                 }
                             }
                             .frame(maxWidth: 320)
+                            TextField(t("Jump host (optional)"), text: $jumpHost)
+                                .textFieldStyle(.roundedBorder)
+                                .help(t("Enter one jump host in [user@]host[:port] format."))
+                                .onSubmit(connect)
                         }
                     }
                 }
@@ -56,12 +67,14 @@ public struct RemoteView: View {
                     .font(.callout)
                     .foregroundStyle(palette.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
+                forwardControls
             }
             Text(t("SSH sessions run in this window. RDP and VNC open compatible installed clients; web protocols use the default browser."))
                 .foregroundStyle(palette.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             if !status.isEmpty { Text(status).foregroundStyle(palette.textSecondary) }
-            if !sshSessions.isEmpty {
+            if let error = sshLayout.persistenceError { Text(error).foregroundStyle(palette.textSecondary) }
+            if !sshLayout.layout.tabs.isEmpty {
                 operationComposer
                 sshSessionWorkspace
                 operationHistory
@@ -70,23 +83,32 @@ public struct RemoteView: View {
         }
         .padding(28)
         .background(palette.background)
+        .onDisappear { forwardCancellation?.cancel() }
         .onChange(of: proto) { _, value in port = String(value.defaultPort) }
         .onChange(of: selectedTemplateID) { _, value in
             if let template = SSHCommandTemplate.readOnly.first(where: { $0.id == value }) {
                 commandText = template.command
             }
         }
-        .confirmationDialog(t("Confirm SSH operation"), isPresented: $showCommandConfirmation, titleVisibility: .visible) {
+        .onChange(of: selectedSSHSessionID) { _, _ in cancelCommandConfirmation() }
+        .onChange(of: Set(sshLayout.layout.tabs.map(\.id))) { previous, current in
+            for id in previous.subtracting(current) { removeLiveSession(id) }
+        }
+        .onChange(of: commandText) { _, _ in cancelCommandConfirmation() }
+        .onChange(of: isPromptReady) { _, ready in
+            if !ready { cancelCommandConfirmation() }
+        }
+        .confirmationDialog(t("Confirm SSH operation"), isPresented: $showCommandConfirmation, titleVisibility: .visible,
+                            presenting: queuedCommand) { request in
             Button(t("Send command"), role: .destructive) {
-                guard let queuedCommand else { return }
-                submitSSHCommand(queuedCommand, confirmed: true)
-                self.queuedCommand = nil
+                guard queuedCommand == request, selectedSSHSessionID == request.sessionID,
+                      commandText == request.command else { return }
+                cancelCommandConfirmation()
+                submitSSHCommand(request.command, to: request.sessionID, confirmed: true)
             }
-            Button(t("Cancel"), role: .cancel) { queuedCommand = nil }
-        } message: {
-            if let session = selectedSSHSession, let queuedCommand {
-            Text(tf("Target: %@\nCommand:\n%@", session.configuration.displayTarget, SSHCommandPolicy.reviewedText(queuedCommand)))
-            }
+            Button(t("Cancel"), role: .cancel, action: cancelCommandConfirmation)
+        } message: { request in
+            Text(tf("Target: %@\nCommand:\n%@", request.displayTarget, SSHCommandPolicy.reviewedText(request.command)))
         }
     }
 
@@ -99,33 +121,15 @@ public struct RemoteView: View {
                 return
             }
             do {
-                let identity: String?
-                var sshUsername = username
-                if selectedSSHCredentialID == "none" {
-                    identity = nil
-                } else {
-                    guard let reference = sshKeyReferences.first(where: { $0.id.uuidString == selectedSSHCredentialID }) else {
-                        throw SSHCommandBuilder.ValidationError.invalidIdentityFile
-                    }
-                    let secret = try credentials.secret(for: reference)
-                    guard let keyPath = secret.privateKeyPath?.trimmingCharacters(in: .whitespacesAndNewlines), !keyPath.isEmpty else {
-                        throw SSHCommandBuilder.ValidationError.invalidIdentityFile
-                    }
-                    let expandedPath = (keyPath as NSString).expandingTildeInPath
-                    guard FileManager.default.isReadableFile(atPath: expandedPath) else {
-                        throw SSHCommandBuilder.ValidationError.invalidIdentityFile
-                    }
-                    identity = expandedPath
-                    if sshUsername.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        sshUsername = reference.account
-                    }
-                }
-                let configuration = try SSHCommandBuilder.build(host: target, port: numericPort, username: sshUsername, identityFile: identity)
-                let session = SSHSession(configuration: configuration)
-                sshSessions.append(session)
-                selectedSSHSessionID = session.id
-                auditLog.record(target: configuration.auditTarget, kind: .sshSessionOpened)
-                status = tf("SSH terminal opened for %@", configuration.displayTarget)
+                let tab = SSHSessionTab(host: target, port: numericPort,
+                                        username: username.trimmingCharacters(in: .whitespacesAndNewlines),
+                                        jumpHost: jumpHost.trimmingCharacters(in: .whitespacesAndNewlines),
+                                        credentialID: UUID(uuidString: selectedSSHCredentialID))
+                try startSession(for: tab)
+                var layout = sshLayout.layout
+                layout.tabs.append(tab)
+                layout.selectedID = tab.id
+                sshLayout.save(layout)
             } catch {
                 status = error.localizedDescription
             }
@@ -163,24 +167,140 @@ public struct RemoteView: View {
         credentials.references.filter { $0.kind == .sshKeyReference }
     }
 
+    private func startSession(for tab: SSHSessionTab) throws {
+        guard sshSessions[tab.id] == nil else { return }
+        let configuration = try sshConfiguration(for: tab)
+        sshSessions[tab.id] = SSHSession(configuration: configuration)
+        auditLog.record(target: configuration.auditTarget, kind: .sshSessionOpened)
+        status = tf("SSH terminal opened for %@", tab.displayTarget(configuration: configuration))
+    }
+
+    private func sshConfiguration(for tab: SSHSessionTab) throws -> SSHLaunchConfiguration {
+        var username = tab.username
+        var identity: String?
+        if let credentialID = tab.credentialID {
+            guard let reference = sshKeyReferences.first(where: { $0.id == credentialID }) else {
+                throw SSHCommandBuilder.ValidationError.invalidIdentityFile
+            }
+            let secret = try credentials.secret(for: reference)
+            guard let keyPath = secret.privateKeyPath?.trimmingCharacters(in: .whitespacesAndNewlines), !keyPath.isEmpty else {
+                throw SSHCommandBuilder.ValidationError.invalidIdentityFile
+            }
+            let expandedPath = (keyPath as NSString).expandingTildeInPath
+            guard FileManager.default.isReadableFile(atPath: expandedPath) else {
+                throw SSHCommandBuilder.ValidationError.invalidIdentityFile
+            }
+            identity = expandedPath
+            if username.isEmpty { username = reference.account }
+        }
+        return try SSHCommandBuilder.build(host: tab.host, port: tab.port, username: username,
+                                           identityFile: identity, jumpHost: tab.jumpHost)
+    }
+
+    private var forwardControls: some View {
+        GroupBox(t("SSH local forwarding")) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    TextField(t("Local port"), text: $forwardLocalPort).frame(width: 100)
+                    TextField(t("Forward destination"), text: $forwardTargetHost)
+                    TextField(t("Destination port"), text: $forwardTargetPort).frame(width: 105)
+                }
+                .textFieldStyle(.roundedBorder)
+                .disabled(forwardCancellation != nil)
+                HStack {
+                    Button(t("Start forwarding")) { startForward() }
+                        .disabled(forwardCancellation != nil)
+                        .accessibilityIdentifier("sshForwardStart")
+                    if let forwardCancellation {
+                        Button(t("Stop forwarding")) {
+                            forwardStatus = t("Stopping…")
+                            forwardCancellation.cancel()
+                        }
+                        .accessibilityIdentifier("sshForwardStop")
+                    }
+                    if !forwardStatus.isEmpty {
+                        Text(forwardStatus).textSelection(.enabled)
+                    }
+                }
+                Text(t("Listens on 127.0.0.1. Verify the SSH host keys in the terminal before starting."))
+                    .font(.caption)
+                    .foregroundStyle(palette.textSecondary)
+            }
+            .padding(4)
+        }
+    }
+
+    private func startForward() {
+        guard let sshPort = Int(port), let localPort = Int(forwardLocalPort), let targetPort = Int(forwardTargetPort) else {
+            forwardStatus = SSHCommandBuilder.ValidationError.invalidPort.localizedDescription
+            return
+        }
+        do {
+            let tab = SSHSessionTab(host: host.trimmingCharacters(in: .whitespacesAndNewlines), port: sshPort,
+                                    username: username.trimmingCharacters(in: .whitespacesAndNewlines),
+                                    jumpHost: jumpHost.trimmingCharacters(in: .whitespacesAndNewlines),
+                                    credentialID: UUID(uuidString: selectedSSHCredentialID))
+            let connection = try sshConfiguration(for: tab)
+            let arguments = try SSHCommandBuilder.localForward(connection: connection, localPort: localPort,
+                                                                targetHost: forwardTargetHost, targetPort: targetPort)
+            let cancellation = DiagnosticCancellation()
+            let job = ProcessJobSpec(operation: .command, targetScope: connection.auditTarget,
+                                     deadline: Date().addingTimeInterval(86_400), maximumOutputBytesPerStream: 8192,
+                                     cancellation: cancellation)
+            forwardCancellation = cancellation
+            forwardStatus = t("Starting forwarding…")
+            Task {
+                let result = await Shell.run(connection.executable, arguments, job: job,
+                                             environment: ["SHELL": "/bin/sh", "SSH_ASKPASS_REQUIRE": "never"],
+                                             readiness: (SSHCommandBuilder.forwardReadyOutput, 15)) {
+                    Task { @MainActor in
+                        guard forwardCancellation === cancellation, !cancellation.isCancelled else { return }
+                        forwardStatus = tf("Listening on 127.0.0.1:%d", localPort)
+                    }
+                }
+                forwardCancellation = nil
+                switch result.jobState {
+                case .cancelled, .succeeded:
+                    forwardStatus = t("Forwarding stopped")
+                case .timedOut:
+                    forwardStatus = t("Timed out")
+                default:
+                    let details = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+                    forwardStatus = details.isEmpty ? t("SSH forwarding failed") : details
+                }
+                if !result.cleanupCompleted { forwardStatus += "\n" + t("Process cleanup incomplete") }
+            }
+        } catch {
+            forwardStatus = error.localizedDescription
+        }
+    }
+
+    private var selectedSSHSessionID: UUID? { sshLayout.layout.selectedID }
+
     private var sshSessionWorkspace: some View {
         VStack(spacing: 0) {
             ScrollView(.horizontal) {
                 HStack(spacing: 6) {
-                    ForEach(sshSessions) { session in
+                    ForEach(sshLayout.layout.tabs) { tab in
+                        let session = sshSessions[tab.id]
+                        let target = tab.displayTarget(configuration: session?.configuration)
                         HStack(spacing: 4) {
                             Button {
-                                selectedSSHSessionID = session.id
+                                guard selectedSSHSessionID != tab.id else { return }
+                                var layout = sshLayout.layout
+                                layout.selectedID = tab.id
+                                sshLayout.save(layout)
                             } label: {
-                                Label(session.title, systemImage: "terminal")
+                                Label(session?.exitCode.map { "\(target) (\($0))" } ?? target, systemImage: "terminal")
                                     .lineLimit(1)
                                     .padding(.leading, 10)
                                     .padding(.vertical, 7)
                             }
                             .buttonStyle(.plain)
-                            .help(session.configuration.displayTarget)
+                            .help(target)
+                            .accessibilityAddTraits(selectedSSHSessionID == tab.id ? .isSelected : [])
                             Button {
-                                closeSession(session.id)
+                                closeSession(tab.id)
                             } label: {
                                 Image(systemName: "xmark")
                                     .font(.caption2.weight(.semibold))
@@ -190,7 +310,7 @@ public struct RemoteView: View {
                             .help(t("Close SSH session"))
                             .accessibilityLabel(t("Close SSH session"))
                         }
-                        .background(selectedSSHSessionID == session.id ? Color.accentColor.opacity(0.16) : Color.clear,
+                        .background(selectedSSHSessionID == tab.id ? Color.accentColor.opacity(0.16) : Color.clear,
                                     in: RoundedRectangle(cornerRadius: 6))
                     }
                 }
@@ -198,14 +318,30 @@ public struct RemoteView: View {
             }
             Divider()
             ZStack {
-                ForEach(sshSessions) { session in
-                    EmbeddedSSHView(configuration: session.configuration, commandSubmission: session.commandSubmission) { exitCode in
-                        updateSession(session.id, exitCode: exitCode)
+                ForEach(sshLayout.layout.tabs) { tab in
+                    if let session = sshSessions[tab.id] {
+                        EmbeddedSSHView(configuration: session.configuration, commandSubmission: session.commandSubmission) { submission in
+                            let kind: OperationAuditKind = submission.confirmed ? .confirmedCommandSubmitted : .readOnlyCommandSubmitted
+                            auditLog.record(target: session.configuration.auditTarget, kind: kind)
+                            status = t("Command submitted to the active SSH session")
+                        } onExit: { exitCode in
+                            updateSession(tab.id, exitCode: exitCode)
+                        }
+                        .opacity(selectedSSHSessionID == tab.id ? 1 : 0)
+                        .allowsHitTesting(selectedSSHSessionID == tab.id)
+                        .accessibilityHidden(selectedSSHSessionID != tab.id)
                     }
-                    .id(session.id)
-                    .opacity(selectedSSHSessionID == session.id ? 1 : 0)
-                    .allowsHitTesting(selectedSSHSessionID == session.id)
-                    .accessibilityHidden(selectedSSHSessionID != session.id)
+                    if selectedSSHSessionID == tab.id, sshSessions[tab.id] == nil {
+                        VStack(spacing: 10) {
+                            Text(t("SSH session disconnected")).foregroundStyle(palette.textSecondary)
+                            Button(t("Connect")) {
+                                do { try startSession(for: tab) }
+                                catch { status = error.localizedDescription }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .accessibilityIdentifier("connectSavedSSHSession")
+                        }
+                    }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -213,8 +349,7 @@ public struct RemoteView: View {
         }
         .frame(minHeight: 320)
         .overlay(alignment: .topLeading) {
-            if let session = sshSessions.first(where: { $0.id == selectedSSHSessionID }),
-               let exitCode = session.exitCode {
+            if let exitCode = selectedSSHSession?.exitCode {
                 Text(tf("SSH exited with code %@", String(exitCode)))
                     .font(.caption.monospaced())
                     .padding(6)
@@ -225,28 +360,31 @@ public struct RemoteView: View {
     }
 
     private func updateSession(_ id: UUID, exitCode: Int32?) {
-        guard let index = sshSessions.firstIndex(where: { $0.id == id }) else { return }
-        guard sshSessions[index].exitCode == nil else { return }
-        sshSessions[index].exitCode = exitCode ?? -1
+        guard let session = sshSessions[id], session.exitCode == nil else { return }
+        sshSessions[id]?.exitCode = exitCode ?? -1
         var readyIDs = readySSHSessionIDs
         readyIDs.remove(id)
         readySSHSessionIDs = readyIDs
-        auditLog.record(target: sshSessions[index].configuration.auditTarget, kind: .sshSessionClosed)
+        auditLog.record(target: session.configuration.auditTarget, kind: .sshSessionClosed)
     }
 
     private func closeSession(_ id: UUID) {
-        if let session = sshSessions.first(where: { $0.id == id }), session.exitCode == nil {
+        removeLiveSession(id)
+        var layout = sshLayout.layout
+        layout.tabs.removeAll { $0.id == id }
+        if layout.selectedID == id { layout.selectedID = layout.tabs.last?.id }
+        sshLayout.save(layout)
+    }
+
+    private func removeLiveSession(_ id: UUID) {
+        if let session = sshSessions.removeValue(forKey: id), session.exitCode == nil {
             auditLog.record(target: session.configuration.auditTarget, kind: .sshSessionClosed)
         }
-        sshSessions.removeAll { $0.id == id }
-        var readyIDs = readySSHSessionIDs
-        readyIDs.remove(id)
-        readySSHSessionIDs = readyIDs
-        if selectedSSHSessionID == id { selectedSSHSessionID = sshSessions.last?.id }
+        readySSHSessionIDs.remove(id)
     }
 
     private var selectedSSHSession: SSHSession? {
-        sshSessions.first { $0.id == selectedSSHSessionID }
+        selectedSSHSessionID.flatMap { sshSessions[$0] }
     }
 
     private var operationComposer: some View {
@@ -275,7 +413,6 @@ public struct RemoteView: View {
             TextField(t("Command"), text: $commandText)
                 .textFieldStyle(.roundedBorder)
                 .font(.system(.body, design: .monospaced))
-                .onChange(of: commandText) { _, _ in queuedCommand = nil }
             HStack {
                 Text(t("Only exact built-in templates are treated as read-only. Other commands require review and confirmation."))
                     .font(.caption)
@@ -320,8 +457,8 @@ public struct RemoteView: View {
     }
 
     private var isPromptReady: Bool {
-        guard let session = selectedSSHSession, session.exitCode == nil else { return false }
-        return readySSHSessionIDs.contains(session.id)
+        guard let id = selectedSSHSessionID, let session = sshSessions[id], session.exitCode == nil else { return false }
+        return readySSHSessionIDs.contains(id)
     }
 
     private var commandIsValid: Bool {
@@ -334,13 +471,15 @@ public struct RemoteView: View {
     }
 
     private func reviewAndSendCommand() {
-        guard isPromptReady else { return }
+        guard let id = selectedSSHSessionID, let session = sshSessions[id],
+              let tab = sshLayout.layout.tabs.first(where: { $0.id == id }), isPromptReady else { return }
         do {
             switch try SSHCommandPolicy.review(commandText) {
             case .readOnly:
-                submitSSHCommand(commandText, confirmed: false)
+                submitSSHCommand(commandText, to: id, confirmed: false)
             case .requiresConfirmation:
-                queuedCommand = commandText
+                queuedCommand = PendingSSHCommand(sessionID: id, displayTarget: tab.displayTarget(configuration: session.configuration),
+                                                  command: commandText)
                 showCommandConfirmation = true
             }
         } catch {
@@ -348,14 +487,15 @@ public struct RemoteView: View {
         }
     }
 
-    private func submitSSHCommand(_ command: String, confirmed: Bool) {
-        guard let id = selectedSSHSessionID,
-              let index = sshSessions.firstIndex(where: { $0.id == id }),
+    private func cancelCommandConfirmation() {
+        showCommandConfirmation = false
+        queuedCommand = nil
+    }
+
+    private func submitSSHCommand(_ command: String, to id: UUID, confirmed: Bool) {
+        guard let session = sshSessions[id], session.exitCode == nil,
               readySSHSessionIDs.contains(id) else { return }
-        sshSessions[index].commandSubmission = SSHCommandSubmission(command: command)
-        let kind: OperationAuditKind = confirmed ? .confirmedCommandSubmitted : .readOnlyCommandSubmitted
-        auditLog.record(target: sshSessions[index].configuration.auditTarget, kind: kind)
-        status = t("Command submitted to the active SSH session")
+        sshSessions[id]?.commandSubmission = SSHCommandSubmission(command: command, confirmed: confirmed)
     }
 
     private func openTerminal(_ command: String) {
@@ -389,14 +529,14 @@ public struct RemoteView: View {
     }
 }
 
-private struct SSHSession: Identifiable {
-    let id = UUID()
+private struct PendingSSHCommand: Equatable {
+    let sessionID: UUID
+    let displayTarget: String
+    let command: String
+}
+
+private struct SSHSession {
     let configuration: SSHLaunchConfiguration
     var exitCode: Int32?
     var commandSubmission: SSHCommandSubmission?
-
-    var title: String {
-        let target = configuration.displayTarget
-        return exitCode.map { "\(target) (\($0))" } ?? target
-    }
 }

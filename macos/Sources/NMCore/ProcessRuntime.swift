@@ -1,5 +1,6 @@
 import Darwin
 import Foundation
+import os
 
 public struct ProcessJobEvent: Codable, Hashable, Sendable {
     public let state: ProcessJobState
@@ -54,14 +55,88 @@ private struct OutputCapture {
 /// One owner performs launch, drain, signals and reap. Cancellation only sets a
 /// flag. The unreaped leader reserves the PGID until all group signals finish.
 /// Descendants that create a different session/group are outside this ownership.
-enum ProcessRuntime {
+package enum ProcessRuntime {
+    private struct ShutdownState {
+        var token = DiagnosticCancellation()
+        var diagnostics: [ObjectIdentifier: @Sendable () -> Void] = [:]
+    }
+
     private static let slots = DispatchSemaphore(value: 4)
+    private static let activeJobs = DispatchGroup()
+    private static let shutdown = OSAllocatedUnfairLock(initialState: ShutdownState())
+
+    package static func beginShutdown() -> Bool {
+        let cancellations = shutdown.withLock { state in
+            state.token.cancel()
+            return Array(state.diagnostics.values)
+        }
+        for cancel in cancellations { cancel() }
+        return activeJobs.wait(timeout: .now()) == .timedOut
+    }
+
+    package static func registerDiagnostic(_ cancellation: DiagnosticCancellation) -> Bool {
+        shutdown.withLock { state in
+            let id = ObjectIdentifier(cancellation)
+            guard !state.token.isCancelled, state.diagnostics[id] == nil else { return false }
+            state.diagnostics[id] = { cancellation.cancel() }
+            activeJobs.enter()
+            return true
+        }
+    }
+
+    @MainActor
+    package static func startDiagnosticTask(
+        _ cancellation: DiagnosticCancellation,
+        operation: @escaping @MainActor @Sendable () async -> Void
+    ) -> Task<Void, Never>? {
+        shutdown.withLock { state in
+            let id = ObjectIdentifier(cancellation)
+            guard !state.token.isCancelled, state.diagnostics[id] == nil else { return nil }
+            activeJobs.enter()
+            let task = Task { @MainActor in
+                defer { finishDiagnostic(cancellation) }
+                await operation()
+            }
+            state.diagnostics[id] = {
+                cancellation.cancel()
+                task.cancel()
+            }
+            return task
+        }
+    }
+
+    package static func finishDiagnostic(_ cancellation: DiagnosticCancellation) {
+        shutdown.withLock { state in
+            if state.diagnostics.removeValue(forKey: ObjectIdentifier(cancellation)) != nil { activeJobs.leave() }
+        }
+    }
+
+    package static func waitForShutdown() async {
+        await withCheckedContinuation { continuation in
+            activeJobs.notify(queue: .global(qos: .utility)) { continuation.resume() }
+        }
+    }
+
+    package static func cancelShutdown() {
+        shutdown.withLock { $0.token = DiagnosticCancellation() }
+    }
 
     static func run(_ path: String, _ arguments: [String], job: ProcessJobSpec,
-                    environment: [String: String]?, taskCancellation: DiagnosticCancellation? = nil) -> CommandResult {
+                    environment: [String: String]?, taskCancellation: DiagnosticCancellation? = nil,
+                    readiness: (prefix: Data, timeout: TimeInterval)? = nil, onReady: () -> Void = {}) -> CommandResult {
         let started = job.createdUptime
+        // Close admission and register jobs under the same lock so the quit
+        // path cannot miss a job that is preparing to launch.
+        let shutdown = Self.shutdown.withLock { state -> DiagnosticCancellation? in
+            guard !state.token.isCancelled else { return nil }
+            activeJobs.enter()
+            return state.token
+        }
+        defer { if shutdown != nil { activeJobs.leave() } }
         func now() -> TimeInterval { ProcessInfo.processInfo.systemUptime }
-        func isCancelled() -> Bool { job.cancellation?.isCancelled == true || taskCancellation?.isCancelled == true }
+        func isCancelled() -> Bool {
+            shutdown?.isCancelled != false || job.cancellation?.isCancelled == true || taskCancellation?.isCancelled == true
+        }
         var events = [ProcessJobEvent(state: .queued, elapsed: 0)]
         var out = OutputCapture(limit: job.maximumOutputBytesPerStream)
         var err = OutputCapture(limit: job.maximumOutputBytesPerStream)
@@ -185,6 +260,7 @@ enum ProcessRuntime {
         var ownsLeader = true
         var stdoutEOF = false
         var stderrEOF = false
+        var reportedReady = false
         var stopStarted: TimeInterval?
         var killAt: TimeInterval?
         var cleanupDeadline: TimeInterval?
@@ -231,9 +307,14 @@ enum ProcessRuntime {
             if terminal == nil {
                 if isCancelled() { terminal = .cancelled }
                 else if now() >= job.monotonicDeadline { terminal = .timedOut }
+                else if !reportedReady, let readiness, now() >= started + readiness.timeout { terminal = .timedOut }
             }
             drain(output.0, capture: &out, eof: &stdoutEOF)
             drain(errorOutput.0, capture: &err, eof: &stderrEOF)
+            if terminal == nil, !reportedReady, let readiness, out.bytes.starts(with: readiness.prefix) {
+                reportedReady = true
+                onReady()
+            }
             if terminal != nil {
                 let live = liveGroupMembers(pid)
                 if live == nil && !cleanupErrors.contains("group membership unavailable") { cleanupErrors.append("group membership unavailable") }

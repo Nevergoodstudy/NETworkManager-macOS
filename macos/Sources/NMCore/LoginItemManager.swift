@@ -20,10 +20,11 @@ public enum LoginItemState: String, CaseIterable, Sendable {
 /// background collector is installed. The legacy per-user LaunchAgent is only
 /// removed when it belongs to this app's historical label.
 @available(macOS 13.0, *)
+@MainActor
 public final class LoginItemManager: ObservableObject {
     public static let shared = LoginItemManager()
 
-    public static let legacyLabel = "com.networkmanager.mac.launcher"
+    public nonisolated static let legacyLabel = "com.networkmanager.mac.launcher"
 
     @Published public private(set) var state: LoginItemState = .unavailable
     @Published public private(set) var lastError: String?

@@ -19,6 +19,7 @@ struct NETworkManagerMacApp: App {
     @StateObject private var theme = Theme.shared
     @StateObject private var localization = Loc.shared
     @NMStateCompat private var selectedTool: String?
+    @NMStateCompat private var pendingMetric: FieldMetricObservation?
     private let resetSettingsWasDeferred: Bool
 
     init() {
@@ -37,7 +38,7 @@ struct NETworkManagerMacApp: App {
 
     var body: some Scene {
         WindowGroup(t("NETworkManager")) {
-            ContentView(selectedTool: selectedToolBinding)
+            ContentView(selectedTool: selectedToolBinding, pendingMetric: $pendingMetric)
                 .environmentObject(theme)
                 .environmentObject(localization)
                 .themedRoot()
@@ -79,6 +80,14 @@ struct NETworkManagerMacApp: App {
             }
         }
 
+        DocumentGroup(newDocument: FieldProjectDocument()) { configuration in
+            FieldProjectView(document: configuration.$document, pendingMetric: $pendingMetric)
+                .environmentObject(theme)
+                .environmentObject(localization)
+                .themedRoot()
+        }
+        .defaultSize(width: 800, height: 680)
+
         Settings {
             SettingsView()
                 .environmentObject(theme)
@@ -101,6 +110,41 @@ private final class AppLifecycleDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         true
     }
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        let hasActiveJobs = ProcessRuntime.beginShutdown()
+        let needsWorkspaceWait = AssetStore.initializedShared.map { store in
+            store.isLoadingWorkspace || store.isRestoringBackup || store.isSavingWorkspace || store.persistenceError != nil
+        } ?? false
+        guard hasActiveJobs || needsWorkspaceWait else {
+            return .terminateNow
+        }
+        Task { @MainActor in
+            await ProcessRuntime.waitForShutdown()
+            guard let store = AssetStore.initializedShared else {
+                sender.reply(toApplicationShouldTerminate: true)
+                return
+            }
+            await store.waitForWorkspaceWrites()
+            while let error = store.persistenceError {
+                let alert = NSAlert()
+                alert.messageText = t("Asset workspace")
+                alert.informativeText = error
+                alert.alertStyle = .warning
+                alert.addButton(withTitle: t("Retry"))
+                alert.addButton(withTitle: t("Cancel"))
+                guard alert.runModal() == .alertFirstButtonReturn else {
+                    ProcessRuntime.cancelShutdown()
+                    sender.reply(toApplicationShouldTerminate: false)
+                    return
+                }
+                store.save()
+                await store.waitForWorkspaceWrites()
+            }
+            sender.reply(toApplicationShouldTerminate: true)
+        }
+        return .terminateLater
+    }
 }
 
 private struct ToolItem: Identifiable, Hashable {
@@ -118,11 +162,15 @@ private struct ToolGroup: Identifiable {
 private struct ContentView: View {
     @Environment(\.palette) private var palette
     @Binding var selectedTool: String?
+    @Binding var pendingMetric: FieldMetricObservation?
     @NMStateCompat private var searchText = ""
     @NMStateCompat private var dashboardTarget: String?
     @NMStateCompat private var diagnosticHistorySearch = ""
     @FocusState private var searchFocused: Bool
     private let groups = [
+        ToolGroup(title: "Field engineering", items: [
+            ToolItem(id: "fieldProjects", title: "Field projects", icon: "folder")
+        ]),
         ToolGroup(title: "Monitor", items: [
             ToolItem(id: "dashboard", title: "Dashboard", icon: "rectangle.grid.2x2"),
             ToolItem(id: "zabbix", title: "Zabbix problems", icon: "waveform.path.ecg.rectangle"),
@@ -143,6 +191,10 @@ private struct ContentView: View {
             ToolItem(id: "diagnosticHistory", title: "Diagnostic history", icon: "clock.arrow.circlepath"),
             ToolItem(id: "dns", title: "DNS Lookup", icon: "magnifyingglass"),
             ToolItem(id: "traceroute", title: "Traceroute", icon: "point.3.connected.trianglepath.dotted"),
+            ToolItem(id: "iperf3", title: "iperf3 throughput", icon: "speedometer"),
+            ToolItem(id: "pcapng", title: "Packet capture summary", icon: "doc.text.magnifyingglass"),
+            ToolItem(id: "gnmi", title: "gNMI capabilities", icon: "list.bullet.rectangle"),
+            ToolItem(id: "configCompare", title: "Configuration comparison", icon: "arrow.left.arrow.right"),
             ToolItem(id: "snmp", title: "SNMP", icon: "antenna.radiowaves.left.and.right"),
             ToolItem(id: "whois", title: "WHOIS", icon: "person.text.rectangle"),
             ToolItem(id: "geolocation", title: "IP Geolocation", icon: "globe.americas"),
@@ -279,12 +331,13 @@ private struct ContentView: View {
             openTool: { selectedTool = $0 },
             openPortScanner: { host in dashboardTarget = host; selectedTool = "portScanner" }
         )
+        case "fieldProjects": FieldProjectLandingView()
         case "assets": AssetsView()
         case "diagnosticHistory": DiagnosticHistoryView(initialEventID: diagnosticHistorySearch)
         case "zabbix": ZabbixView(openDiagnosticHistory: { eventID in
             diagnosticHistorySearch = eventID
             selectedTool = "diagnosticHistory"
-        })
+        }, stageMetric: { pendingMetric = $0 })
         case "netbox": NetBoxView()
         case "credentials": CredentialsView()
         case "network": NetworkInfoView()
@@ -301,6 +354,10 @@ private struct ContentView: View {
         case "subnet": CalculatorView(kind: .subnet)
         case "bit": CalculatorView(kind: .bit)
         case "traceroute": UtilitiesView(kind: .traceroute)
+        case "iperf3": Iperf3View()
+        case "pcapng": PacketCaptureView()
+        case "gnmi": GNMIView()
+        case "configCompare": ConfigurationComparisonView()
         case "wifi": SystemDiagnosticsView(kind: .wifi)
         case "connections": SystemDiagnosticsView(kind: .connections)
         case "listeners": SystemDiagnosticsView(kind: .listeners)

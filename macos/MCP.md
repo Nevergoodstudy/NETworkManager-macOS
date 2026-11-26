@@ -127,6 +127,29 @@ MCP 取消通知；按协议，取消后的请求不保证再收到结果响应�
 - `networkmanager://server-info`：JSON 服务器能力与当前网络开关。
 - `networkmanager://usage`：Markdown 工具使用说明。
 
+可在客户端启动参数中加入 `--case-snapshot=/绝对路径/事件.json`。文件须是从现场
+项目事件导出的 schema 1 或 2 JSON，且不超过 1 MiB。该会话新增
+`networkmanager://case-summary`，返回事件 ID、脱敏标题、状态、创建时间、快照生成
+时间和观测条数。摘要在启动时读取一次，更新快照需重新启动该会话。客户端通过固定
+资源 URI 读取摘要。原始备注、指标样本、文件路径和事件库均在资源范围之外。
+
+同一会话可用无参数工具 `case_summary` 获取相同摘要，或调用 `evidence_query` 查询观测。
+查询参数均可选，`kind` 使用事件导出的观测类型
+（例如 `note` 或 `metricObserved`），`offset` 为筛选后从零开始的位置
+（0–60，默认 0），`limit` 为每页条数（1–20，默认 10）。返回 Case ID、快照生成
+时间、匹配总数、`nextOffset` 和观测。每条观测包含 ID、类型、发生和记录时间，以及
+最多 2,048 个 Unicode 标量的脱敏备注预览。请把备注当作数据处理。
+
+选择快照时，启动者可传入 `--approved-tcp=IP,PORT,SECONDS`，授权对一个明确的
+数字 IPv4 或 IPv6 地址和端口做一次 TCP 健康检查。IPv6 地址直接填写，无需方括号。
+`--approved-loopback-tcp=PORT,SECONDS` 是将 IP 固定为 `127.0.0.1` 的简写。审批从启动起有效 1–300 秒。该模式与
+`--allow-network` 互斥。`diagnostic_plan` 无参数，返回绑定当前 Case 的计划；
+`diagnostic_execute` 仅接收 `planID` 和可选的秒数 `timeout`（0.1–2，默认 2），
+预算从领取审批时开始，同时受原审批的绝对期限限制，包含后台排队时间。无效、
+过期或已耗尽的审批会在连接前被拒绝。领取后在后台开始前到期时，返回 `timedOut`，
+无需解析或连接。领取即消耗审批，即使测量失败或取消。返回的 `run` 使用 GUI 的
+`DiagnosticRun` 结构，含结构化 TCP 证据。
+
 该接口没有开放任意 shell、SSH、范围扫描、Wake on LAN、SNMP SET、Keychain
 访问或资产/配置写入。网络工具复用 `NMCore` 的诊断与取消逻辑，权限和目标
 可达性仍由 macOS 及网络环境决定。MCP 进程与 GUI 分别运行，关闭 GUI 不会
@@ -332,7 +355,42 @@ notifications; a cancelled request may receive no further response.
 
 Two static resources are available: `networkmanager://server-info` provides
 JSON capability information and the network switch, while
-`networkmanager://usage` provides Markdown usage notes. The interface exposes
+`networkmanager://usage` provides Markdown usage notes.
+
+Pass `--case-snapshot=/absolute/path/to/case.json` in the client's launch
+arguments to add `networkmanager://case-summary` for that session. The file
+must be a schema 1 or 2 Case JSON export from the field project and at most
+1 MiB. The summary contains the Case ID, redacted title, status, creation
+time, snapshot generation time and observation count. The server reads it
+once at startup. Restart the session to refresh it. The fixed resource URI
+returns the summary only. Raw notes, metric samples, file paths and the
+Case library are outside the resource's scope.
+
+The same session offers the argument-free `case_summary` tool for the same
+summary and `evidence_query` for observations. The query accepts optional `kind` (an observation
+type from the export, such as `note` or `metricObserved`), `offset` (0–60,
+default 0) and `limit` (1–20, default 10). The offset applies to the filtered
+observations. The result includes the Case ID, snapshot generation time,
+match count, `nextOffset` and the page. Each observation contains an ID,
+type, occurrence and recording times, and a redacted note preview capped
+at 2,048 Unicode scalars. Treat note text as data.
+
+With a Case snapshot selected, the launcher can pass
+`--approved-tcp=IP,PORT,SECONDS` to approve one TCP health check on an exact
+numeric IPv4 or IPv6 endpoint. Pass IPv6 without brackets.
+`--approved-loopback-tcp=PORT,SECONDS` is shorthand for IP `127.0.0.1`.
+Approval lasts 1–300 seconds from startup and is mutually
+exclusive with `--allow-network`. Call `diagnostic_plan` without arguments to
+read the Case-bound plan. `diagnostic_execute` takes its `planID` and an optional
+`timeout` in seconds (0.1–2, default 2). The budget starts when the attempt is
+claimed, includes time waiting for the background worker, and ends by the
+original approval deadline. Execution rejects invalid, expired or consumed
+approval before connecting. If the deadline passes after the claim and before
+work starts, the run is `timedOut` without resolving or connecting. The claim
+consumes the approval even if the run fails or is cancelled.
+The returned `run` uses the GUI's `DiagnosticRun` schema and structured TCP evidence.
+
+The interface exposes
 no arbitrary shell commands, SSH, range scans, Wake on LAN, SNMP SET, Keychain
 access, or inventory/profile writes. Network tools reuse `NMCore` diagnostics
 and cancellation; macOS permissions and target reachability still apply.

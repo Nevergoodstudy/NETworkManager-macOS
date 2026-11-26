@@ -40,6 +40,10 @@ visible app process and does not add a project-specific resolver service.
 
 ## 改进计划 / Improvement plan
 
+从「现场工程 → 现场项目」打开或新建客户站点项目。项目文件把售前勘察、交付验收和售后维护保存在一起，并可预览和导出检查报告；售后维护支持可复用的人工巡检模板。[国内网络工程改进计划与实施状态](docs/FIELD_ENGINEERING_PLAN.md) · [巡检实施记录](docs/T06_INSPECTION_2026-11-20.md)
+
+Open or create a customer-site project from Field engineering → Field projects. A project records the survey, delivery baseline, maintenance checklist and reusable manual inspection records, and can export a previewed report. See the [field engineering plan and validation status](docs/FIELD_ENGINEERING_PLAN.md) and the [inspection implementation record](docs/T06_INSPECTION_2026-11-20.md).
+
 改进计划聚焦诊断结果、任务执行、资产身份、历史存储和故障证据。中英文设计、16 项任务和验收条件见 [改进计划索引](docs/README.md)。当前处于第一阶段 P0 实施：T01–T03 已通过 PR #20 合并，Apple Silicon 打包修复通过 PR #27 合并；[T04 Repository 与 SQLite 基础](docs/T04_SQLITE_FOUNDATION_2026-11-18.md) 已通过 PR #28 于 2026-11-18 12:37:31 UTC 合并，最终提交 `dba6168` 的 push 与 PR CI 均通过 macOS 15/26。第九个实施切片增加[默认工作区所有权保护](docs/T04_WORKSPACE_OWNERSHIP_2026-11-18.md)，本机 Debug 存储检查、完整 Release `NMTest` 与 `NMCheck` 已通过，本轮 arm64 `.app` / DMG、双实例存储、菜单退出、重试接管、真实 GUI Ping 及活跃 SNMP 期间启动竞争实例已通过。生产代码 `efe8673` 的 push CI 已通过 macOS 15/26；[PR #29](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/29) 记录最新提交的检查与合并状态。九个切片覆盖 T01–T04，4/16 主项有实现，整项验收仍为 **0/16**；T04 保持开放。
 
 The improvement plan covers diagnostic results, job execution, asset identity, history storage and incident evidence. The [plan index](docs/README.md) links the Chinese/English design, 16 tasks and acceptance criteria. Work is in the first P0 stage: T01–T03 were merged through PR #20, with Apple Silicon packaging fixes in PR #27. The [T04 Repository and SQLite foundation](docs/T04_SQLITE_FOUNDATION_2026-11-18.md) was merged through PR #28 at 2026-11-18 12:37:31 UTC; its final commit `dba6168` passed push and PR CI on macOS 15/26. The ninth slice adds [default-workspace ownership](docs/T04_WORKSPACE_OWNERSHIP_2026-11-18.md). Local Debug storage checks, full Release `NMTest` and `NMCheck` passed; the current arm64 `.app` / DMG, packaged two-instance storage, menu quit/retry takeover, actual GUI Ping and contender launch during active SNMP passed. Production commit `efe8673` passed push CI on macOS 15/26; [PR #29](https://github.com/Nevergoodstudy/NETworkManager-macOS/pull/29) records checks and merge status for the latest commit. Nine slices cover T01–T04 (4/16 main items have implementation), with **0/16 whole tasks fully accepted**. T04 remains open.
@@ -73,9 +77,14 @@ To run the checks against optimized Release modules:
 `NMTest` uses `@testable import NMCore`, so Release builds must explicitly enable
 testability for the test invocation. The distributable app does not need that flag.
 
+Use `NMTest --single-instance` to run the core suite without spawning a second
+app test process. Storage migration, backup, and recovery still run. The
+default suite also tests workspace ownership across multiple processes.
+
 For focused storage correctness checks and the optional isolated scale benchmark:
 
     swift run --package-path macos NMTest --storage-only
+    swift run --package-path macos -c release -Xswiftc -enable-testing NMTest --case inspection-project
     swift run --package-path macos -c release -Xswiftc -enable-testing NMTest --storage-benchmark /tmp/networkmanager-storage-benchmark.json
 
 The benchmark uses 10,000 fixture devices and 100,000 diagnostic runs. It measures
@@ -186,6 +195,12 @@ referenced Keychain item is still available on this Mac; the app preserves a
 copy of damaged metadata before writing recovered references.
 
 SSH sessions use the system OpenSSH client inside the app's terminal tabs.
+In Remote, enter an optional jump host as `[user@]host[:port]`, for example
+`ops@bastion.example:2222` or `ops@[2001:db8::1]:2222`. The session tab and
+command confirmation show the requested hop. The identity selected in Remote
+applies to the destination. Set jump-host-specific identity and host-key
+settings in `~/.ssh/config`. Leaving the field empty uses the existing OpenSSH
+configuration for the destination.
 The Remote view offers exact-match Cisco IOS read-only templates; other
 commands require a confirmation dialog showing the target and command. Sending
 is disabled until the operator confirms the host key and verifies that the

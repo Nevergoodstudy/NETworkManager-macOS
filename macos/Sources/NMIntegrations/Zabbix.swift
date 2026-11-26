@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import NMCore
 
@@ -48,6 +49,17 @@ public enum ZabbixError: LocalizedError, Sendable {
     case api(Int, String)
     case decoding(String)
     case responseTooLarge(Int)
+    case invalidProblemTime
+
+    var isAccessDenied: Bool {
+        switch self {
+        case .httpStatus(401, _), .httpStatus(403, _): return true
+        case let .api(_, message):
+            return ["not authorized", "no permissions to call", "no permissions to referred object",
+                    "permission denied"].contains { message.localizedCaseInsensitiveContains($0) }
+        default: return false
+        }
+    }
 
     public var errorDescription: String? {
         switch self {
@@ -60,6 +72,7 @@ public enum ZabbixError: LocalizedError, Sendable {
         case let .api(code, message): return "Zabbix API error \(code): \(message)"
         case let .decoding(message): return "Zabbix response could not be decoded: \(message)"
         case let .responseTooLarge(limit): return "Zabbix response exceeded the \(limit / 1_048_576) MB safety limit."
+        case .invalidProblemTime: return "The Zabbix problem has an invalid timestamp."
         }
     }
 }
@@ -96,6 +109,55 @@ public struct ZabbixProblem: Codable, Hashable, Sendable, Identifiable {
         default: return "Unknown"
         }
     }
+}
+
+public struct ZabbixMetric: Decodable, Sendable, Identifiable {
+    fileprivate let itemid: FlexibleString
+    fileprivate let value_type: FlexibleString
+    public let name: String
+    public let key: String
+    public let units: String
+    public let delay: String
+
+    private enum CodingKeys: String, CodingKey {
+        case itemid, value_type, name, units, delay
+        case key = "key_"
+    }
+
+    public var id: String { itemid.value }
+}
+
+public struct ZabbixMetricHistory: Sendable {
+    public enum Window: Int, CaseIterable, Sendable {
+        case five = 5, fifteen = 15, thirty = 30
+    }
+
+    public struct Sample: Decodable, Sendable {
+        public let seconds: Int
+        public let nanoseconds: Int
+        public let rawValue: String
+
+        private enum CodingKeys: String, CodingKey { case clock, ns, value }
+
+        public init(from decoder: Decoder) throws {
+            let fields = try decoder.container(keyedBy: CodingKeys.self)
+            guard let seconds = Int(try fields.decode(FlexibleString.self, forKey: .clock).value), seconds >= 0,
+                  let nanoseconds = Int(try fields.decode(FlexibleString.self, forKey: .ns).value),
+                  (0..<1_000_000_000).contains(nanoseconds) else {
+                throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath, debugDescription: "Invalid history timestamp."))
+            }
+            self.seconds = seconds
+            self.nanoseconds = nanoseconds
+            rawValue = try fields.decode(FlexibleString.self, forKey: .value).value
+        }
+    }
+
+    public let range: ClosedRange<Int>
+    public let queriedAt: Date
+    public let samples: [Sample]
+    public let beforeOrAtLimitReached: Bool
+    public let afterLimitReached: Bool
+    public let afterWindowOpen: Bool
 }
 
 private struct ZabbixRPCRequest: Encodable {
@@ -156,13 +218,14 @@ private struct ZabbixHostRecord: Decodable {
     var interfaces: [Interface]?
 }
 
-private struct FlexibleString: Decodable, Hashable {
+private struct FlexibleString: Decodable, Hashable, Sendable {
     var value: String
 
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         if let string = try? container.decode(String.self) { value = string; return }
         if let integer = try? container.decode(Int64.self) { value = String(integer); return }
+        if let integer = try? container.decode(UInt64.self) { value = String(integer); return }
         if let number = try? container.decode(Double.self) { value = String(number); return }
         throw DecodingError.typeMismatch(String.self, .init(codingPath: decoder.codingPath, debugDescription: "Expected a string or number."))
     }
@@ -298,6 +361,77 @@ public final class ZabbixClient: @unchecked Sendable {
         }
     }
 
+    public func fetchNumericMetrics(for host: ZabbixHost) async throws -> [ZabbixMetric] {
+        try await call("item.get", params: [
+            "hostids": AnyEncodable([host.hostID]), "filter": AnyEncodable(["value_type": [0, 3]]),
+            "output": AnyEncodable(["itemid", "name", "key_", "value_type", "units", "delay"]),
+            "sortfield": AnyEncodable(["name", "itemid"])
+        ])
+    }
+
+    public func fetchMetricHistory(for metric: ZabbixMetric, problem: ZabbixProblem,
+                                   window: ZabbixMetricHistory.Window, now: Date = .now) async throws -> ZabbixMetricHistory {
+        let radius = window.rawValue * 60
+        guard problem.clock > 0, problem.clock <= Int.max - radius else { throw ZabbixError.invalidProblemTime }
+        let range = max(0, problem.clock - radius)...(problem.clock + radius)
+        let limit = 500
+        let before = try await fetchHistory(for: metric, range: range.lowerBound...problem.clock, order: "DESC", limit: limit + 1)
+        try Task.checkCancellation()
+        let after = try await fetchHistory(for: metric, range: (problem.clock + 1)...range.upperBound, order: "ASC", limit: limit + 1)
+        return ZabbixMetricHistory(range: range, queriedAt: now, samples: before.prefix(limit).reversed() + after.prefix(limit),
+                                  beforeOrAtLimitReached: before.count > limit, afterLimitReached: after.count > limit,
+                                  afterWindowOpen: now.timeIntervalSince1970 < Double(range.upperBound) + 1)
+    }
+
+    public func metricObservation(for metric: ZabbixMetric, history: ZabbixMetricHistory,
+                                  problem: ZabbixProblem, host: ZabbixHost) -> FieldMetricObservation {
+        let instance = ExternalAssetIdentity(instance: configuration.baseURL.absoluteString,
+                                             objectType: "host", remoteID: host.hostID).instance
+        var origin = URLComponents(string: instance)
+        origin?.path = ""
+        let instanceID = SHA256.hash(data: Data(instance.utf8)).map { String(format: "%02x", $0) }.joined()
+        func sanitized(_ value: String) -> String {
+            DiagnosticSecretRedactor.redact(value, secrets: [token, configuration.tokenReference])
+        }
+        return FieldMetricObservation(
+            source: sanitized(origin?.string ?? "Zabbix"), instanceID: instanceID, eventID: problem.eventID,
+            hostID: host.hostID, hostName: sanitized(host.displayName), itemID: metric.id, itemName: sanitized(metric.name),
+            unit: sanitized(metric.units), configuredInterval: sanitized(metric.delay), queriedAt: history.queriedAt,
+            alertSecond: problem.clock, window: history.range,
+            samples: history.samples.map { .init(seconds: $0.seconds, nanoseconds: $0.nanoseconds, rawValue: $0.rawValue) },
+            beforeOrAtLimitReached: history.beforeOrAtLimitReached, afterLimitReached: history.afterLimitReached,
+            afterWindowOpen: history.afterWindowOpen
+        )
+    }
+
+    private func fetchHistory(for metric: ZabbixMetric, range: ClosedRange<Int>, order: String,
+                              limit: Int) async throws -> [ZabbixMetricHistory.Sample] {
+        guard let historyType = Int(metric.value_type.value), historyType == 0 || historyType == 3 else {
+            throw ZabbixError.invalidResponse
+        }
+        let samples: [ZabbixMetricHistory.Sample] = try await call("history.get", params: [
+            "history": AnyEncodable(historyType), "itemids": AnyEncodable([metric.id]),
+            "output": AnyEncodable(["clock", "ns", "value"]),
+            "time_from": AnyEncodable(range.lowerBound), "time_till": AnyEncodable(range.upperBound),
+            "sortfield": AnyEncodable(["clock", "ns"]), "sortorder": AnyEncodable(order), "limit": AnyEncodable(limit)
+        ])
+        guard samples.count <= limit, samples.allSatisfy({ sample in
+            guard range.contains(sample.seconds), sample.rawValue.utf8.count <= 64 else { return false }
+            return historyType == 3 ? UInt64(sample.rawValue) != nil : Double(sample.rawValue)?.isFinite == true
+        }) else {
+            throw ZabbixError.invalidResponse
+        }
+        let ascending = order == "ASC"
+        guard zip(samples, samples.dropFirst()).allSatisfy({ previous, current in
+            let left = (previous.seconds, previous.nanoseconds)
+            let right = (current.seconds, current.nanoseconds)
+            return ascending ? left <= right : left >= right
+        }) else {
+            throw ZabbixError.invalidResponse
+        }
+        return samples
+    }
+
     private func fetchHosts(_ hostIDs: [String]) async throws -> [ZabbixHostRecord] {
         guard !hostIDs.isEmpty else { return [] }
         return try await call("host.get", params: [
@@ -363,16 +497,18 @@ public final class ZabbixClient: @unchecked Sendable {
 }
 
 public enum ZabbixDiagnosticRunner {
+    @MainActor
     @discardableResult
     public static func ping(
         problem: ZabbixProblem,
         host: ZabbixHost,
-        in assets: AssetStore = .shared,
+        in assets: AssetStore? = nil,
         executePing: @escaping @Sendable (String) async -> DiagnosticExecutionResult = { target in
             await DiagnosticService.runPing(host: target)
         }
     ) async -> UUID? {
         guard let target = host.target, !target.isEmpty else { return nil }
+        let assets = assets ?? AssetStore.shared
         let matchingDevices = assets.devices.filter { $0.address.caseInsensitiveCompare(target) == .orderedSame }
         let device = matchingDevices.count == 1 ? matchingDevices.first : nil
         let parameters = ["timeout": "2", "source": "Zabbix", "eventID": problem.eventID, "triggerID": problem.triggerID]

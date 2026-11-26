@@ -34,6 +34,7 @@ public struct OperationAuditRecord: Identifiable, Codable, Hashable, Sendable {
 }
 
 /// A local audit trail that deliberately excludes command text and terminal output.
+@MainActor
 public final class OperationsAuditLog: ObservableObject {
     public static let shared = OperationsAuditLog()
 

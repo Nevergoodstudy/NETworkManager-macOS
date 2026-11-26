@@ -13,6 +13,7 @@ public struct LookupView: View {
     @NMStateCompat private var kind: Kind
     @NMStateCompat private var query = "example.com"
     @NMStateCompat private var server = ""
+    @NMStateCompat private var dnsServerPort = "53"
     @NMStateCompat private var dnsMode: DNSLookupMode = .system
     @NMStateCompat private var recordType: DNSRecordType = .a
     @NMStateCompat private var records: [DNSRecord] = []
@@ -44,6 +45,18 @@ public struct LookupView: View {
                         .frame(maxWidth: 340)
                         .disabled(isRunning)
                         .accessibilityIdentifier("diagnosticDNSMode")
+                        if dnsMode == .server {
+                            HStack {
+                                TextField(t("DNS server"), text: $server)
+                                    .accessibilityIdentifier("diagnosticLookupServer")
+                                TextField(t("Port"), text: $dnsServerPort)
+                                    .frame(width: 72)
+                                    .accessibilityLabel(t("DNS server port"))
+                                    .accessibilityIdentifier("diagnosticLookupDNSPort")
+                            }
+                            .textFieldStyle(.roundedBorder)
+                            .disabled(isRunning)
+                        }
                     }
 
                     HStack {
@@ -59,8 +72,8 @@ public struct LookupView: View {
                             .disabled(isRunning)
                             .accessibilityIdentifier("diagnosticDNSRecordType")
                         }
-                        if kind != .dns || dnsMode == .server {
-                            TextField(kind == .dns ? t("DNS server") : t("Server (optional)"), text: $server)
+                        if kind != .dns {
+                            TextField(t("Server (optional)"), text: $server)
                                 .textFieldStyle(.roundedBorder)
                                 .frame(width: 190)
                                 .disabled(isRunning)
@@ -68,7 +81,7 @@ public struct LookupView: View {
                         }
                         Button(isRunning ? t("Running…") : t("Lookup")) { run() }
                             .buttonStyle(.borderedProminent)
-                            .disabled(isRunning)
+                            .disabled(isRunning || history.isLoadingWorkspace)
                             .accessibilityIdentifier("diagnosticLookupRun")
                         if isRunning {
                             Button { diagnosticTask?.cancel() } label: {
@@ -101,67 +114,69 @@ public struct LookupView: View {
         .onChange(of: kind) { _, _ in clearResults() }
         .onChange(of: query) { _, _ in clearResults() }
         .onChange(of: server) { _, _ in clearResults() }
+        .onChange(of: dnsServerPort) { _, _ in clearResults() }
         .onChange(of: dnsMode) { _, _ in clearResults() }
         .onChange(of: recordType) { _, _ in clearResults() }
     }
 
     private func run() {
+        guard !isRunning, !history.isLoadingWorkspace else { return }
         clearResults()
         let target = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !target.isEmpty else { error = t("Invalid input"); return }
-        if kind == .dns, dnsMode == .server, server.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        let usesSpecifiedServer = kind == .dns && dnsMode == .server
+        let selectedServer = server.trimmingCharacters(in: .whitespacesAndNewlines)
+        if usesSpecifiedServer && selectedServer.isEmpty {
             error = t("Enter a DNS server for this query mode.")
             return
         }
-        isRunning = true
+        guard let port = usesSpecifiedServer ? UInt16(dnsServerPort.trimmingCharacters(in: .whitespacesAndNewlines)) : 53,
+              port > 0 else {
+            error = t("Enter a TCP or DNS port from 1 to 65535.")
+            return
+        }
+        let diagnosticKind: DiagnosticKind
+        let parameters: [String: String]
+        let execute: @Sendable () async -> DiagnosticExecutionResult
         switch kind {
         case .dns:
             let selectedType = recordType
             let selectedMode = dnsMode
-            let selectedServer = server.trimmingCharacters(in: .whitespacesAndNewlines)
-            let serverArgument = selectedMode == .server ? selectedServer : nil
+            let serverArgument = usesSpecifiedServer ? selectedServer : nil
             dnsRequestDescription = tf("Query: %@ (%@)", target, selectedType.displayName)
             dnsResultMode = selectedMode
-            let runID = history.beginDiagnostic(kind: .dns, target: target,
-                                                parameters: ["recordType": selectedType.displayName,
-                                                             "mode": selectedMode.rawValue,
-                                                             "server": serverArgument ?? ""])
-            diagnosticTask = Task {
-                let result = await DiagnosticService.runDNS(host: target, recordType: selectedType,
-                                                            server: serverArgument, mode: selectedMode)
-                records = result.dnsRecords
-                output = result.displayOutput ?? result.detail
-                error = result.status == .succeeded ? nil : result.summary
-                history.finishDiagnostic(id: runID, status: result.status, summary: result.summary,
-                                          detail: result.detail, latency: result.latency, source: result.source)
-                diagnosticTask = nil
-                isRunning = false
+            diagnosticKind = .dns
+            var dnsParameters = ["recordType": selectedType.displayName, "mode": selectedMode.rawValue,
+                                 "server": serverArgument ?? ""]
+            if usesSpecifiedServer { dnsParameters["serverPort"] = String(port) }
+            parameters = dnsParameters
+            execute = {
+                await DiagnosticService.runDNS(host: target, recordType: selectedType,
+                                               server: serverArgument, serverPort: port, mode: selectedMode)
             }
         case .whois:
             let selectedServer = server.isEmpty ? nil : server
-            let runID = history.beginDiagnostic(kind: .whois, target: target, parameters: ["server": selectedServer ?? "auto"])
-            diagnosticTask = Task {
-                let result = await DiagnosticService.runWhois(host: target, server: selectedServer)
-                output = result.displayOutput ?? result.detail
-                error = result.status == .succeeded ? nil : result.summary
-                history.finishDiagnostic(id: runID, status: result.status, summary: result.summary,
-                                          detail: result.detail, latency: result.latency, source: result.source)
-                diagnosticTask = nil
-                isRunning = false
-            }
+            diagnosticKind = .whois
+            parameters = ["server": selectedServer ?? "auto"]
+            execute = { await DiagnosticService.runWhois(host: target, server: selectedServer) }
         case .sntp:
             let timeout: TimeInterval = 3
-            let runID = history.beginDiagnostic(kind: .sntp, target: target, parameters: ["timeout": String(timeout)])
-            diagnosticTask = Task {
-                let result = await DiagnosticService.runSNTP(host: target, timeout: timeout)
-                output = result.displayOutput ?? result.detail
-                error = result.status == .succeeded ? nil : result.summary
-                history.finishDiagnostic(id: runID, status: result.status, summary: result.summary,
-                                          detail: result.detail, latency: result.latency, source: result.source)
-                diagnosticTask = nil
-                isRunning = false
-            }
+            diagnosticKind = .sntp
+            parameters = ["timeout": String(timeout)]
+            execute = { await DiagnosticService.runSNTP(host: target, timeout: timeout) }
         }
+        diagnosticTask = ProcessRuntime.startDiagnosticTask(DiagnosticCancellation()) {
+            let runID = history.beginDiagnostic(kind: diagnosticKind, target: target, parameters: parameters)
+            let result = await execute()
+            if diagnosticKind == .dns { records = result.dnsRecords }
+            output = result.displayOutput ?? result.detail
+            error = result.status == .succeeded ? nil : result.summary
+            history.finishDiagnostic(id: runID, status: result.status, summary: result.summary,
+                                     detail: result.detail, latency: result.latency, source: result.source)
+            diagnosticTask = nil
+            isRunning = false
+        }
+        isRunning = diagnosticTask != nil
     }
 
     @ViewBuilder

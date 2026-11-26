@@ -17,6 +17,7 @@ public struct AssetsView: View {
     @NMStateCompat private var showingAddSite = false
     @NMStateCompat private var showingAddDevice = false
     @NMStateCompat private var showingBackupExporter = false
+    @NMStateCompat private var encodingBackup = false
     @NMStateCompat private var showingBackupImporter = false
     @NMStateCompat private var backupData = Data()
     @NMStateCompat private var backupMessage = ""
@@ -38,14 +39,22 @@ public struct AssetsView: View {
     public var body: some View {
         NavigationSplitView {
             VStack(spacing: 0) {
-                if let accessError = store.workspaceAccessError {
+                if store.isLoadingWorkspace {
+                    ProgressView(t("Loading…"))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(12)
+                } else if store.isRestoringBackup {
+                    ProgressView(t("Import backup"))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(12)
+                } else if let accessError = store.workspaceAccessError {
                     VStack(alignment: .leading, spacing: 8) {
                         Label(t("Asset workspace unavailable"), systemImage: "lock.fill")
                             .font(.headline)
                         Text(accessError)
                             .font(.caption)
                             .textSelection(.enabled)
-                        Button(t("Retry opening workspace")) { store.retryWorkspaceAccess() }
+                        Button(t("Retry opening workspace")) { Task { await store.retryWorkspaceAccessInBackground() } }
                             .buttonStyle(.bordered)
                             .accessibilityIdentifier("assetWorkspaceRetry")
                     }
@@ -77,11 +86,15 @@ public struct AssetsView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(.orange.opacity(0.1))
                 } else if let persistenceError = store.persistenceError {
-                    Label(persistenceError, systemImage: "exclamationmark.triangle")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                        .padding(10)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    HStack {
+                        Label(persistenceError, systemImage: "exclamationmark.triangle")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                        Spacer()
+                        Button(t("Retry")) { store.save() }
+                            .disabled(!store.canEditWorkspace || store.isSavingWorkspace)
+                    }
+                    .padding(10)
                 }
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
@@ -177,8 +190,8 @@ public struct AssetsView: View {
             .toolbar {
                 ToolbarItem {
                     Menu {
-                        Button { exportBackup() } label: { Label(t("Export backup"), systemImage: "square.and.arrow.up") }
-                            .disabled(!store.canEditWorkspace)
+                        Button { Task { await exportBackup() } } label: { Label(t("Export backup"), systemImage: "square.and.arrow.up") }
+                            .disabled(!store.canEditWorkspace || encodingBackup)
                         Button { showingBackupImporter = true } label: { Label(t("Import backup"), systemImage: "square.and.arrow.down") }
                             .disabled(store.workspaceAccessError != nil)
                     } label: {
@@ -231,6 +244,7 @@ public struct AssetsView: View {
                 ContentUnavailableView(t("Select a device"), systemImage: "server.rack", description: Text(t("Choose an asset to inspect status and run diagnostics.")))
             }
         }
+        .disabled(store.isLoadingWorkspace || store.isRestoringBackup)
         .background(palette.background)
         .fileExporter(
             isPresented: $showingBackupExporter,
@@ -241,15 +255,15 @@ public struct AssetsView: View {
             if case .failure(let error) = result { backupMessage = tf("Backup export failed: %@", error.localizedDescription) }
         }
         .fileImporter(isPresented: $showingBackupImporter, allowedContentTypes: [.json], allowsMultipleSelection: false) { result in
-            do {
-                let urls = try result.get()
-                guard let url = urls.first else { throw AssetBackupError.emptyWorkspace }
-                let access = url.startAccessingSecurityScopedResource()
-                defer { if access { url.stopAccessingSecurityScopedResource() } }
-                try store.importBackup(Data(contentsOf: url))
-                backupMessage = t("Asset backup imported.")
-            } catch {
-                backupMessage = tf("Backup import failed: %@", error.localizedDescription)
+            Task { @MainActor in
+                do {
+                    let urls = try result.get()
+                    guard let url = urls.first else { throw AssetBackupError.emptyWorkspace }
+                    try await store.importBackupInBackground(from: url)
+                    backupMessage = t("Asset backup imported.")
+                } catch {
+                    backupMessage = tf("Backup import failed: %@", error.localizedDescription)
+                }
             }
         }
         .alert(t("Asset workspace"), isPresented: Binding(get: { !backupMessage.isEmpty }, set: { if !$0 { backupMessage = "" } })) {
@@ -322,9 +336,12 @@ public struct AssetsView: View {
         store.searchDevices(searchText).filter { $0.siteID == siteID }
     }
 
-    private func exportBackup() {
+    private func exportBackup() async {
+        guard !encodingBackup else { return }
+        encodingBackup = true
+        defer { encodingBackup = false }
         do {
-            backupData = try store.exportBackup()
+            backupData = try await store.exportBackupInBackground()
             showingBackupExporter = true
         } catch {
             backupMessage = tf("Backup export failed: %@", error.localizedDescription)
@@ -384,9 +401,27 @@ struct DeviceInspector: View {
                                 .font(.caption.monospaced())
                                 .foregroundStyle(.secondary)
                         }
+                        if let identity = device.externalIdentity {
+                            LabeledContent(t("Remote object"), value: "\(identity.objectType) · \(identity.remoteID)")
+                                .font(.caption.monospaced())
+                                .textSelection(.enabled)
+                        }
+                        if let sourceAddress = device.sourceAddress, sourceAddress != device.address {
+                            LabeledContent(t("Source address"), value: sourceAddress)
+                                .font(.caption.monospaced())
+                                .textSelection(.enabled)
+                            Text(t("The local address is preserved because it was edited locally."))
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
                     }
                     .accessibilityIdentifier("deviceSourceMetadata")
                 }
+
+                if device.externalIdentity != nil || device.networkInventory != nil {
+                    AssetNetworkInventoryView(device: device)
+                }
+                LibreNMSLinksView(deviceID: device.id)
+                    .id(device.id)
 
                 HStack(spacing: 10) {
                     info(title: t("Type"), value: device.kind.displayName, icon: device.kind.symbol)
@@ -497,15 +532,12 @@ struct DeviceInspector: View {
             Label(activeDiagnostic == kind ? t("Running…") : title, systemImage: icon)
         }
         .buttonStyle(.bordered)
-        .disabled(activeDiagnostic != nil)
+        .disabled(activeDiagnostic != nil || store.isLoadingWorkspace)
         .accessibilityIdentifier(identifier)
     }
 
     fileprivate func runDiagnostic(_ kind: DiagnosticKind, targetOverride: String? = nil, savedParameters: [String: String] = [:]) {
-        guard activeDiagnostic == nil else { return }
-        activeDiagnostic = kind
-        isPinging = true
-        message = t("Running…")
+        guard activeDiagnostic == nil, !store.isLoadingWorkspace else { return }
         let target = targetOverride ?? device.address
         var parameters: [String: String]
         if savedParameters.isEmpty {
@@ -513,6 +545,7 @@ struct DeviceInspector: View {
             case .ping: parameters = ["timeout": "2.0"]
             case .dns: parameters = ["recordType": "A", "timeout": "3.0"]
             case .tcp: parameters = ["port": "22", "timeout": "2.0"]
+            case .tls, .http: parameters = ["port": "443", "timeout": "5.0", "scheme": "https", "path": "/"]
             case .traceroute: parameters = ["maxHops": "16", "timeout": "45.0"]
             case .whois: parameters = ["server": "auto", "timeout": "10.0"]
             case .sntp: parameters = ["timeout": "3.0"]
@@ -544,16 +577,18 @@ struct DeviceInspector: View {
         let credentialRef = credentials.references.first { $0.id == credentialRefID && $0.kind == .snmp }
         let credentialSecret = credentialRef.flatMap { try? credentials.secret(for: $0) }
         let securityLevel = parameters["securityLevel"] ?? (credentialSecret?.privacyPassword == nil ? "authNoPriv" : "authPriv")
-        let runID = store.beginDiagnostic(deviceID: device.id, kind: kind, target: target, parameters: parameters)
-        activeRunID = runID
-        let startedAt = Date()
-        OperationsTelemetry.diagnosticStarted(kind: kind, runID: runID)
-        diagnosticTask = Task {
+        diagnosticTask = ProcessRuntime.startDiagnosticTask(DiagnosticCancellation()) { [parameters] in
+            let runID = store.beginDiagnostic(deviceID: device.id, kind: kind, target: target, parameters: parameters)
+            activeRunID = runID
+            let startedAt = Date()
+            OperationsTelemetry.diagnosticStarted(kind: kind, runID: runID)
             let result: DiagnosticExecutionResult
             switch kind {
             case .ping: result = await DiagnosticService.runPing(host: target, timeout: timeout)
             case .dns: result = await DiagnosticService.runDNS(host: target, recordType: recordType, timeout: timeout)
             case .tcp: result = await DiagnosticService.runTCP(host: target, port: port, timeout: timeout)
+            case .tls: result = await DiagnosticService.runTLS(host: target, port: port, timeout: timeout)
+            case .http: result = await DiagnosticService.runHTTP(host: target, port: port, scheme: parameters["scheme"] ?? "https", path: parameters["path"] ?? "/", timeout: timeout)
             case .traceroute: result = await DiagnosticService.runTraceroute(host: target, maxHops: maxHops, timeout: timeout)
             case .whois: result = await DiagnosticService.runWhois(host: target, server: parameters["server"] == "auto" ? nil : parameters["server"], timeout: timeout)
             case .sntp: result = await DiagnosticService.runSNTP(host: target, timeout: timeout)
@@ -569,6 +604,11 @@ struct DeviceInspector: View {
                 diagnosticTask = nil
                 isPinging = false
             }
+        }
+        if diagnosticTask != nil {
+            activeDiagnostic = kind
+            isPinging = true
+            message = t("Running…")
         }
     }
 

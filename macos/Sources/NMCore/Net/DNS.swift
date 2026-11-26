@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - Records
 
-public enum DNSRecordType: UInt16, CaseIterable, Identifiable, Sendable {
+public enum DNSRecordType: UInt16, Codable, CaseIterable, Identifiable, Sendable {
     case a = 1
     case ns = 2
     case cname = 5
@@ -32,7 +32,7 @@ public enum DNSRecordType: UInt16, CaseIterable, Identifiable, Sendable {
     }
 }
 
-public enum DNSLookupMode: String, CaseIterable, Identifiable, Sendable {
+public enum DNSLookupMode: String, Codable, CaseIterable, Identifiable, Sendable {
     case system
     case server
 

@@ -432,12 +432,15 @@ public enum TCPProbe {
 
     static func probeOutcome(host: String, port: Int, timeout: TimeInterval,
                              cancellation: DiagnosticCancellation?,
+                             absoluteDeadline: DispatchTime? = nil,
                              operations: any TCPSocketOperations = SystemTCPSocketOperations(),
                              resolver: TCPAddressResolution = { host, port, timeout, cancellation in
                                  try SocketAddressResolver.resolve(host, port: port, timeout: timeout, cancellation: cancellation)
                              }) -> TCPConnectOutcome {
         let started = operations.now
-        let deadline = started + timeoutBudget(timeout)
+        let timeoutDeadline = started + timeoutBudget(timeout)
+        let deadline = absoluteDeadline.map { min(timeoutDeadline, TimeInterval($0.uptimeNanoseconds) / 1_000_000_000) }
+            ?? timeoutDeadline
         guard cancellation?.isCancelled != true else { return .failed(cancelled(stage: .resolution)) }
         guard operations.now < deadline else { return .failed(timedOut(stage: .resolution)) }
         let addresses: [ResolvedSocketAddress]
@@ -558,7 +561,9 @@ public enum TCPProbe {
 
                 while index < width, index < ports.count, !activeCancellation.isCancelled {
                     let port = ports[index]
-                    group.addTask { probe(host, port, timeout, activeCancellation) }
+                    group.addTask {
+                        await runBlockingDiagnostic { probe(host, port, timeout, activeCancellation) }
+                    }
                     index += 1
                 }
 
@@ -569,11 +574,13 @@ public enum TCPProbe {
                     }
                     if Task.isCancelled || activeCancellation.isCancelled {
                         group.cancelAll()
-                        break
+                        continue
                     }
                     if index < ports.count {
                         let port = ports[index]
-                        group.addTask { probe(host, port, timeout, activeCancellation) }
+                        group.addTask {
+                            await runBlockingDiagnostic { probe(host, port, timeout, activeCancellation) }
+                        }
                         index += 1
                     }
                 }

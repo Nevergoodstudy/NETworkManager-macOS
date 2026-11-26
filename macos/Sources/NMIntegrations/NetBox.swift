@@ -24,6 +24,11 @@ public struct NetBoxConfiguration: Codable, Hashable, Sendable {
         if let tokenReference, !tokenReference.isEmpty { value += " · token: \(tokenReference)" }
         return value
     }
+
+    /// Source identity must survive credential rotation.
+    public var sourceInstance: String {
+        ExternalAssetIdentity(instance: baseURL.absoluteString, objectType: "dcim.device", remoteID: "0").instance
+    }
 }
 
 public enum NetBoxError: LocalizedError, Sendable {
@@ -56,11 +61,13 @@ public struct NetBoxReference: Codable, Hashable, Sendable {
     public var id: Int?
     public var name: String?
     public var display: String?
+    public var address: String?
 
-    public init(id: Int? = nil, name: String? = nil, display: String? = nil) {
+    public init(id: Int? = nil, name: String? = nil, display: String? = nil, address: String? = nil) {
         self.id = id
         self.name = name
         self.display = display
+        self.address = address
     }
 
     public var label: String { display ?? name ?? (id.map(String.init) ?? "Unknown") }
@@ -195,14 +202,16 @@ public struct NetBoxSyncResult: Sendable {
     public var devicePages: Int
     public var sitePages: Int
     public var source: String
+    public var networkInventories: [Int: AssetNetworkInventory]
 
-    public init(devices: [NetBoxDeviceRecord], sites: [NetBoxSiteRecord], fetchedAt: Date, devicePages: Int, sitePages: Int, source: String) {
+    public init(devices: [NetBoxDeviceRecord], sites: [NetBoxSiteRecord], fetchedAt: Date, devicePages: Int, sitePages: Int, source: String, networkInventories: [Int: AssetNetworkInventory] = [:]) {
         self.devices = devices
         self.sites = sites
         self.fetchedAt = fetchedAt
         self.devicePages = devicePages
         self.sitePages = sitePages
         self.source = source
+        self.networkInventories = networkInventories
     }
 }
 
@@ -313,7 +322,7 @@ public final class NetBoxClient: @unchecked Sendable {
     public func sync(maxPages: Int = 50) async throws -> NetBoxSyncResult {
         let devices = try await fetchDevices(maxPages: maxPages)
         let sites = try await fetchSites(maxPages: maxPages)
-        return NetBoxSyncResult(devices: devices.0, sites: sites.0, fetchedAt: Date(), devicePages: devices.pages, sitePages: sites.pages, source: configuration.redactedDescription)
+        return NetBoxSyncResult(devices: devices.0, sites: sites.0, fetchedAt: Date(), devicePages: devices.pages, sitePages: sites.pages, source: configuration.sourceInstance)
     }
 
     private func requireToken() throws -> String {
@@ -360,20 +369,23 @@ public final class NetBoxClient: @unchecked Sendable {
         }
     }
 
-    private func fetchPages<Record: Codable & Sendable>(path: String, maxPages: Int) async throws -> ([Record], pages: Int) {
-        var request = try makeRequest(path: path)
+    func fetchPages<Record: Codable & Sendable>(path: String, query: [URLQueryItem] = [], maxPages: Int,
+                                               recordLimit: Int? = nil) async throws -> ([Record], pages: Int) {
+        var request = try makeRequest(path: path, query: query)
         var values: [Record] = []
         var pages = 0
         var visited: Set<URL> = []
         guard let baseOrigin = NetBoxOrigin(url: configuration.baseURL) else { throw NetBoxError.invalidBaseURL }
         var hasNext = true
         while pages < maxPages {
+            try Task.checkCancellation()
             guard let url = request.url else { throw NetBoxError.invalidBaseURL }
             guard visited.insert(Self.paginationIdentity(url)).inserted else { throw NetBoxError.paginationLoop }
             let data = try await perform(request)
             let page: NetBoxPage<Record>
             do { page = try decoder.decode(NetBoxPage<Record>.self, from: data) }
             catch { throw NetBoxError.decoding(error.localizedDescription) }
+            if let recordLimit, values.count + page.results.count > recordLimit { throw NetBoxError.invalidResponse }
             values.append(contentsOf: page.results)
             pages += 1
             guard let next = page.next else {
@@ -415,13 +427,26 @@ public final class NetBoxClient: @unchecked Sendable {
 
 public enum NetBoxAssetMapper {
     public static func snapshots(from result: NetBoxSyncResult) -> [ExternalAssetSnapshot] {
-        result.devices.compactMap { snapshot(from: $0, source: result.source, fetchedAt: result.fetchedAt) }
+        result.devices.compactMap { snapshot(from: $0, source: result.source, fetchedAt: result.fetchedAt,
+                                            networkInventory: result.networkInventories[$0.id]) }
     }
 
-    public static func snapshot(from record: NetBoxDeviceRecord, source: String, fetchedAt: Date) -> ExternalAssetSnapshot? {
-        guard let rawAddress = record.primaryIP4?.display ?? record.primaryIP6?.display,
-              !rawAddress.isEmpty else { return nil }
-        let address = rawAddress.split(separator: "/", maxSplits: 1).first.map(String.init) ?? rawAddress
+    public static func snapshot(from record: NetBoxDeviceRecord, source: String, fetchedAt: Date,
+                                networkInventory: AssetNetworkInventory? = nil) -> ExternalAssetSnapshot? {
+        let primary = [record.primaryIP4, record.primaryIP6].compactMap { reference -> AssetIPAddress? in
+            guard let reference, let cidr = reference.address ?? reference.display else { return nil }
+            let identity = reference.id.flatMap { id in
+                id > 0 ? ExternalAssetIdentity(instance: source, objectType: "ipam.ipaddress", remoteID: String(id)) : nil
+            }
+            if let identity, let recorded = networkInventory?.addresses.first(where: { $0.identity == identity }) {
+                var value = recorded
+                value.isPrimary = true
+                return value
+            }
+            let value = AssetIPAddress(identity: identity, cidr: cidr, isPrimary: true)
+            return value.isValid ? value : nil
+        }
+        guard record.id > 0, let address = primary.first?.host else { return nil }
         let type = "\(record.deviceRole?.label ?? "") \(record.deviceType?.label ?? "") \(record.deviceType?.model ?? "")".lowercased()
         let kind: AssetDeviceKind
         if type.contains("firewall") { kind = .firewall }
@@ -440,7 +465,10 @@ public enum NetBoxAssetMapper {
             address: address,
             kind: kind,
             role: record.deviceRole?.label ?? "",
-            vendor: record.deviceType?.manufacturer?.label ?? ""
+            vendor: record.deviceType?.manufacturer?.label ?? "",
+            externalIdentity: ExternalAssetIdentity(instance: source, objectType: "dcim.device", remoteID: String(record.id)),
+            sourcePrimaryAddresses: primary,
+            networkInventory: networkInventory
         )
     }
 }

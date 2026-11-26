@@ -157,15 +157,14 @@ public struct ScannerView: View {
         }
     }
 
-    private func beginScan(total: Int) -> DiagnosticCancellation {
+    private func beginScan(total: Int, cancellation: DiagnosticCancellation, task: Task<Void, Never>) {
         results.removeAll()
         completedTargets = 0
         totalTargets = total
         isRunning = true
         message = t("Running…")
-        let cancellation = DiagnosticCancellation()
         scanCancellation = cancellation
-        return cancellation
+        scanTask = task
     }
 
     private func cancelCurrentScan() {
@@ -188,8 +187,8 @@ public struct ScannerView: View {
         let timeout = max(0.1, Double(timeoutText) ?? 1.5)
         let concurrency = max(1, Int(concurrencyText) ?? 128)
         let includeClosed = showClosed
-        let cancellation = beginScan(total: ports.count)
-        scanTask = Task {
+        let cancellation = DiagnosticCancellation()
+        let task = ProcessRuntime.startDiagnosticTask(cancellation) {
             let scanned = await TCPProbe.scan(host: target, ports: ports, timeout: timeout,
                                               concurrency: concurrency, cancellation: cancellation) { _ in
                 completedTargets += 1
@@ -204,6 +203,7 @@ public struct ScannerView: View {
                 ? tf("Stopped after %d of %d targets.", completedTargets, totalTargets)
                 : tf("Completed: %d port(s)", scanned.count))
         }
+        if let task { beginScan(total: ports.count, cancellation: cancellation, task: task) }
     }
 
     private func requestIPScan() {
@@ -236,9 +236,9 @@ public struct ScannerView: View {
             }
             let timeout = max(0.1, Double(timeoutText) ?? 1.2)
             let attempts = max(1, Int(attemptsText) ?? 1)
-            let cancellation = beginScan(total: hosts.count)
+            let cancellation = DiagnosticCancellation()
             let concurrency = min(32, hosts.count)
-            scanTask = Task {
+            let task = ProcessRuntime.startDiagnosticTask(cancellation) {
                 let finishedTargets = await Self.scanIPTargets(
                     hosts, concurrency: concurrency, timeout: timeout, attempts: attempts,
                     cancellation: cancellation
@@ -251,6 +251,7 @@ public struct ScannerView: View {
                     ? tf("Stopped after %d of %d targets.", finishedTargets, totalTargets)
                     : tf("Completed: %d host(s)", hosts.count))
             }
+            if let task { beginScan(total: hosts.count, cancellation: cancellation, task: task) }
         } catch {
             message = error.localizedDescription
         }
@@ -287,7 +288,7 @@ public struct ScannerView: View {
                     }
                     if Task.isCancelled || cancellation.isCancelled {
                         group.cancelAll()
-                        break
+                        continue
                     }
                     guard row != nil, nextIndex < targets.count else { continue }
                     let target = targets[nextIndex]
@@ -319,10 +320,13 @@ public struct ScannerView: View {
             let attempt: ICMPReply?
             do {
                 attempt = try await withTaskCancellationHandler {
-                    try await Task.detached(priority: .utility) { () throws -> ICMPReply? in
-                        guard !cancellation.isCancelled else { return nil }
-                        return try probe(target, timeout, cancellation)
-                    }.value
+                    let result = await runBlockingDiagnostic(qos: .utility) {
+                        Result { () throws -> ICMPReply? in
+                            guard !cancellation.isCancelled else { return nil }
+                            return try probe(target, timeout, cancellation)
+                        }
+                    }
+                    return try result.get()
                 } onCancel: {
                     cancellation.cancel()
                 }
@@ -357,19 +361,14 @@ public struct ScannerView: View {
         let count = max(1, Int(pingCountText) ?? 10)
         let interval = max(0.1, Double(intervalText) ?? 0.8)
         let timeout = max(0.1, Double(timeoutText) ?? 2.0)
-        let cancellation = beginScan(total: count)
-        scanTask = Task {
+        let cancellation = DiagnosticCancellation()
+        let task = ProcessRuntime.startDiagnosticTask(cancellation) {
             for _ in 0..<count {
                 guard !Task.isCancelled, !cancellation.isCancelled else { break }
-                let reply = await Task.detached(priority: .utility) { () -> ICMPReply? in
-                    guard !cancellation.isCancelled,
-                          let pinger = try? ICMPPinger(host: target, timeout: timeout, cancellation: cancellation) else { return nil }
-                    return pinger.ping()
-                }.value
+                let reply = await Ping.once(host: target, timeout: timeout, cancellation: cancellation)
                 guard !Task.isCancelled, !cancellation.isCancelled else { break }
-                let success = reply?.outcome.isSuccess == true
-                results.append(ScanRow(host: target, port: nil, status: reply?.outcome.displayName ?? t("Error"),
-                                       latency: reply?.rtt, details: reply?.source ?? "", success: success))
+                results.append(ScanRow(host: target, port: nil, status: reply.outcome.displayName,
+                                       latency: reply.rtt, details: reply.source ?? "", success: reply.outcome.isSuccess))
                 completedTargets += 1
                 do {
                     try await Task.sleep(for: .milliseconds(Int(interval * 1000)))
@@ -382,6 +381,7 @@ public struct ScannerView: View {
                 ? tf("Stopped after %d of %d targets.", completedTargets, totalTargets)
                 : t("Completed"))
         }
+        if let task { beginScan(total: count, cancellation: cancellation, task: task) }
     }
 }
 

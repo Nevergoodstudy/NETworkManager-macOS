@@ -38,6 +38,7 @@ DATE_FIELDS = {"createdAt", "updatedAt", "startedAt", "finishedAt", "sourceFetch
 REFERENCE_DATE = datetime.datetime(2001, 1, 1, tzinfo=datetime.timezone.utc)
 WORKSPACE_READY = "[assets] workspace ready"
 WORKSPACE_BLOCKED = "[assets] workspace access blocked: in-use"
+WORKSPACE_UNAVAILABLE = "[assets] workspace access blocked: unavailable"
 WORKSPACE_RECOVERY_REQUIRED = "[assets] workspace recovery required"
 
 
@@ -315,6 +316,44 @@ def install_running_fixture(database, expected):
     return actual
 
 
+def exercise_migration_permission(app, root):
+    support = root / "Read Only Support"
+    write_settings(support)
+    settings = support / "settings.json"
+    settings_bytes = settings.read_bytes()
+    expected = fixture()
+    expected["diagnosticRuns"].pop()
+    legacy = support / "assets.json"
+    original = json.dumps(expected, ensure_ascii=False).encode("utf-8")
+    legacy.write_bytes(original)
+    database = support / "assets.sqlite"
+    marker = support / "assets.sqlite.initialized"
+    executable = app / "Contents" / "MacOS" / EXECUTABLE_NAME
+    permissions = support.stat().st_mode & 0o777
+    support.chmod(0o500)
+    try:
+        check(not os.access(support, os.W_OK), "Fixture directory still permits writes")
+        denied_log = root / "migration-permission-denied"
+        launch_app(app, support, denied_log)
+        wait_for(app, "running app with a read-only support directory",
+                 lambda: log_contains(denied_log, WORKSPACE_UNAVAILABLE))
+        check(not database.exists() and not marker.exists(), "Read-only launch published a database")
+        check(legacy.read_bytes() == original, "Read-only launch changed original JSON")
+        check(settings.read_bytes() == settings_bytes, "Read-only launch changed saved preferences")
+    finally:
+        try:
+            stop_app(executable)
+        finally:
+            support.chmod(permissions)
+
+    retry_log = root / "migration-permission-retry"
+    launch_app(app, support, retry_log)
+    wait_for_ready(app, support, retry_log)
+    check(read_database(database)["snapshot"] == encoded_dates(expected), "Retry lost migrated records")
+    check(legacy.read_bytes() == original and marker.exists(), "Retry did not preserve or publish the expected files")
+    stop_app(executable)
+
+
 def exercise(app, contender, root):
     support = root / "Migrated Support"
     write_settings(support)
@@ -424,6 +463,7 @@ def exercise(app, contender, root):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--app", required=True, type=Path, help="Built NETworkManager.app package")
+    parser.add_argument("--migration-permission", action="store_true", help="Only check read-only startup and migration retry")
     parser.add_argument("--keep-fixtures", action="store_true", help="Keep isolated fixtures and logs after completion")
     arguments = parser.parse_args()
     app_source = arguments.app.expanduser().resolve()
@@ -435,7 +475,7 @@ def main():
     root = Path(tempfile.mkdtemp(prefix="networkmanager packaged storage ")).resolve()
     app = root / "Owner Applications With Spaces" / "NETworkManager.app"
     contender = root / "Contender Applications With Spaces" / "NETworkManager.app"
-    apps = (app, contender)
+    apps = (app,) if arguments.migration_permission else (app, contender)
     result = 1
     keep_fixtures = arguments.keep_fixtures
     try:
@@ -443,10 +483,14 @@ def main():
             copied_app.parent.mkdir()
             command(["/usr/bin/ditto", app_source, copied_app], timeout=60)
             command(["/usr/bin/codesign", "--verify", "--deep", "--strict", copied_app], timeout=30)
-        exercise(app, contender, root)
-        print("Packaged storage acceptance passed: migration, recovery, persistence, "
-              "two-instance ownership, blocked running-fixture preservation, "
-              "SIGTERM/SIGKILL owner release, and damaged-data preservation.")
+        if arguments.migration_permission:
+            exercise_migration_permission(app, root)
+            print("Packaged read-only startup and migration retry passed.")
+        else:
+            exercise(app, contender, root)
+            print("Packaged storage acceptance passed: migration, recovery, persistence, "
+                  "two-instance ownership, blocked running-fixture preservation, "
+                  "SIGTERM/SIGKILL owner release, and damaged-data preservation.")
         result = 0
     except (CheckFailure, OSError, ValueError, subprocess.TimeoutExpired, sqlite3.Error) as error:
         print(f"Packaged storage acceptance failed: {error}", file=sys.stderr)

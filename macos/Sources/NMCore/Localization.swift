@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import os
 
 /// Application language selection.
 public enum AppLanguage: String, CaseIterable, Codable, Identifiable, Sendable {
@@ -34,52 +35,65 @@ public enum AppLanguage: String, CaseIterable, Codable, Identifiable, Sendable {
 ///    fall back to the English text, so the UI never shows raw keys.
 ///  * Every feature module registers its own table via `register(zh:en:)` at
 ///    application start-up, which keeps the modules independent of each other.
+@MainActor
 public final class Loc: ObservableObject {
-    public static let shared = Loc()
+    public nonisolated static let shared = Loc()
 
-    private let lock = NSLock()
-    private var zhTable: [String: String] = [:]
-    private var enTable: [String: String] = [:]
+    private struct TranslationState: Sendable {
+        var language: AppLanguage
+        var zh: [String: String] = [:]
+        var en: [String: String] = [:]
+    }
+
+    private nonisolated let state: OSAllocatedUnfairLock<TranslationState>
 
     /// Bumped on every language change so that SwiftUI re-renders observers.
     @Published public private(set) var revision: Int = 0
 
-    @Published public var language: AppLanguage = .system {
-        didSet {
-            guard language != oldValue else { return }
+    public var language: AppLanguage {
+        get { state.withLock { $0.language } }
+        set {
+            let changed = state.withLock { state in
+                guard state.language != newValue else { return false }
+                state.language = newValue
+                return true
+            }
+            guard changed else { return }
+            SettingsStore.shared.language = newValue
             revision &+= 1
-            SettingsStore.shared.language = language
-            objectWillChange.send()
         }
     }
 
-    public init() {
-        if let stored = SettingsStore.shared.language {
-            language = stored
-        }
+    public nonisolated init() {
+        state = OSAllocatedUnfairLock(initialState: TranslationState(language: SettingsStore.persistedLanguage ?? .system))
         registerCoreStrings()
     }
 
     // MARK: - Registration
 
-    public func register(zh: [String: String], en: [String: String] = [:]) {
-        lock.lock()
-        defer { lock.unlock() }
-        for (key, value) in zh { zhTable[key] = value }
-        for (key, value) in en { enTable[key] = value }
+    public nonisolated func register(zh: [String: String], en: [String: String] = [:]) {
+        state.withLock { state in
+            state.zh.merge(zh) { _, translation in translation }
+            state.en.merge(en) { _, translation in translation }
+        }
+
         if Thread.isMainThread {
-            revision &+= 1
+            MainActor.assumeIsolated { revision &+= 1 }
         }
     }
 
     // MARK: - Queries
 
-    public static var systemPrefersChinese: Bool {
+    public nonisolated static var systemPrefersChinese: Bool {
         let preferred = Locale.preferredLanguages.first ?? "en"
         return preferred.lowercased().hasPrefix("zh")
     }
 
-    public var isChinese: Bool {
+    public nonisolated var isChinese: Bool {
+        Self.usesChinese(state.withLock { $0.language })
+    }
+
+    private nonisolated static func usesChinese(_ language: AppLanguage) -> Bool {
         switch language {
         case .chineseSimplified: return true
         case .english: return false
@@ -87,38 +101,497 @@ public final class Loc: ObservableObject {
         }
     }
 
-    public var locale: Locale {
+    public nonisolated var locale: Locale {
         Locale(identifier: isChinese ? "zh_Hans_CN" : "en_US")
     }
 
-    public var resolvedLanguage: AppLanguage {
+    public nonisolated var resolvedLanguage: AppLanguage {
         isChinese ? .chineseSimplified : .english
     }
 
     /// Translate an English source string.
-    public func t(_ english: String) -> String {
-        lock.lock()
-        let zh = zhTable[english]
-        let en = enTable[english]
-        lock.unlock()
-
-        if isChinese {
-            if let zh { return zh }
-            if let en { return en }
-            return english
+    public nonisolated func t(_ english: String) -> String {
+        state.withLock { state in
+            if Self.usesChinese(state.language), let translation = state.zh[english] { return translation }
+            return state.en[english] ?? english
         }
-        return en ?? english
     }
 
     /// Translate + `String(format:)` style arguments.
-    public func tf(_ english: String, _ args: CVarArg...) -> String {
+    public nonisolated func tf(_ english: String, _ args: CVarArg...) -> String {
         String(format: t(english), locale: locale, arguments: args)
     }
 
     // MARK: - Core strings
 
-    private func registerCoreStrings() {
+    private nonisolated func registerCoreStrings() {
         register(zh: [
+            "iperf3 throughput": "iperf3 吞吐量",
+            "Packet capture summary": "抓包摘要",
+            "Configuration comparison": "配置比较",
+            "Configuration format": "配置格式",
+            "Choose file…": "选择文件…",
+            "Compare configurations": "比较配置",
+            "Configuration changes": "配置变更",
+            "Sensitive or unsupported lines changed.": "敏感内容或不支持显示的行有变更。",
+            "No changes in displayed commands.": "可显示的配置命令没有变更。",
+            "Could not read the configuration file.": "无法读取配置文件。",
+            "Configuration files are limited to 512 KiB and 2,000 lines each.": "每个配置文件最多 512 KiB、2,000 行。",
+            "Choose a UTF-8 configuration file.": "请选择 UTF-8 配置文件。",
+            "gNMI capabilities": "gNMI 能力",
+            "Choose CA certificate…": "选择 CA 证书…",
+            "Clear CA certificate": "清除 CA 证书",
+            "Could not open the CA certificate file.": "无法打开 CA 证书文件。",
+            "Choose gnmic executable…": "选择 gnmic 可执行文件…",
+            "Clear gnmic executable": "清除 gnmic 可执行文件",
+            "Could not open the gnmic executable.": "无法打开 gnmic 可执行文件。",
+            "Read capabilities": "读取能力",
+            "Interface state": "接口状态",
+            "Interface name": "接口名称",
+            "Read interface state": "读取接口状态",
+            "Sampled at": "采样时间",
+            "Enter one exact interface name.": "请输入一个确切的接口名称。",
+            "The device returned no state for this interface.": "设备未返回此接口的状态。",
+            "gNMI returned an unsupported interface state response.": "gNMI 返回了不支持的接口状态响应。",
+            "Could not read interface state. Check the endpoint, CA certificate, and OpenConfig support.": "无法读取接口状态。请检查端点、CA 证书和 OpenConfig 支持情况。",
+            "Capabilities": "能力",
+            "Supported encodings": "支持的编码",
+            "Enter a valid hostname or IP address and port.": "请输入有效的主机名或 IP 地址及端口。",
+            "gnmic was not found in the system or Homebrew command locations.": "未在系统或 Homebrew 的命令目录找到 gnmic。",
+            "gNMI returned an unsupported capabilities response.": "gNMI 返回了不支持的能力响应。",
+            "Could not read gNMI capabilities. Check the endpoint and TLS certificate.": "无法读取 gNMI 能力。请检查端点和 TLS 证书。",
+            "Open pcapng…": "打开 pcapng…",
+            "Import capture summary…": "导入抓包摘要…",
+            "Remove capture summary": "移除抓包摘要",
+            "Could not import the capture summary.": "无法导入抓包摘要。",
+            "Imported at": "导入时间",
+            "Local import": "本地导入",
+            "Captured packets": "捕获包数",
+            "Capture file size": "抓包文件大小",
+            "Capture parser": "抓包解析器",
+            "Export summary…": "导出摘要…",
+            "Could not read the selected capture file.": "无法读取所选抓包文件。",
+            "Could not export the capture summary.": "无法导出抓包摘要。",
+            "The capture file exceeds 64 MiB.": "抓包文件超过 64 MiB。",
+            "The pcapng file is damaged or unsupported by this Mac.": "pcapng 文件已损坏，或此 Mac 不支持该文件。",
+            "The capture file changed during analysis.": "抓包文件在分析期间发生了变化。",
+            "iperf3 server": "iperf3 服务器",
+            "Choose iperf3 executable…": "选择 iperf3 可执行文件…",
+            "Clear iperf3 executable": "清除 iperf3 可执行文件",
+            "Could not open the iperf3 executable.": "无法打开 iperf3 可执行文件。",
+            "Traffic direction": "流量方向",
+            "Mac to server": "Mac → 服务器",
+            "Server to Mac": "服务器 → Mac",
+            "Duration: %d s": "测量时长：%d 秒",
+            "Target rate: %d Mbps": "目标速率：%d Mbps",
+            "Measured endpoints": "实测端点",
+            "Interfaces matching local address": "匹配本机地址的接口",
+            "Measurement settings": "测量参数",
+            "Sender": "发送端",
+            "Receiver": "接收端",
+            "%.2f Mbps · %@ bytes · %.2f s": "%.2f Mbps · %@ 字节 · %.2f 秒",
+            "Enter an iperf3 server hostname or IP address and a port from 1 to 65535.": "请输入 iperf3 服务器的主机名或 IP 地址，以及 1 到 65535 之间的端口。",
+            "iperf3 was not found in the system or Homebrew command locations.": "在系统和 Homebrew 的命令目录中找不到 iperf3。",
+            "iperf3 output exceeded the limit.": "iperf3 输出超过限制。",
+            "iperf3 returned an incomplete or unsupported report.": "iperf3 返回的报告不完整或格式不受支持。",
+            "iperf3 process cleanup did not complete.": "iperf3 进程清理未完成。",
+            "macOS denied permission to start iperf3.": "macOS 拒绝启动 iperf3 的权限。",
+            "Could not start iperf3.": "无法启动 iperf3。",
+            "The command runner is busy. Try again shortly.": "命令执行器正忙，请稍后重试。",
+            "iperf3 exited with status %d.": "iperf3 退出，状态码为 %d。",
+            // Field projects
+            "Manual inspections": "人工巡检",
+            "Manual inspection": "人工巡检",
+            "Manual inspection record": "人工巡检记录",
+            "Inspection template": "巡检模板",
+            "New template": "新建模板",
+            "Edit template": "编辑模板",
+            "Template title": "模板标题",
+            "Template version": "模板版本",
+            "Inspection item": "巡检项",
+            "Add inspection item": "添加巡检项",
+            "Remove inspection item": "移除巡检项",
+            "Save template": "保存模板",
+            "Start inspection": "开始巡检",
+            "Inspection records": "巡检记录",
+            "Inspection record": "巡检记录",
+            "No inspection records yet.": "尚无巡检记录。",
+            "Edit inspection": "编辑巡检",
+            "Save inspection": "保存巡检",
+            "Set remediation deadline": "设置整改期限",
+            "Remediation due": "整改期限",
+            "No deadline": "未设期限",
+            "items need follow-up": "项待整改",
+            "%d inspection items": "%d 个巡检项",
+            "Inspections are manual records and do not start network probes.": "人工填写巡检记录，不会启动网络探测。",
+            "Inspection template fields are missing, too long, or invalid.": "巡检模板字段缺失、过长或无效。模板需包含 1–40 个巡检项。",
+            "A field project can contain up to 20 inspection templates.": "每个现场项目最多可保存 20 个巡检模板。",
+            "Inspection fields are missing, too long, or invalid.": "巡检字段缺失、过长或无效。",
+            "A field project can contain up to 30 inspection records.": "每个现场项目最多可保存 30 条巡检记录。",
+            "The inspection template is unavailable.": "找不到所选巡检模板。",
+            "%d files could not be loaded; previous snapshots are retained": "%d 个文件未能读取，保留先前快照",
+            "%d files · %d matching incidents": "%d 个文件 · %d 个匹配事件",
+            "%d interfaces · %d addresses": "%d 个接口 · %d 个地址",
+            "%d matching incidents": "%d 个匹配事件",
+            "All incident states": "全部事件状态",
+            "Device synced at": "设备资料同步时间",
+            "Device details are newer than this interface inventory.": "设备资料比接口清单新。",
+            "Check the search length and occurrence date range.": "请检查搜索长度与发生时间范围。",
+            "Choose project files…": "选择项目文件…",
+            "Choose up to 40 project files. Search uses saved snapshots in this window only; unsaved edits and files you did not choose are excluded.": "最多选择 40 个项目文件。仅检索此窗口读取的已保存快照，不包含未保存修改或未选择的文件。",
+            "Clear asset filter": "清除设备筛选",
+            "Configured enabled": "配置启用状态",
+            "Configured interfaces and addresses": "配置接口与地址",
+            "Filter by occurrence time": "按发生时间筛选",
+            "Find incidents for this asset": "查找此设备的事件",
+            "From": "起始",
+            "Global routing table": "全局路由表",
+            "Incident search pages require 1–100 results and a nonnegative offset.": "事件检索每页须为 1–100 条，起始位置不能为负数。",
+            "Interface inventory": "接口清单",
+            "Interface inventory has not been read. In NetBox preview, choose Read interfaces and addresses, then confirm import.": "尚未读取接口清单。请在 NetBox 预览中选择“读取接口与地址”，然后确认导入。",
+            "Interface inventory reading was cancelled.": "接口清单读取已取消。",
+            "Interface preview is ready. Confirm the selected local asset update to save it.": "接口预览已就绪。确认所选本地资产更新后才会保存。",
+            "Inventory captured at": "清单读取时间",
+            "NetBox source": "NetBox 来源",
+            "Cable configuration unavailable": "未提供线缆配置",
+            "No cable configured": "未配置线缆",
+            "Configured cable": "配置线缆",
+            "No configured cable endpoints": "线缆未配置对端",
+            "Cable endpoint details unavailable": "线缆对端详情不可用",
+            "Front port": "前端口",
+            "Rear port": "后端口",
+            "Next page": "下一页",
+            "No assigned addresses returned.": "未返回关联地址。",
+            "No configured interfaces returned.": "未返回配置接口。",
+            "Open source project": "打开源项目",
+            "Previous page": "上一页",
+            "Primary IP": "主 IP 地址",
+            "Read interfaces and addresses": "读取接口与地址",
+            "Reading selected project files…": "正在读取所选项目文件…",
+            "Reading this device's configured interfaces and addresses. Local assets change only after import confirmation.": "正在读取此设备的配置接口与地址。确认导入后才会更新本地资产。",
+            "Refresh loaded files": "刷新已载入文件",
+            "Routing domain not recorded": "未记录路由域",
+            "Search incidents, tickets, owners or notes": "搜索事件、工单、负责人或备注",
+            "Search project incidents": "检索项目事件",
+            "Exact ticket: %@": "精确工单号：%@",
+            "Clear ticket filter": "清除工单筛选",
+            "Find other cases with this ticket": "查找同工单的其他事件",
+            "Find other cases for ticket %@": "查找工单 %@ 的其他事件",
+            "Matches the whole ticket, case-sensitive, ignoring surrounding whitespace. The selected case is excluded.": "匹配完整工单号，区分大小写，忽略首尾空白；排除当前事件。",
+            "Local case library": "本地事件库",
+            "Remove local source?": "移除本地来源？",
+            "Remove local copy": "移除本地副本",
+            "Remove the saved library copy of %@ and its observations? The source project file is kept.": "移除事件库中保存的 %@ 副本及观测记录？源项目文件会保留。",
+            "Import project snapshots…": "导入项目快照…",
+            "Reload library": "重新载入事件库",
+            "Refresh source snapshot": "刷新来源快照",
+            "Loading local case library…": "正在载入本地事件库…",
+            "%d imported sources · %d observations": "%d 个已导入来源 · %d 条观测记录",
+            "Imported project copies stay on this Mac after closing the app. Choose saved files explicitly; refresh a source to update its snapshot. Unsaved changes are excluded.": "已导入的项目副本保存在本机，关闭应用后仍可查看。请显式选择已保存文件；刷新来源以更新快照。未保存的改动不包含在内。",
+            "This source changed in another window. Reload the library, then choose the file again.": "此来源已被其他窗口更新。请重新载入事件库，再次选择该文件。",
+            "The local case library can contain up to 200 project sources.": "本地事件库最多可包含 200 个项目来源。",
+            "The local case library is damaged or belongs to another application.": "本地事件库已损坏或属于其他应用。",
+            "The initialized case library is missing. Restore its backup before importing.": "已初始化的事件库丢失。请先恢复备份，再导入项目。",
+            "The local case library could not be locked. Try again.": "无法锁定本地事件库，请重试。",
+            "Unsupported case library schema: %d.": "不支持的事件库格式版本：%d。",
+            "Case library storage error %d: %@": "事件库存储错误 %d：%@",
+            "Select an incident to review its saved timeline.": "选择事件以查看已保存的时间线。",
+            "Select up to 40 project files for this search session.": "本次检索最多可选择 40 个项目文件。",
+            "Snapshot loaded at": "快照载入时间",
+            "Source configuration is a dated snapshot. It does not prove reachability or this Mac's actual route; diagnostics keep using the device's local target.": "来源配置是带时间的快照，不能证明可达性或本机实际路由；诊断仍使用设备的本地目标地址。",
+            "Source file": "源文件",
+            "Source primary addresses": "来源主地址",
+            "The project search source is invalid.": "项目检索来源无效。",
+            "Through": "截至",
+            "Maintenance incidents": "维护事件",
+            "Incident": "故障事件",
+            "New incident": "新建事件",
+            "Edit incident": "编辑事件",
+            "Save incident": "保存事件",
+            "Incident title": "事件标题",
+            "Owner": "负责人",
+            "External ticket reference": "外部工单号",
+            "Incident status": "事件状态",
+            "Case and observation export": "事件与观测导出",
+            "Preview case export": "预览事件导出",
+            "Export format": "导出格式",
+            "Markdown": "Markdown",
+            "JSON": "JSON",
+            "Generated": "生成时间",
+            "Observations": "观测记录",
+            "No timeline entries.": "没有时间线条目。",
+            "Export…": "导出…",
+            "Incident open": "处理中",
+            "Monitoring recovery": "恢复观察中",
+            "Incident resolved": "已解决",
+            "Fault reported": "报障",
+            "Response started": "开始响应",
+            "Escalated": "升级处理",
+            "Temporary recovery": "临时恢复",
+            "Retest recorded": "记录复测",
+            "Incident note": "事件备注",
+            "Timeline entries": "时间线条目",
+            "Add timeline entry": "添加时间线条目",
+            "Entry type": "记录类型",
+            "Occurred at": "发生时间",
+            "Recorded at": "记录时间",
+            "Recorded by": "记录人",
+            "Add entry": "添加记录",
+            "Attached retest result": "关联的复测结果",
+            "Associated asset snapshot": "关联设备快照",
+            "No handoff revision associated": "未关联交接版本",
+            "No asset associated": "未关联设备",
+            "No incidents recorded yet.": "尚未记录故障事件。",
+            "Save the project to keep timeline changes.": "请保存项目以保留时间线修改。",
+            "Manual entry without a diagnostic link": "人工记录，不关联诊断",
+            "Record incidents manually and explicitly link saved retests. Timeline entries do not run diagnostics or change the handoff assessment.": "手动记录事件，按需关联已保存的复测结果。时间线记录不会启动诊断或更改交接结论。",
+            "The associated revision and asset snapshot are fixed when the incident is created. Later asset changes do not rewrite this record.": "交接版本和设备快照在创建事件时固定，后续设备变更不会改写此记录。",
+            "Only saved retests for this incident's handoff revision are offered. Linking a result does not run a new retest.": "仅列出与本事件交接版本一致的已保存复测结果。关联结果不会发起新复测。",
+            "Prepare retest": "准备复测",
+            "Prepared from incident": "复测来源事件",
+            "A completed retest must be linked to the incident timeline separately.": "复测完成后，仍需单独将结果关联到事件时间线。",
+            "The incident's handoff revision is fixed for this retest.": "本次复测固定使用事件关联的交接版本。",
+            "Choose a method": "请选择复测方法",
+            "Incident fields are missing, too long, or invalid.": "事件字段缺失、过长或无效。",
+            "A field project can contain up to 20 incidents.": "每个现场项目最多可记录 20 个事件。",
+            "An incident can contain up to 60 timeline entries.": "每个事件最多可记录 60 条时间线条目。",
+            "The selected incident is unavailable.": "找不到所选事件。",
+            "The incident baseline or retest reference is unavailable or does not match.": "事件的基线或复测引用不存在或不匹配。",
+            "Field engineering": "现场工程",
+            "Field projects": "现场项目",
+            "New field project": "新建现场项目",
+            "Open field project…": "打开现场项目…",
+            "Field project details": "现场项目详情",
+            "Customer": "客户",
+            "Project scope": "项目范围",
+            "Project phase": "工程阶段",
+            "Presales survey": "售前勘察",
+            "Delivery acceptance": "交付验收",
+            "After-sales maintenance": "售后维护",
+            "Requirements and authorized scope": "需求与授权范围",
+            "Existing network and constraints": "现网与现场限制",
+            "Design assumptions and open risks": "方案假设与待确认风险",
+            "Connectivity and network access": "连通性与网络接入",
+            "Service performance baseline": "业务性能基线",
+            "Exceptions and handoff confirmation": "例外与交接确认",
+            "Incident impact and timeline": "故障影响与时间线",
+            "Comparison with delivery baseline": "交付基线对照",
+            "Remediation and retest": "处置与复测",
+            "Not assessed": "待检查",
+            "Criterion met": "符合判据",
+            "Criterion not met": "不符合判据",
+            "Assessment blocked": "检查受阻",
+            "Criterion": "判据",
+            "Unit": "单位",
+            "Evidence and notes": "证据与备注",
+            "Assessment": "检查结论",
+            "Recorded delivery baseline": "已记录的交付基线",
+            "Checklist baseline (current draft)": "检查表基线（当前草稿）",
+            "Add a criterion and evidence to record this result.": "请填写判据和证据以记录此结论。",
+            "Attached diagnostic evidence": "已附加诊断证据",
+            "Attach diagnostic": "附加诊断",
+            "Remove diagnostic evidence": "移除诊断证据",
+            "Choose from completed diagnostic history": "从已完成的诊断历史中选择",
+            "Search history": "搜索历史记录",
+            "No completed diagnostic history": "没有已完成的诊断历史",
+            "Already attached": "已附加",
+            "Network context note (optional)": "网络环境备注（可选）",
+            "This context is not stored with the original run. Leave blank if unknown.": "该环境信息并未随原始诊断保存；不确定时请留空。",
+            "Attach selected record": "附加所选记录",
+            "This diagnostic is already attached to this check.": "此检查项已附加该诊断记录。",
+            "Each check can include at most 10 diagnostic records.": "每个检查项最多可附加 10 条诊断记录。",
+            "Attached diagnostic records": "已附加诊断记录数",
+            "Diagnostic run": "诊断运行",
+            "Measured at": "测量时间",
+            "Target": "目标",
+            "Address family": "地址族",
+            "Latency": "延迟",
+            "Summary": "摘要",
+            "Context note (added when attaching)": "环境备注（附加时补录）",
+            "Not recorded": "未记录",
+            "Standalone diagnostic": "独立诊断",
+            "Unknown address": "地址未记录",
+            "Dual stack": "双栈（记录涉及 IPv4 和 IPv6）",
+            "Keep the site survey, delivery baseline, and maintenance notes together in one project file.": "在同一份项目文件中维护售前勘察、交付基线和售后记录。",
+            "Network field project report": "网络现场项目报告",
+            "Preview report": "预览报告",
+            "Include customer, site, notes, and diagnostic details": "包含客户、站点、备注和诊断详情",
+            "Export report…": "导出报告…",
+            "Field project error": "现场项目错误",
+            "The field project exceeds the 512 KB limit.": "现场项目超过 512 KB 大小限制。",
+            "The field project is damaged or has an invalid format.": "现场项目已损坏或文件格式无效。",
+            "This field project uses an unsupported format version.": "不支持该现场项目的文件格式版本。",
+            "This field project contains an unknown check.": "该现场项目包含未知检查项。",
+            "This field project contains invalid diagnostic evidence.": "该现场项目包含无效的诊断证据。",
+
+            // Structured acceptance and handoff reports
+            "Measurement conditions": "测量条件",
+            "Blocked reason": "受阻原因",
+            "Proof of concept": "概念验证（PoC）",
+            "Acceptance check": "验收检查项",
+            "Engineer notes": "工程师填写",
+            "Customer material": "客户提供的材料",
+            "Attached diagnostic history": "已附加的诊断历史",
+            "On-site measurement (entered manually)": "现场测量（人工录入）",
+            "Requirement": "需求",
+            "Measurement point": "测点",
+            "Observation conditions": "观测条件",
+            "Follow-up owner": "跟进责任人",
+            "Reason blocked": "受阻原因",
+            "Confirmed exception": "已确认例外",
+            "Diagnostic details": "诊断明细",
+            "Retest plan": "复测安排",
+            "Acceptance report": "网络工程验收单",
+            "Acceptance draft": "验收草稿",
+            "Handoff revision": "交接版本",
+            "Handoff revision %d": "交接版本 %d",
+            "Handoff revision unavailable": "找不到所选交接版本",
+            "Acceptance preparation": "验收准备",
+            "Plan version": "方案版本",
+            "Requirements": "需求",
+            "Add requirement": "添加需求",
+            "Remove requirement": "移除需求",
+            "Measurement points": "测点",
+            "Add measurement point": "添加测点",
+            "Remove measurement point": "移除测点",
+            "Remove this reference from the acceptance rows before deleting it.": "请先从验收项目中移除此引用，再删除它。",
+            "Rows in the draft": "草稿项目数",
+            "Add PoC row": "添加 PoC 项",
+            "Add acceptance row": "添加验收项",
+            "No PoC rows": "暂无 PoC 项",
+            "No acceptance rows": "暂无验收项",
+            "Remove this draft row?": "移除此草稿项目？",
+            "Evidence source": "证据来源",
+            "Historical evidence check": "历史证据检查项",
+            "Verify that the attached diagnostic targets and measurement conditions match this row.": "请确认附加诊断的目标和测量条件与此项目一致。",
+            "Remove exception": "移除例外",
+            "Add confirmed exception": "添加已确认例外",
+            "Review confirmed exception": "查看已确认例外",
+            "Remove draft row": "移除草稿项目",
+            "Row %d": "第 %d 项",
+            "Requirement %d": "需求 %d",
+            "Measurement point %d": "测点 %d",
+            "Exception note": "例外说明",
+            "Confirmation date": "确认日期",
+            "Save exception": "保存例外",
+            "Handoff revisions": "交接版本",
+            "Save the draft as a read-only handoff revision. This does not certify customer approval.": "将草稿保存为只读交接版本。此操作不代表客户已批准。",
+            "Create handoff revision…": "创建交接版本…",
+            "Create a read-only handoff revision?": "创建只读交接版本？",
+            "Create revision": "创建版本",
+            "Handoff revision %d created. Save the project to keep it.": "已创建交接版本 %d。请保存项目以保留此版本。",
+            "Unassessed and blocked rows remain as recorded. Future draft edits will not change this version.": "尚未检查和受阻项目会按当前状态保留。之后修改草稿不会影响此版本。",
+            "Handoff baseline": "交接基线",
+            "No handoff revisions saved yet.": "尚未保存交接版本。",
+            "Created at": "创建时间",
+            "Read-only handoff snapshot": "只读交接快照",
+            "Preview acceptance report": "预览验收报告",
+            "Review snapshot rows": "查看快照项目",
+            "Report source": "报告来源",
+            "The summary shares statuses and attachment counts. Select individual fields only after reviewing them.": "摘要仅共享状态和附件数量。请先检查各字段，再单独选择要分享的内容。",
+            "Optional report fields": "可选报告字段",
+            "This field project contains invalid acceptance records.": "该现场项目包含无效的验收记录。",
+            "Add the required assessment fields and evidence before recording this result.": "请先填写所需的检查字段和证据，再记录结论。",
+            "Add a plan version and at least one acceptance check before creating a handoff revision.": "请先填写方案版本并添加至少一项验收检查，再生成交接版本。",
+            "This project already contains the maximum number of handoff revisions.": "此项目的交接版本数量已达上限。",
+            "Complete the exception, confirmer, and retest plan before creating a handoff revision.": "请先填写例外说明、确认人和复测安排，再生成交接版本。",
+            "Authorized single-service retest": "授权单服务复测",
+            "Select a handoff revision before preparing a retest.": "准备复测前请先选择交接版本。",
+            "Handoff row": "交接项目",
+            "Baseline diagnostic evidence": "基线诊断证据",
+            "No specific evidence": "不引用特定证据",
+            "Baseline target": "基线目标",
+            "Baseline method": "基线方法",
+            "Not selected": "未选择",
+            "Target host or IP address": "目标主机或 IP 地址",
+            "Method": "方法",
+            "System DNS lookup": "系统 DNS 查询",
+            "TCP service connection": "TCP 服务连接",
+            "Specified DNS control": "指定 DNS 对照",
+            "Direct-IP TCP control": "指定 IP 的 TCP 对照",
+            "TLS handshake and trust": "TLS 握手与证书校验",
+            "HTTP HEAD response": "HTTP HEAD 响应",
+            "HTTP scheme": "HTTP 协议",
+            "HTTP absolute path": "HTTP 路径（以 / 开头）",
+            "HEAD only; no credentials or cookies. Redirects are not followed. A 2xx response passes this check.": "仅发送 HEAD，不携带凭据或 Cookie，不跟随重定向；2xx 状态码表示本项通过。",
+            "TLS and HTTPS use system trust. Total deadline: five seconds. Network route and interface are not verified.": "TLS 和 HTTPS 使用系统证书信任校验。总时限为 5 秒，不验证网络路由和接口。",
+            "Transport peer": "传输对端",
+            "The transport peer is a proxy; the origin address was not measured.": "传输对端是代理，未测量源服务器地址。",
+            "TLS trust verified": "TLS 证书信任校验通过",
+            "TLS trust not verified": "TLS 证书信任校验未通过",
+            "TLS version": "TLS 版本",
+            "TLS cipher suite": "TLS 密码套件",
+            "Redirect received and not followed.": "已收到重定向，未跟随。",
+            "Enter a valid service host, port and absolute HTTP path.": "请输入有效的服务主机、端口和 HTTP 绝对路径。",
+            "TLS certificate or hostname validation failed.": "TLS 证书或主机名校验失败。",
+            "TLS handshake failed.": "TLS 握手失败。",
+            "HTTP HEAD returned status %d": "HTTP HEAD 返回状态码 %d",
+            "Service check timed out.": "服务检查超时。",
+            "Service check cancelled.": "服务检查已取消。",
+            "HTTP authentication is required; no credentials were sent.": "HTTP 服务要求身份认证，未发送凭据。",
+            "HTTP response exceeded the diagnostic limit.": "HTTP 响应超出诊断限制。",
+            "Service transport failed.": "服务传输失败。",
+            "TLS handshake and trust verification succeeded.": "TLS 握手和证书信任校验通过。",
+            "Use an ASCII hostname or numeric IP, a valid port and an absolute path without query, fragment or percent escapes.": "请使用 ASCII 主机名或数字 IP、有效端口及以 / 开头的路径；路径不含查询、片段或百分号转义。",
+            "DNS record type": "DNS 记录类型",
+            "DNS server port": "DNS 服务器端口",
+            "TCP port": "TCP 端口",
+            "Current network conditions": "当前网络条件",
+            "Approved baseline network conditions": "已批准的基线网络条件",
+            "Change or authorization reference": "变更单或授权编号",
+            "Confirmed by": "确认人",
+            "Window start": "窗口开始",
+            "Window end": "窗口结束",
+            "I confirm this target and method are authorized for this window.": "我确认此目标和方法已获准在该时间窗内执行。",
+            "Retest in progress": "复测进行中",
+            "Cancel retest": "取消复测",
+            "Start retest": "开始复测",
+            "Attached retest results": "已附加复测结果",
+            "Attach selected result": "附加所选结果",
+            "Authorization reference": "授权编号",
+            "Actual target": "实际目标",
+            "Observed path": "观测路径",
+            "Comparison note": "比较说明",
+            "DNS mode": "DNS 模式",
+            "Compared with baseline": "与基线比较",
+            "Not started": "未开始",
+            "Blocked before execution": "执行前受阻",
+            "Comparison not evaluated": "尚未比较",
+            "Comparable with baseline": "可与基线比较",
+            "Not directly comparable": "不可直接比较",
+            "Route and interface were not measured.": "未测量路由和接口。",
+            "A matching baseline target and method were not recorded.": "未记录可匹配的基线目标与方法。",
+            "The target or method differs from the selected baseline.": "目标或方法与所选基线不同。",
+            "Baseline or current network conditions were not recorded.": "未记录基线或当前网络条件。",
+            "The current network context differs from the baseline.": "当前网络条件与基线不同。",
+            "The baseline or observed address family was not recorded.": "未记录基线或本次观测的地址族。",
+            "The observed address family differs from the baseline.": "本次观测的地址族与基线不同。",
+            "Entered conditions match, but the network route and interface have not been verified.": "填写的条件一致，但尚未核实网络路由与接口。",
+            "Port %d open": "端口 %d 可连接",
+            "Port %d closed": "端口 %d 拒绝连接",
+            "The DNS server did not answer in time.": "DNS 服务器未在规定时间内响应。",
+            "%d record(s)": "%d 条记录",
+            "Mode: %@\nResolver: %@\nResponse: %@\nValues: %@": "模式：%@\n解析器：%@\n响应：%@\n记录值：%@",
+            "Mode: %@\nResolver: %@\nResponse: %@\nElapsed: %@": "模式：%@\n解析器：%@\n响应：%@\n耗时：%@",
+            "Enter one host or IP address only.": "请输入单个主机名或 IP 地址。",
+            "Confirm an authorization reference and approver before starting the retest.": "开始复测前请确认授权编号和批准人。",
+            "The retest window is invalid.": "复测时间窗无效。",
+            "The current time is outside the approved retest window.": "当前时间不在批准的复测时间窗内。",
+            "Network context is limited to 500 characters.": "网络条件备注最多 500 个字符。",
+            "System DNS mode cannot include a specified DNS server.": "系统 DNS 模式不能指定 DNS 服务器。",
+            "A specified DNS server is required for this control test.": "此对照测试必须指定 DNS 服务器。",
+            "System DNS mode supports only A and AAAA records.": "系统 DNS 模式仅支持 A 和 AAAA 记录。",
+            "Enter a TCP or DNS port from 1 to 65535.": "请输入 1 到 65535 之间的 TCP 或 DNS 端口。",
+            "Direct-IP TCP control tests require one numeric IP address.": "指定 IP 的 TCP 对照测试必须使用单个数字 IP 地址。",
+            "This retest record is invalid.": "复测记录无效。",
+            "This retest record contains too much diagnostic output.": "复测记录包含过多诊断输出。",
+            "The local diagnostic workspace is not available for saving.": "本地诊断工作区当前不可用于保存。",
+            "This retest result is already attached.": "此复测结果已附加。",
+            "This project has reached the retest result limit.": "此项目的复测结果数量已达上限。",
+            "This retest result is invalid.": "复测结果无效。",
+            "The selected handoff baseline is no longer available.": "所选交接基线已不可用。",
+            "Remove retest result": "移除复测结果",
+
             // Generic
             "System default": "跟随系统",
             "English": "English",
@@ -145,6 +618,8 @@ public final class Loc: ObservableObject {
             "Browse": "浏览",
             "Open": "打开",
             "Output truncated": "输出已截断",
+            "Standard output": "标准输出",
+            "Standard error": "标准错误",
             "Process cleanup incomplete": "进程清理未完成",
             "Traceroute is not installed": "未安装 Traceroute",
             "Connection refused": "连接被拒绝",
@@ -169,6 +644,40 @@ public final class Loc: ObservableObject {
             "Enter a valid host or IP address": "请输入有效的主机名或 IP 地址",
             "Enter a valid host and port": "请输入有效的主机名和端口",
             "Close SSH session": "关闭 SSH 会话",
+            "SSH session disconnected": "SSH 会话未连接",
+            "SSH tab layout could not be saved. (%@)": "无法保存 SSH 标签布局。（%@）",
+            "Jump host (optional)": "跳板主机（可选）",
+            "Read configuration over SSH": "通过 SSH 读取配置",
+            "Uses SSH agent authentication and verified SSH host keys.": "使用 SSH agent 认证与已验证的 SSH 主机密钥。",
+            "Read as Before": "读取为变更前配置",
+            "Read as After": "读取为变更后配置",
+            "Could not read a complete configuration over SSH.": "未能通过 SSH 读取完整配置。",
+            "LibreNMS links": "LibreNMS 链路",
+            "LibreNMS base URL": "LibreNMS 服务地址",
+            "LibreNMS device ID": "LibreNMS 设备 ID",
+            "Read LibreNMS links": "读取 LibreNMS 链路",
+            "No LibreNMS links returned.": "没有返回 LibreNMS 链路。",
+            "Inactive in LibreNMS": "LibreNMS 标记为非活动",
+            "LibreNMS snapshot is stale": "LibreNMS 快照已超过 24 小时",
+            "Endpoint differs from NetBox": "对端与 NetBox 配置不同",
+            "Enter a LibreNMS HTTPS URL, device ID and API token.": "请输入 LibreNMS HTTPS 地址、设备 ID 和 API 令牌。",
+            "LibreNMS returned an invalid or incomplete response.": "LibreNMS 返回的响应无效或不完整。",
+            "LibreNMS returned no visible links for this device.": "LibreNMS 未返回此设备的可见链路。",
+            "LibreNMS returned HTTP %d.": "LibreNMS 返回 HTTP %d。",
+            "LibreNMS links could not be saved.": "无法保存 LibreNMS 链路。",
+            "SSH local forwarding": "SSH 本地端口转发",
+            "Local port": "本地端口",
+            "Forward destination": "转发目标",
+            "Destination port": "目标端口",
+            "Start forwarding": "启动转发",
+            "Stop forwarding": "停止转发",
+            "Starting forwarding…": "正在启动转发…",
+            "Listening on 127.0.0.1:%d": "正在监听 127.0.0.1:%d",
+            "Forwarding stopped": "转发已停止",
+            "SSH forwarding failed": "SSH 转发失败",
+            "Listens on 127.0.0.1. Verify the SSH host keys in the terminal before starting.": "仅监听 127.0.0.1。启动前请先在终端验证 SSH 主机密钥。",
+            "Enter one jump host in [user@]host[:port] format.": "请按 [用户名@]主机[:端口] 格式输入单个跳板主机，IPv6 地址须放在方括号中。",
+            "%@ via %@": "%@ 经由 %@",
             "SSH terminal opened for %@": "已打开到 %@ 的 SSH 终端",
             "SSH exited with code %@": "SSH 已退出，代码 %@",
             "SSH session opened": "SSH 会话已打开",
@@ -319,6 +828,33 @@ public final class Loc: ObservableObject {
             "%d active problem(s)": "%d 个活动告警",
             "Enter an HTTPS Zabbix URL. HTTP is limited to loopback testing.": "请输入 HTTPS Zabbix URL。HTTP 仅限本机回环测试。",
             "Zabbix request failed": "Zabbix 请求失败",
+            "Metric history": "指标历史",
+            "Metric observation": "指标观测",
+            "Prepare metric attachment": "暂存指标快照",
+            "Metric prepared. Select an incident in a field project.": "已暂存指标快照，请在现场项目中选择要关联的事件。",
+            "Attach metric to incident": "关联指标到事件",
+            "Attach metric": "关联指标",
+            "Discard prepared metric": "丢弃暂存的指标",
+            "No incidents have room for another observation.": "此项目没有可添加观测的事件。",
+            "Query time": "查询时间",
+            "Time window": "时间窗",
+            "Unix timestamp": "Unix 时间戳",
+            "Event ID": "告警 ID",
+            "The Zabbix problem has an invalid timestamp.": "Zabbix 告警的时间戳无效。",
+            "Zabbix returned no visible numeric items.": "Zabbix 未返回可见的数值监控项。",
+            "Monitoring item": "监控项",
+            "Select a monitoring item": "选择监控项",
+            "Minutes on each side": "前后各几分钟",
+            "Configured interval": "配置采样间隔",
+            "Post-alert window was still open at query time.": "查询时，告警后的时间窗尚未结束。",
+            "History at or before the alert was truncated.": "告警同秒及之前的样本已截断。",
+            "History after the alert was truncated.": "告警后的样本已截断。",
+            "Zabbix returned no samples in this window.": "Zabbix 未返回此时间窗内的样本。",
+            "Alert phase": "相对告警",
+            "Before alert": "告警前",
+            "Alert second": "告警同秒",
+            "After alert": "告警后",
+            "Since previous sample": "距上条样本",
             "Network Interface": "网络接口",
             "WiFi": "WiFi",
             "IP Scanner": "IP 扫描器",
@@ -644,6 +1180,18 @@ public final class Loc: ObservableObject {
             "Sites read": "读取站点数",
             "Pages read": "读取页数",
             "Last synced": "最近同步",
+            "Remote object": "远端对象",
+            "Source address": "来源地址",
+            "The local address is preserved because it was edited locally.": "本地地址已被手动修改，因此保留本地值。",
+            "Confirm local asset update": "确认更新本地资产",
+            "Add or refresh %d selected devices": "新增或刷新所选 %d 台设备",
+            "Selected devices will be added or refreshed locally. Source address changes update unmodified local addresses; local edits and history are preserved. No changes will be sent to NetBox.": "所选设备将在本地新增或刷新。来源地址变化时，只更新未被手动改过的本地地址；本地编辑和历史记录会保留。不会向 NetBox 写入更改。",
+            "Select all eligible": "选择全部可处理项",
+            "Add or refresh selected": "新增或刷新所选项",
+            "Read-only sync completed. Review %d devices; %d can be added or refreshed.": "只读同步完成：请审核 %d 台设备，其中 %d 台可新增或刷新。",
+            "Existing device; ready to refresh": "已有设备，可刷新",
+            "The selected devices cannot be imported or refreshed.": "所选设备无法导入或刷新。",
+            "Processed %d selected devices; %d new devices added. Older snapshots are ignored.": "已处理所选 %d 台设备，新增 %d 台；旧快照已忽略。",
             "Source": "来源",
             "NetBox devices": "NetBox 设备",
             "NetBox returned no devices.": "NetBox 未返回设备。",
@@ -747,6 +1295,7 @@ public final class Loc: ObservableObject {
             "Last 24 hours": "最近 24 小时",
             "Last 7 days": "最近 7 天",
             "Export filtered evidence": "导出筛选后的证据",
+            "Could not load diagnostic history": "无法加载诊断历史",
             "No matching diagnostics": "没有匹配的诊断记录",
             "Completed checks and standalone lookups will appear here.": "资产诊断和独立查询记录会显示在这里。",
             "Standalone check": "独立查询",

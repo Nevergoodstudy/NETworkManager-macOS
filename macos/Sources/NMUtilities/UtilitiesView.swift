@@ -29,6 +29,7 @@ public struct UtilitiesView: View {
     @NMStateCompat private var output = ""
     @NMStateCompat private var error: String?
     @NMStateCompat private var isRunning = false
+    @NMStateCompat private var commandTask: Task<Void, Never>?
 
     public init(kind: Kind = .traceroute) { _kind = NMStateCompat(wrappedValue: kind) }
 
@@ -48,7 +49,13 @@ public struct UtilitiesView: View {
         }
         .padding(28)
         .background(palette.background)
-        .onChange(of: kind) { _, newValue in if newValue == .hosts { loadHosts() } }
+        .onChange(of: kind) { _, newValue in
+            commandTask?.cancel()
+            output = ""
+            error = nil
+            if newValue == .hosts { loadHosts() }
+        }
+        .onDisappear { commandTask?.cancel() }
         .task { if kind == .hosts { loadHosts() } }
     }
 
@@ -74,7 +81,13 @@ public struct UtilitiesView: View {
             HStack {
                 TextField(kind == .traceroute ? t("Hostname or IP address") : t("Command"), text: kind == .traceroute ? $host : $command)
                     .textFieldStyle(.roundedBorder)
+                    .accessibilityIdentifier("utilityCommandInput")
                 Button(t("Run")) { run() }.buttonStyle(.borderedProminent).disabled(isRunning)
+                    .accessibilityIdentifier("runUtilityCommand")
+                if commandTask != nil {
+                    Button(t("Cancel")) { commandTask?.cancel() }.buttonStyle(.bordered)
+                        .accessibilityIdentifier("cancelUtilityCommand")
+                }
             }
             ScrollView {
                 Text(output.isEmpty ? t("Nothing to show") : output)
@@ -124,20 +137,43 @@ public struct UtilitiesView: View {
     }
 
     private func run() {
+        let selected = kind
+        let input = selected == .traceroute ? host : command
         isRunning = true; error = nil; output = ""
-        Task {
-            if kind == .traceroute {
-                let result = await DiagnosticService.runTraceroute(host: host)
+        commandTask = Task {
+            defer {
+                commandTask = nil
+                isRunning = false
+            }
+            if selected == .traceroute {
+                let result = await DiagnosticService.runTraceroute(host: input)
+                guard kind == selected else { return }
                 output = result.displayOutput ?? result.detail
                 if result.status != .succeeded { error = result.summary }
-            } else {
-                // The command utility intentionally runs through /bin/sh so that
-                // users can compose local diagnostics. It never runs implicitly.
-                let result = await Shell.runShell(command, timeout: 30)
-                output = result.output
-                if !result.succeeded { error = result.output }
+                return
             }
-            isRunning = false
+            let result = await Shell.runShell(input, timeout: 30)
+            guard kind == selected else { return }
+            output = result.stdout.isEmpty || result.stderr.isEmpty ? result.output :
+                "\(t("Standard output"))\n\(result.stdout)\n\n\(t("Standard error"))\n\(result.stderr)"
+            if result.stdoutTruncated || result.stderrTruncated {
+                output += "\n" + t("Output truncated")
+            }
+            if !result.cleanupCompleted {
+                error = t("Process cleanup incomplete")
+                return
+            }
+            if result.cancelled {
+                error = t("Cancelled")
+                return
+            }
+            if result.timedOut {
+                error = t("Timed out")
+                return
+            }
+            if !result.succeeded {
+                error = result.status >= 0 ? tf("Command exit status: %d", result.status) : result.stderr
+            }
         }
     }
 

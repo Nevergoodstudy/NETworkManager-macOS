@@ -128,12 +128,19 @@ public enum Shell {
 
     public static func run(_ path: String, _ arguments: [String] = [], job: ProcessJobSpec,
                            environment: [String: String]? = nil) async -> CommandResult {
+        await run(path, arguments, job: job, environment: environment, readiness: nil, onReady: {})
+    }
+
+    package static func run(_ path: String, _ arguments: [String], job: ProcessJobSpec,
+                            environment: [String: String]?, readiness: (prefix: Data, timeout: TimeInterval)?,
+                            onReady: @escaping @Sendable () -> Void) async -> CommandResult {
         let taskCancellation = DiagnosticCancellation()
         return await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in
                 DispatchQueue.global(qos: .userInitiated).async {
                     continuation.resume(returning: ProcessRuntime.run(path, arguments, job: job,
-                        environment: environment, taskCancellation: taskCancellation))
+                        environment: environment, taskCancellation: taskCancellation,
+                        readiness: readiness, onReady: onReady))
                 }
             }
         } onCancel: {
@@ -176,60 +183,6 @@ public enum Shell {
                                  deadline: Date().addingTimeInterval(max(0, timeout)),
                                  maximumOutputBytesPerStream: maximumOutputBytesPerStream, cancellation: cancellation)
         return ProcessRuntime.run(path, arguments, job: job, environment: environment)
-    }
-
-    // MARK: Streaming
-
-    /// Stream stdout line by line from a long running process (ptx excluded, for
-    /// tools such as `traceroute` or `log stream`). Cancelling the consuming task
-    /// terminates the process.
-    public static func streamLines(_ path: String, _ arguments: [String]) -> AsyncStream<String> {
-        AsyncStream { continuation in
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: path)
-            process.arguments = arguments
-            let pipe = Pipe()
-            process.standardOutput = pipe
-            process.standardError = pipe
-            process.standardInput = FileHandle.nullDevice
-
-            let handle = pipe.fileHandleForReading
-            var buffer = Data()
-
-            handle.readabilityHandler = { fh in
-                let chunk = fh.availableData
-                if chunk.isEmpty {
-                    handle.readabilityHandler = nil
-                    continuation.finish()
-                    return
-                }
-                buffer.append(chunk)
-                while let idx = buffer.firstIndex(of: 0x0A) {
-                    let lineData = buffer[buffer.startIndex..<idx]
-                    buffer = buffer[buffer.index(after: idx)...]
-                    if let line = String(data: Data(lineData), encoding: .utf8) {
-                        continuation.yield(line.trimmingCharacters(in: .newlines))
-                    }
-                }
-            }
-
-            process.terminationHandler = { _ in
-                handle.readabilityHandler = nil
-                continuation.finish()
-            }
-
-            do {
-                try process.run()
-            } catch {
-                continuation.finish()
-                return
-            }
-
-            continuation.onTermination = { _ in
-                handle.readabilityHandler = nil
-                if process.isRunning { process.terminate() }
-            }
-        }
     }
 
     // MARK: Privileged helper

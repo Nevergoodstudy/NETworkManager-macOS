@@ -39,9 +39,10 @@ func waitForSocketReadiness(fd: Int32, events: Int16, timeout: TimeInterval, can
 
 /// Socket polling must not occupy Swift's cooperative workers: callers need
 /// those workers to receive more requests and propagate cancellation.
-func runBlockingDiagnostic<Result: Sendable>(_ operation: @escaping @Sendable () -> Result) async -> Result {
+package func runBlockingDiagnostic<Value: Sendable>(qos: DispatchQoS.QoSClass = .userInitiated,
+                                                    _ operation: @escaping @Sendable () -> Value) async -> Value {
     await withCheckedContinuation { continuation in
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: qos).async {
             continuation.resume(returning: operation())
         }
     }

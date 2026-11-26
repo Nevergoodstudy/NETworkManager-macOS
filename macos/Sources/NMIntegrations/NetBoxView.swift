@@ -32,6 +32,8 @@ public struct NetBoxView: View {
     @NMStateCompat private var importCandidates: [NetBoxImportCandidate] = []
     @NMStateCompat private var selectedImportIDs: Set<Int> = []
     @NMStateCompat private var showingImportConfirmation = false
+    @NMStateCompat private var inventoryTask: Task<Void, Never>?
+    @NMStateCompat private var loadingInventoryID: Int?
 
     private enum StatusKind {
         case idle
@@ -64,6 +66,7 @@ public struct NetBoxView: View {
             .frame(maxWidth: .infinity, alignment: .topLeading)
         }
         .background(palette.background)
+        .onDisappear { inventoryTask?.cancel() }
         .onChange(of: baseURLText) { _, _ in
             invalidatePreviewForConfigurationChange()
             persistNonSecretConfiguration()
@@ -79,14 +82,14 @@ public struct NetBoxView: View {
             statusKind = .warning
             statusMessage = t("The selected Keychain credential is no longer available.")
         }
-        .confirmationDialog(t("Confirm local asset import"), isPresented: $showingImportConfirmation, titleVisibility: .visible) {
-            Button(tf("Add %d selected devices", selectedEligibleCount)) {
+        .confirmationDialog(t("Confirm local asset update"), isPresented: $showingImportConfirmation, titleVisibility: .visible) {
+            Button(tf("Add or refresh %d selected devices", selectedEligibleCount)) {
                 importSelectedCandidates()
             }
             .accessibilityIdentifier("netBoxConfirmAddSelectedAssets")
             Button(t("Cancel"), role: .cancel) {}
         } message: {
-            Text(t("Selected NetBox devices will be added to the local workspace. No changes will be sent to NetBox."))
+            Text(t("Selected devices will be added or refreshed locally. Source address changes update unmodified local addresses; local edits and history are preserved. No changes will be sent to NetBox."))
         }
     }
 
@@ -153,6 +156,9 @@ public struct NetBoxView: View {
 #endif
 
                     if isWorking { ProgressView().controlSize(.small) }
+                    if loadingInventoryID != nil {
+                        Button(t("Cancel")) { inventoryTask?.cancel() }
+                    }
                     Spacer()
                     Text(t("Read-only · no changes are sent to NetBox"))
                         .font(.caption).foregroundStyle(palette.textSecondary)
@@ -215,7 +221,7 @@ public struct NetBoxView: View {
                     }
                     Spacer()
                     Button { selectAllImportable(candidates) } label: {
-                        Label(t("Select new"), systemImage: "checkmark.circle")
+                        Label(t("Select all eligible"), systemImage: "checkmark.circle")
                     }
                     .buttonStyle(.bordered)
                     .disabled(eligibleImportCount == 0)
@@ -225,14 +231,14 @@ public struct NetBoxView: View {
                         Label(t("Clear selection"), systemImage: "circle")
                     }
                     .buttonStyle(.bordered)
-                    .disabled(selectedEligibleCount == 0)
+                    .disabled(isWorking || selectedEligibleCount == 0)
                     .accessibilityIdentifier("netBoxClearImportSelection")
 
                     Button { showingImportConfirmation = true } label: {
-                        Label(t("Add selected"), systemImage: "square.and.arrow.down")
+                        Label(t("Add or refresh selected"), systemImage: "square.and.arrow.down")
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(selectedEligibleCount == 0)
+                    .disabled(isWorking || selectedEligibleCount == 0)
                     .accessibilityIdentifier("netBoxAddSelectedAssets")
                 }
                 if candidates.isEmpty {
@@ -249,6 +255,7 @@ public struct NetBoxView: View {
                                 resultCell(t("Status"), width: 100, isHeader: true)
                                 resultCell(t("Primary IP"), width: 150, isHeader: true)
                                 resultCell(t("Import status"), width: 190, isHeader: true)
+                                resultCell(t("Interface inventory"), width: 180, isHeader: true)
                             }
                             .padding(.vertical, 7)
                             Divider()
@@ -274,6 +281,18 @@ public struct NetBoxView: View {
                                         .lineLimit(1)
                                         .truncationMode(.middle)
                                         .frame(width: 190, alignment: .leading)
+                                    Button {
+                                        readInventory(for: candidate.record)
+                                    } label: {
+                                        if let inventory = candidate.snapshot?.networkInventory {
+                                            Text(tf("%d interfaces · %d addresses", inventory.interfaces.count, inventory.addresses.count))
+                                        } else {
+                                            Text(t("Read interfaces and addresses"))
+                                        }
+                                    }
+                                    .disabled(isWorking || candidate.duplicateInResponse || candidate.snapshot == nil)
+                                    .frame(width: 180)
+                                    .accessibilityIdentifier("netBoxReadInventory-\(candidate.id)")
                                 }
                                 .padding(.vertical, 7)
                                 Divider()
@@ -401,7 +420,7 @@ public struct NetBoxView: View {
                     selectAllImportable(candidates)
                     lastTestAt = value.fetchedAt
                     statusKind = .success
-                    statusMessage = tf("Read-only sync completed. Review %d devices; %d are eligible to add.", value.devices.count, eligibleImportCount)
+                    statusMessage = tf("Read-only sync completed. Review %d devices; %d can be added or refreshed.", value.devices.count, eligibleImportCount)
                 } else {
                     statusKind = .warning
                     statusMessage = t("Connection changed while NetBox was responding. Sync again to review the current source.")
@@ -429,7 +448,8 @@ public struct NetBoxView: View {
     private func makeImportCandidates(from result: NetBoxSyncResult) -> [NetBoxImportCandidate] {
         var seenSnapshots: [ExternalAssetSnapshot] = []
         return result.devices.map { record in
-            let snapshot = NetBoxAssetMapper.snapshot(from: record, source: result.source, fetchedAt: result.fetchedAt)
+            let snapshot = NetBoxAssetMapper.snapshot(from: record, source: result.source, fetchedAt: result.fetchedAt,
+                                                      networkInventory: result.networkInventories[record.id])
             let duplicateInResponse = snapshot.map { value in
                 seenSnapshots.contains { $0.hasSameIdentity(as: value) }
             } ?? false
@@ -439,10 +459,36 @@ public struct NetBoxView: View {
     }
 
     private func canImport(_ candidate: NetBoxImportCandidate) -> Bool {
-        guard assets.primaryWorkspace != nil,
+        guard assets.canEditWorkspace, assets.primaryWorkspace != nil,
               let snapshot = candidate.snapshot,
               !candidate.duplicateInResponse else { return false }
-        return !assets.containsExternalAsset(snapshot)
+        return snapshot.externalIdentity?.isValid != false
+    }
+
+    private func readInventory(for record: NetBoxDeviceRecord) {
+        guard let client = makeClient(), let requestedConnection = currentConnectionIdentity,
+              let previewDate = syncResult?.fetchedAt else { return }
+        isWorking = true
+        loadingInventoryID = record.id
+        statusKind = .running
+        statusMessage = t("Reading this device's configured interfaces and addresses. Local assets change only after import confirmation.")
+        inventoryTask = Task { @MainActor in
+            defer { isWorking = false; loadingInventoryID = nil; inventoryTask = nil }
+            do {
+                let inventory = try await client.fetchNetworkInventory(for: record)
+                try Task.checkCancellation()
+                guard currentConnectionIdentity == requestedConnection, syncResult?.fetchedAt == previewDate else { return }
+                syncResult?.networkInventories[record.id] = inventory
+                if let result = syncResult { importCandidates = makeImportCandidates(from: result) }
+                statusKind = .success
+                statusMessage = t("Interface preview is ready. Confirm the selected local asset update to save it.")
+            } catch is CancellationError {
+                statusKind = .warning
+                statusMessage = t("Interface inventory reading was cancelled.")
+            } catch {
+                apply(error: error)
+            }
+        }
     }
 
     private func selectAllImportable(_ candidates: [NetBoxImportCandidate]) {
@@ -469,21 +515,21 @@ public struct NetBoxView: View {
     private func candidateStatus(_ candidate: NetBoxImportCandidate) -> String {
         guard let snapshot = candidate.snapshot else { return t("No primary IP; cannot add") }
         if candidate.duplicateInResponse { return t("Duplicate in NetBox results") }
-        guard assets.primaryWorkspace != nil else { return t("Local workspace is unavailable") }
-        return assets.containsExternalAsset(snapshot) ? t("Already in local assets") : t("Ready to add")
+        guard assets.canEditWorkspace, assets.primaryWorkspace != nil else { return t("Local workspace is unavailable") }
+        return assets.containsExternalAsset(snapshot) ? t("Existing device; ready to refresh") : t("Ready to add")
     }
 
     private func candidateStatusSymbol(_ candidate: NetBoxImportCandidate) -> String {
         guard let snapshot = candidate.snapshot else { return "minus.circle" }
         if candidate.duplicateInResponse { return "exclamationmark.triangle" }
-        guard assets.primaryWorkspace != nil else { return "exclamationmark.triangle" }
-        return assets.containsExternalAsset(snapshot) ? "checkmark.circle" : "plus.circle"
+        guard assets.canEditWorkspace, assets.primaryWorkspace != nil else { return "exclamationmark.triangle" }
+        return assets.containsExternalAsset(snapshot) ? "arrow.clockwise.circle" : "plus.circle"
     }
 
     private func candidateStatusColor(_ candidate: NetBoxImportCandidate) -> Color {
         guard let snapshot = candidate.snapshot else { return palette.textSecondary }
         if candidate.duplicateInResponse { return palette.warning }
-        guard assets.primaryWorkspace != nil else { return palette.danger }
+        guard assets.canEditWorkspace, assets.primaryWorkspace != nil else { return palette.danger }
         return assets.containsExternalAsset(snapshot) ? palette.textSecondary : palette.success
     }
 
@@ -495,14 +541,19 @@ public struct NetBoxView: View {
         guard !snapshots.isEmpty else {
             selectedImportIDs.removeAll()
             statusKind = .warning
-            statusMessage = t("The selected devices are already present or cannot be imported.")
+            statusMessage = t("The selected devices cannot be imported or refreshed.")
             return
         }
         let addedCount = assets.mergeExternalAssets(snapshots)
         selectedImportIDs.removeAll()
         showingImportConfirmation = false
-        statusKind = .success
-        statusMessage = tf("Added %d new devices to the local workspace.", addedCount)
+        if let error = assets.persistenceError {
+            statusKind = .failure
+            statusMessage = error
+        } else {
+            statusKind = .success
+            statusMessage = tf("Processed %d selected devices; %d new devices added. Older snapshots are ignored.", snapshots.count, addedCount)
+        }
     }
 
     private func invalidatePreviewForConfigurationChange() {
@@ -617,7 +668,7 @@ public struct NetBoxView: View {
     }
 
     private func primaryAddress(_ device: NetBoxDeviceRecord) -> String {
-        device.primaryIP4?.display ?? device.primaryIP6?.display ?? t("No primary address")
+        [device.primaryIP4, device.primaryIP6].compactMap { $0?.address ?? $0?.display }.joined(separator: " · ")
     }
 
     private func persistNonSecretConfiguration() {

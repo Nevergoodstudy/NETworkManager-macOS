@@ -23,8 +23,7 @@ public struct SystemDiagnosticsView: View {
     @NMStateCompat private var socketResult: SocketInventoryResult?
     @NMStateCompat private var neighborResult: SystemInventoryResult<NeighborEntry>?
     @NMStateCompat private var wifiResult: SystemInventoryResult<WiFiSummary>?
-    @NMStateCompat private var output = ""
-    @NMStateCompat private var error: String?
+    @NMStateCompat private var commandResult: SystemInventoryResult<String>?
     @NMStateCompat private var isLoading = false
     @NMStateCompat private var refreshTask: Task<Void, Never>?
     @NMStateCompat private var requestID: UUID?
@@ -48,7 +47,6 @@ public struct SystemDiagnosticsView: View {
                         .accessibilityIdentifier(socketScope == nil ? "systemDiagnosticsCancel" : "socketInventoryCancel")
                 }
             }
-            if let error { Text(error).foregroundStyle(palette.danger) }
             content
             Spacer()
         }
@@ -124,11 +122,22 @@ public struct SystemDiagnosticsView: View {
                 Text(t("Refresh to read Wi-Fi details.")).foregroundStyle(.secondary)
             }
         case .firewall, .discovery:
-            ScrollView {
-                Text(output.isEmpty ? t("Nothing to show") : output)
-                    .font(.body.monospaced()).textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading).padding()
-            }.background(palette.card, in: RoundedRectangle(cornerRadius: 8)).frame(minHeight: 420)
+            if isLoading {
+                ProgressView().controlSize(.small)
+            }
+            if let commandResult {
+                if !commandResult.issues.isEmpty {
+                    captureSummary(commandResult)
+                    captureDetails(commandResult)
+                }
+                if commandResult.state == .empty || !commandResult.entries.isEmpty {
+                    ScrollView {
+                        Text(commandResult.entries.first ?? t("Nothing to show"))
+                            .font(.body.monospaced()).textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading).padding()
+                    }.background(palette.card, in: RoundedRectangle(cornerRadius: 8)).frame(minHeight: 420)
+                }
+            }
         }
     }
 
@@ -196,7 +205,10 @@ public struct SystemDiagnosticsView: View {
 
     private func captureMessage(for issue: SystemInventoryIssue) -> String {
         switch issue {
-        case .missingExecutable: return "The required macOS command could not be found."
+        case .missingExecutable:
+            return kind == .discovery
+                ? "Install lldpd with Homebrew to enable LLDP/CDP discovery."
+                : "The required macOS command could not be found."
         case .permissionDenied: return "macOS denied permission to start the command."
         case .busy: return "The command runner is busy. Try refreshing shortly."
         case .launchFailed: return "The system network command could not be started."
@@ -245,9 +257,8 @@ public struct SystemDiagnosticsView: View {
         let id = UUID()
         requestID = id
         isLoading = true
-        error = nil
         socketResult = nil
-        output = ""
+        commandResult = nil
         neighborResult = nil
         wifiResult = nil
         let selected = kind
@@ -272,15 +283,12 @@ public struct SystemDiagnosticsView: View {
                 let value = await WiFiInventory.collect()
                 guard requestID == id, kind == selected else { return }
                 wifiResult = value
-            case .firewall:
-                let result = await Shell.runTool("/usr/libexec/ApplicationFirewall/socketfilterfw", ["--getglobalstate", "--listapps"], timeout: 20)
+            case .firewall, .discovery:
+                let tool = selected == .firewall ? "/usr/libexec/ApplicationFirewall/socketfilterfw" : "lldpcli"
+                let arguments = selected == .firewall ? ["--getglobalstate", "--listapps"] : ["show", "neighbors", "-f", "keyvalue"]
+                let result = await Shell.runTool(tool, arguments, timeout: 20)
                 guard requestID == id, kind == selected else { return }
-                output = result.output
-                error = result.succeeded ? nil : result.output
-            case .discovery:
-                let result = await Shell.runTool("lldpcli", ["show", "neighbors", "-f", "keyvalue"], timeout: 20)
-                guard requestID == id, kind == selected else { return }
-                output = result.succeeded ? result.output : result.output + "\n\n" + t("Install lldpd with Homebrew to enable LLDP/CDP discovery.")
+                commandResult = SystemInventoryResult(entries: result.stdout.isEmpty ? [] : [result.stdout], command: result)
             }
         }
     }

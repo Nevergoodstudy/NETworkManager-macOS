@@ -16,9 +16,10 @@ let package = Package(
     ],
     targets: [
         .systemLibrary(name: "CSQLite"),
+        .systemLibrary(name: "CPcap"),
         .target(
             name: "NMCore",
-            dependencies: ["CSQLite"],
+            dependencies: ["CSQLite", "CPcap"],
             resources: [.copy("Resources")]
         ),
         .target(name: "NMMCPTools", dependencies: ["NMCore", .product(name: "MCP", package: "swift-sdk")]),
@@ -28,7 +29,7 @@ let package = Package(
         .target(name: "NMScanners", dependencies: ["NMCore"]),
         .target(name: "NMLookups", dependencies: ["NMCore"]),
         .target(name: "NMCalculators", dependencies: ["NMCore"]),
-        .target(name: "NMUtilities", dependencies: ["NMCore"]),
+        .target(name: "NMUtilities", dependencies: ["NMCore", "NMRemote"]),
         .target(name: "NMRemote", dependencies: ["NMCore", .product(name: "SwiftTerm", package: "SwiftTerm")]),
         .target(name: "NMProfiles", dependencies: ["NMCore"]),
         .target(name: "NMAssets", dependencies: ["NMCore"]),

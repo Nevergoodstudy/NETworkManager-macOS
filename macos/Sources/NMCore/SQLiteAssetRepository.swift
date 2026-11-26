@@ -4,7 +4,7 @@ import CSQLite
 
 /// A synchronous facade over one serial I/O queue. The file lock coordinates
 /// repository instances; a revision token rejects writes based on stale snapshots.
-public final class SQLiteAssetRepository: AssetRepository {
+public final class SQLiteAssetRepository: AssetRepository, @unchecked Sendable {
     public let url: URL
     private let legacyURL: URL?
     private let ownership: AssetWorkspaceOwnership?
@@ -305,11 +305,11 @@ public final class SQLiteAssetRepository: AssetRepository {
     private func posixError() -> NSError { NSError(domain: NSPOSIXErrorDomain, code: Int(errno)) }
 }
 
-private enum SQLValue {
+enum SQLValue {
     case text(String), blob(Data), integer(Int64), real(Double), null
 }
 
-private final class AssetDatabase {
+final class AssetDatabase {
     private(set) var handle: OpaquePointer?
 
     init(url: URL, create: Bool, readOnly: Bool = false) throws {
@@ -382,6 +382,21 @@ private final class AssetDatabase {
         let result = sqlite3_step(statement)
         guard result == SQLITE_ROW || result == SQLITE_DONE else { throw error() }
         return result == SQLITE_DONE
+    }
+
+    /// Internal row decoding for repositories whose keys are not asset UUIDs.
+    /// The statement remains owned here and is finalized even if decoding fails.
+    func rows<T>(_ sql: String, _ values: [SQLValue] = [], decode: (OpaquePointer) throws -> T) throws -> [T] {
+        let statement = try statement(sql, values)
+        defer { sqlite3_finalize(statement) }
+        var rows: [T] = []
+        var result = sqlite3_step(statement)
+        while result == SQLITE_ROW {
+            rows.append(try decode(statement))
+            result = sqlite3_step(statement)
+        }
+        guard result == SQLITE_DONE else { throw error() }
+        return rows
     }
 
     func records<T: Decodable & Identifiable>(_ sql: String, _ values: [SQLValue] = [], verifying: ((T) -> [SQLValue])? = nil) throws -> [T] where T.ID == UUID {

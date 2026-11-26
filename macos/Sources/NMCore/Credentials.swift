@@ -47,6 +47,7 @@ public struct CredentialSecret: Sendable, Equatable {
 
 /// Minimal Keychain wrapper. The JSON metadata file never contains the secret
 /// payload; it only stores CredentialRef values and UUID references.
+@MainActor
 public final class CredentialStore: ObservableObject {
     public static let shared = CredentialStore()
     public static let servicePrefix = "net.borntoberoot.networkmanager.credential"
