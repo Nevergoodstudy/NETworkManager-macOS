@@ -35,10 +35,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Select current stable Xcode
+      - name: Select Xcode 26.3
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: '26.3'
 
       - name: Verify Apple Silicon architecture policy
         run: |

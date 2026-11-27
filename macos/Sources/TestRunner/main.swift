@@ -1516,7 +1516,7 @@ do {
     let preCancelledTCPStatus = DiagnosticStatusBox()
     let preCancelledTCPFinished = DispatchSemaphore(value: 0)
     let preCancelledTCPTask = Task.detached {
-        try? await Task.sleep(nanoseconds: 10_000_000_000)
+        do { try await Task.sleep(for: .seconds(10)) } catch {}
         let result = await DiagnosticService.runTCP(host: "127.0.0.1", port: 9, timeout: 10)
         preCancelledTCPStatus.set(result.status)
         preCancelledTCPFinished.signal()
