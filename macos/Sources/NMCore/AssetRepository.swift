@@ -37,6 +37,19 @@ public struct AssetSnapshot: Codable, Equatable, Sendable {
               diagnosticRuns.allSatisfy({ $0.deviceID.map(deviceIDs.contains) ?? true }) else {
             throw AssetRepositoryError.invalidRelationships
         }
+        let siteWorkspaces = Dictionary(uniqueKeysWithValues: sites.map { ($0.id, $0.workspaceID) })
+        var identitiesByWorkspace: [UUID: Set<ExternalAssetIdentity>] = [:]
+        for device in devices {
+            guard device.sourcePrimaryAddresses.map({ $0.count <= 2 && $0.allSatisfy(\.isValid) }) != false,
+                  device.networkInventory.map({ $0.isValid && $0.deviceIdentity == device.externalIdentity }) != false else {
+                throw AssetRepositoryError.invalidRelationships
+            }
+            guard let identity = device.externalIdentity else { continue }
+            guard identity.isValid, let workspaceID = siteWorkspaces[device.siteID],
+                  identitiesByWorkspace[workspaceID, default: []].insert(identity).inserted else {
+                throw AssetRepositoryError.invalidRelationships
+            }
+        }
     }
 
     static func decodeLegacy(_ data: Data) throws -> AssetSnapshot {
@@ -69,7 +82,7 @@ public struct DiagnosticPageQuery: Sendable {
 
 /// Writes return only after commit. Implementations own their I/O serialization;
 /// callers must reload after a conflict rather than overwrite another writer.
-public protocol AssetRepository: AnyObject {
+public protocol AssetRepository: AnyObject, Sendable {
     func load() throws -> AssetSnapshot?
     func save(_ snapshot: AssetSnapshot) throws
     @discardableResult func restore(_ snapshot: AssetSnapshot, preservingDamaged: Bool) throws -> URL?

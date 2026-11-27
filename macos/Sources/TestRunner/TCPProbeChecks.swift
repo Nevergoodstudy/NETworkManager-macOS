@@ -309,6 +309,31 @@ enum TCPProbeChecks {
         try check(noBudgetFailure.code == .timedOut && noBudget.socketCalls.isEmpty,
                   "A zero timeout should not be silently extended or allocate sockets")
 
+        let expired = TCPSocketFixture([TCPSocketPlan()])
+        let approvalDeadline = DispatchTime(uptimeNanoseconds: 100_250_000_000)
+        expired.advance(0.5)
+        var resolvedAfterExpiry = false
+        let expiredFailure = try failure(TCPProbe.probeOutcome(
+            host: "127.0.0.1", port: 443, timeout: 2, cancellation: nil, absoluteDeadline: approvalDeadline,
+            operations: expired, resolver: { _, _, _, _ in
+                resolvedAfterExpiry = true
+                return addresses
+            }))
+        try check(expiredFailure.code == .timedOut && expiredFailure.stage == .resolution
+                  && !resolvedAfterExpiry && expired.socketCalls.isEmpty && expired.connectCalls == 0,
+                  "An approval that expires before work starts must prevent resolution and connection")
+
+        let expiring = TCPSocketFixture([TCPSocketPlan()])
+        let expiringFailure = try failure(TCPProbe.probeOutcome(
+            host: "127.0.0.1", port: 443, timeout: 2, cancellation: nil, absoluteDeadline: approvalDeadline,
+            operations: expiring, resolver: { _, _, remaining, _ in
+                try check(remaining == 0.25, "Resolution should receive only the time left before the approval expires")
+                expiring.advance(0.25)
+                return addresses
+            }))
+        try check(expiringFailure.code == .timedOut && expiring.socketCalls.isEmpty,
+                  "An approval that expires during resolution must prevent socket setup")
+
         let resolvedLate = TCPSocketFixture([TCPSocketPlan()])
         var resolutionBudget: TimeInterval = 0
         let resolutionFailure = try failure(TCPProbe.probeOutcome(host: "fixture.invalid", port: 443, timeout: 0.1,

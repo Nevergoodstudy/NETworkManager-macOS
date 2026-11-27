@@ -14,6 +14,7 @@ public struct DashboardView: View {
     @NMStateCompat private var gatewayLatency: TimeInterval?
     @NMStateCompat private var gatewayProbeError: String?
     @NMStateCompat private var isProbingGateway = false
+    @NMStateCompat private var gatewayProbeTask: Task<Void, Never>?
     @NMStateCompat private var discoveryRange = ""
     @NMStateCompat private var discoveryResults: [DiscoveredHost] = []
     @NMStateCompat private var selectedDiscoveredHost: String?
@@ -103,7 +104,10 @@ public struct DashboardView: View {
             .background(palette.background)
         }
         .task { refresh() }
-        .onDisappear { cancelDiscovery() }
+        .onDisappear {
+            cancelDiscovery()
+            gatewayProbeTask?.cancel()
+        }
     }
 
     private var routeStatus: some View {
@@ -268,7 +272,7 @@ public struct DashboardView: View {
                       systemImage: isProbingGateway ? "hourglass" : "dot.radiowaves.left.and.right")
             }
             .buttonStyle(.bordered)
-            .disabled(gateway.isEmpty || isProbingGateway)
+            .disabled(gateway.isEmpty || isProbingGateway || isRefreshing)
             .accessibilityIdentifier("probeDefaultGateway")
         }
     }
@@ -483,11 +487,12 @@ public struct DashboardView: View {
     private func refresh() {
         guard !isRefreshing else { return }
         isRefreshing = true
+        gatewayProbeTask?.cancel()
         gatewayReachable = nil
         gatewayLatency = nil
         gatewayProbeError = nil
         Task {
-            let snapshot = await Task.detached(priority: .userInitiated) {
+            let snapshot = await runBlockingDiagnostic {
                 let routeResult = DefaultRouteInventory.current()
                 let interfaces = NetworkInterfaces.list()
                 let sockets = SocketInventory.collectSync()
@@ -502,7 +507,7 @@ public struct DashboardView: View {
                     routeError: routeResult.error,
                     suggestedRange: Self.suggestedRange(interfaces, routeInterface: route?.interface ?? "")
                 )
-            }.value
+            }
 
             interfaces = snapshot.interfaces
             socketResult = snapshot.sockets
@@ -517,24 +522,25 @@ public struct DashboardView: View {
     }
 
     private func probeGateway() {
-        guard !gateway.isEmpty, !isProbingGateway else { return }
+        guard !gateway.isEmpty, !isProbingGateway, !isRefreshing else { return }
         isProbingGateway = true
         gatewayReachable = nil
         gatewayLatency = nil
         gatewayProbeError = nil
         let target = gateway
-        Task {
-            let reply = await Self.probeGateway(target)
-            if let reply {
-                gatewayReachable = reply.outcome.isSuccess
-                gatewayLatency = reply.rtt
-                if case .error(let message) = reply.outcome { gatewayProbeError = message }
-            } else {
-                gatewayReachable = false
-                gatewayProbeError = t("Unable to create an ICMP probe.")
+        let cancellation = DiagnosticCancellation()
+        gatewayProbeTask = ProcessRuntime.startDiagnosticTask(cancellation) {
+            defer {
+                isProbingGateway = false
+                gatewayProbeTask = nil
             }
-            isProbingGateway = false
+            let reply = await Ping.once(host: target, timeout: 1.5, cancellation: cancellation)
+            guard !Task.isCancelled else { return }
+            gatewayReachable = reply.outcome.isSuccess
+            gatewayLatency = reply.rtt
+            if case .error(let message) = reply.outcome { gatewayProbeError = message }
         }
+        if gatewayProbeTask == nil { isProbingGateway = false }
     }
 
     private var discoveryPreview: HostRangePreview? {
@@ -592,22 +598,24 @@ public struct DashboardView: View {
             let cancellation = DiagnosticCancellation()
             discoveryCancellation = cancellation
             let concurrency = min(32, hosts.count)
-            discoveryTask = Task {
+            discoveryTask = ProcessRuntime.startDiagnosticTask(cancellation) {
                 var nextIndex = 0
                 await withTaskGroup(of: ProbeResult.self) { group in
-                    while nextIndex < concurrency {
+                    while nextIndex < concurrency, !cancellation.isCancelled {
                         let host = hosts[nextIndex]
                         group.addTask { await Self.probeHost(host, cancellation: cancellation) }
                         nextIndex += 1
                     }
                     while let result = await group.next() {
+                        if let reply = result.reply {
+                            scannedHosts += 1
+                            if reply.outcome.isSuccess {
+                                discoveryResults.append(DiscoveredHost(host: result.host, latency: reply.rtt ?? 0, ttl: reply.ttl))
+                            }
+                        }
                         if Task.isCancelled || cancellation.isCancelled {
                             group.cancelAll()
-                            break
-                        }
-                        scannedHosts += 1
-                        if let reply = result.reply, reply.outcome.isSuccess {
-                            discoveryResults.append(DiscoveredHost(host: result.host, latency: reply.rtt ?? 0, ttl: reply.ttl))
+                            continue
                         }
                         if nextIndex < hosts.count {
                             let host = hosts[nextIndex]
@@ -617,6 +625,13 @@ public struct DashboardView: View {
                     }
                 }
 
+                if !Task.isCancelled, !cancellation.isCancelled {
+                    let neighbors = await NeighborTable.collect(cancellation: cancellation)
+                    if !Task.isCancelled, !cancellation.isCancelled {
+                        neighborResult = neighbors
+                        refreshedAt = Date()
+                    }
+                }
                 let wasCancelled = Task.isCancelled || cancellation.isCancelled
                 isScanning = false
                 discoveryTask = nil
@@ -624,11 +639,8 @@ public struct DashboardView: View {
                 discoveryMessage = wasCancelled
                     ? tf("Stopped after %d of %d addresses.", scannedHosts, totalHosts)
                     : tf("Completed: %d of %d hosts responded.", discoveryResults.count, totalHosts)
-                if !wasCancelled {
-                    neighborResult = await NeighborTable.collect()
-                    refreshedAt = Date()
-                }
             }
+            if discoveryTask == nil { isScanning = false; discoveryCancellation = nil }
         } catch {
             discoveryMessage = error.localizedDescription
             totalHosts = 0
@@ -637,19 +649,9 @@ public struct DashboardView: View {
     }
 
     private nonisolated static func probeHost(_ host: String, cancellation: DiagnosticCancellation) async -> ProbeResult {
-        let reply = await Task.detached(priority: .utility) { () -> ICMPReply? in
-            guard !cancellation.isCancelled,
-                  let pinger = try? ICMPPinger(host: host, timeout: 0.6, cancellation: cancellation) else { return nil }
-            return pinger.ping()
-        }.value
-        return ProbeResult(host: host, reply: reply)
-    }
-
-    private nonisolated static func probeGateway(_ host: String) async -> ICMPReply? {
-        await Task.detached(priority: .userInitiated) { () -> ICMPReply? in
-            guard let pinger = try? ICMPPinger(host: host, timeout: 1.5) else { return nil }
-            return pinger.ping()
-        }.value
+        let reply = await Ping.once(host: host, timeout: 0.6, cancellation: cancellation)
+        let cancelled = reply.outcome == .error(t("Diagnostic cancelled"))
+        return ProbeResult(host: host, reply: cancelled ? nil : reply)
     }
 
     private nonisolated static func suggestedRange(_ interfaces: [NetworkInterfaceInfo], routeInterface: String) -> String {

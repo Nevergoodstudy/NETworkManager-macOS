@@ -7,6 +7,7 @@ public struct ZabbixView: View {
     @ObservedObject private var credentials = CredentialStore.shared
     @ObservedObject private var assets = AssetStore.shared
     private let openDiagnosticHistory: (String) -> Void
+    private let stageMetric: ((FieldMetricObservation) -> Void)?
 
     @NMStateCompat private var baseURLText: String
     @NMStateCompat private var selectedCredentialID: String
@@ -14,8 +15,10 @@ public struct ZabbixView: View {
     @NMStateCompat private var isWorking = false
     @NMStateCompat private var statusMessage = ""
     @NMStateCompat private var statusKind: StatusKind = .idle
-    @NMStateCompat private var runningPingKeys: Set<String> = []
+    @NMStateCompat private var pingTasks: [String: Task<Void, Never>] = [:]
     @NMStateCompat private var pingFeedback: [String: PingFeedback] = [:]
+    @NMStateCompat private var problemConfiguration: ZabbixConfiguration?
+    @NMStateCompat private var metricPreview: ZabbixMetricPreview.Context?
 
     private enum StatusKind { case idle, working, success, warning, failure }
 
@@ -25,9 +28,11 @@ public struct ZabbixView: View {
         let latency: TimeInterval?
     }
 
-    public init(openDiagnosticHistory: @escaping (String) -> Void = { _ in }) {
+    public init(openDiagnosticHistory: @escaping (String) -> Void = { _ in },
+                stageMetric: ((FieldMetricObservation) -> Void)? = nil) {
         let saved = Self.savedConfiguration()
         self.openDiagnosticHistory = openDiagnosticHistory
+        self.stageMetric = stageMetric
         _baseURLText = NMStateCompat(wrappedValue: saved?.baseURL.absoluteString ?? "https://zabbix.example")
         _selectedCredentialID = NMStateCompat(wrappedValue: saved?.tokenReference ?? "")
     }
@@ -47,12 +52,26 @@ public struct ZabbixView: View {
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(palette.background)
+        .sheet(item: $metricPreview) { context in
+            ZabbixMetricPreview(context: context, stageMetric: stageMetric.map { stage in
+                { observation in
+                    stage(observation)
+                    statusKind = .success
+                    statusMessage = t("Metric prepared. Select an incident in a field project.")
+                }
+            })
+        }
         .onChange(of: baseURLText) { _, _ in
+            invalidateMetricSource()
             persistConfiguration()
             validateBaseURLInput()
         }
-        .onChange(of: selectedCredentialID) { _, _ in persistConfiguration() }
+        .onChange(of: selectedCredentialID) { _, _ in
+            invalidateMetricSource()
+            persistConfiguration()
+        }
         .onAppear { validateBaseURLInput() }
+        .onDisappear { for task in pingTasks.values { task.cancel() } }
         .onChange(of: credentials.references) { _, references in
             guard !selectedCredentialID.isEmpty,
                   !references.contains(where: { $0.id.uuidString == selectedCredentialID && $0.kind == .token }) else { return }
@@ -173,7 +192,7 @@ public struct ZabbixView: View {
 
     private func hostRow(problem: ZabbixProblem, host: ZabbixHost) -> some View {
         let key = pingKey(problem: problem, host: host)
-        let isPingRunning = runningPingKeys.contains(key)
+        let isPingRunning = pingTasks[key] != nil
         return VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 7) {
                 Text(host.displayName).lineLimit(1)
@@ -187,13 +206,21 @@ public struct ZabbixView: View {
                         }
                     }
                     .buttonStyle(.borderless)
-                    .disabled(isPingRunning)
+                    .disabled(isPingRunning || assets.isLoadingWorkspace)
                     .help(t(isPingRunning ? "Ping in progress" : "Ping host and save evidence"))
                     .accessibilityLabel(t(isPingRunning ? "Ping in progress" : "Ping host"))
                     .accessibilityIdentifier("zabbixPing-\(problem.eventID)-\(host.hostID)")
                 } else {
                     Text(t("No interface address")).font(.caption).foregroundStyle(palette.warning)
                 }
+                Button { openMetricPreview(for: problem, host: host) } label: {
+                    Image(systemName: "chart.xyaxis.line")
+                }
+                .buttonStyle(.borderless)
+                .disabled(problemConfiguration == nil || problem.clock <= 0 || isWorking)
+                .help(t(problem.clock > 0 ? "Metric history" : "The Zabbix problem has an invalid timestamp."))
+                .accessibilityLabel(t("Metric history"))
+                .accessibilityIdentifier("zabbixMetricHistory-\(problem.eventID)-\(host.hostID)")
             }
             if let feedback = pingFeedback[key] {
                 HStack(spacing: 6) {
@@ -283,6 +310,7 @@ public struct ZabbixView: View {
                 return
             }
             let configuration = ZabbixConfiguration(baseURL: url, tokenReference: selectedCredential.id.uuidString)
+            invalidateMetricSource()
             persist(configuration)
             let client = ZabbixClient(configuration: configuration, token: token)
             isWorking = true
@@ -291,6 +319,9 @@ public struct ZabbixView: View {
             Task {
                 do {
                     problems = try await client.fetchActiveProblems()
+                    if validBaseURL == configuration.baseURL, self.selectedCredential?.id.uuidString == configuration.tokenReference {
+                        problemConfiguration = configuration
+                    }
                     lastFetchedAt = Date()
                     statusKind = .success
                     statusMessage = tf("%d active problem(s)", problems.count)
@@ -308,6 +339,7 @@ public struct ZabbixView: View {
 
 #if DEBUG
     private func loadLoopbackFixture() {
+        invalidateMetricSource()
         let host = ZabbixHost(hostID: "fixture-loopback", technicalName: "loopback", displayName: t("Local loopback fixture"), target: "127.0.0.1")
         let problem = ZabbixProblem(
             eventID: "fixture-\(Int(Date().timeIntervalSince1970))",
@@ -326,6 +358,24 @@ public struct ZabbixView: View {
     }
 #endif
 
+    private func invalidateMetricSource() {
+        problemConfiguration = nil
+        metricPreview = nil
+    }
+
+    private func openMetricPreview(for problem: ZabbixProblem, host: ZabbixHost) {
+        guard let configuration = problemConfiguration, configuration.baseURL == validBaseURL,
+              let selectedCredential, configuration.tokenReference == selectedCredential.id.uuidString else { return }
+        do {
+            let token = try credentials.secret(for: selectedCredential).token
+            let client = ZabbixClient(configuration: configuration, token: token)
+            metricPreview = ZabbixMetricPreview.Context(client: client, problem: problem, host: host)
+        } catch {
+            statusKind = .failure
+            statusMessage = error.localizedDescription
+        }
+    }
+
     private func validateBaseURLInput() {
         let hasInput = !baseURLText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         guard hasInput, validBaseURL == nil else {
@@ -341,10 +391,9 @@ public struct ZabbixView: View {
 
     private func runPing(for problem: ZabbixProblem, host: ZabbixHost) {
         let key = pingKey(problem: problem, host: host)
-        guard runningPingKeys.insert(key).inserted else { return }
-        pingFeedback.removeValue(forKey: key)
-        Task {
-            defer { runningPingKeys.remove(key) }
+        guard pingTasks[key] == nil, !assets.isLoadingWorkspace else { return }
+        let task = ProcessRuntime.startDiagnosticTask(DiagnosticCancellation()) {
+            defer { pingTasks[key] = nil }
             guard let runID = await ZabbixDiagnosticRunner.ping(problem: problem, host: host, in: assets),
                   let run = assets.diagnosticRuns.first(where: { $0.id == runID }) else {
                 pingFeedback[key] = PingFeedback(status: .failed, summary: t("No diagnostic record was returned."), latency: nil)
@@ -352,6 +401,9 @@ public struct ZabbixView: View {
             }
             pingFeedback[key] = PingFeedback(status: run.status, summary: run.summary, latency: run.latency)
         }
+        guard let task else { return }
+        pingFeedback.removeValue(forKey: key)
+        pingTasks[key] = task
     }
 
     private func pingKey(problem: ZabbixProblem, host: ZabbixHost) -> String {
@@ -431,5 +483,151 @@ public struct ZabbixView: View {
         let raw = SettingsStore.shared.string("zabbix.connection", default: "")
         guard let data = raw.data(using: .utf8) else { return nil }
         return try? JSONDecoder().decode(ZabbixConfiguration.self, from: data)
+    }
+}
+
+private struct ZabbixMetricPreview: View {
+    struct Context: Identifiable {
+        let id = UUID()
+        let client: ZabbixClient
+        let problem: ZabbixProblem
+        let host: ZabbixHost
+    }
+
+    private struct Query: Hashable {
+        var metricID = ""
+        var window = ZabbixMetricHistory.Window.fifteen
+        var revision = 0
+    }
+
+    private struct SampleRow: Identifiable { let id: Int }
+
+    @Environment(\.dismiss) private var dismiss
+    @NMStateCompat private var metrics: Result<[ZabbixMetric], Error>?
+    @NMStateCompat private var query = Query()
+    @NMStateCompat private var history: (query: Query, result: Result<ZabbixMetricHistory, Error>)?
+    let context: Context
+    let stageMetric: ((FieldMetricObservation) -> Void)?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(t("Metric history")).font(.headline)
+                Spacer()
+                Button(t("Close")) { dismiss() }.keyboardShortcut(.cancelAction)
+            }
+            LabeledContent(t("Source"), value: context.client.configuration.baseURL.absoluteString)
+            LabeledContent(t("Host"), value: "\(context.host.displayName) · \(context.host.hostID)")
+            Text(tf("Event %@ · %@", context.problem.eventID, Fmt.dateTime(context.problem.occurredAt)))
+            Divider()
+            switch metrics {
+            case nil: ProgressView()
+            case .failure(let error): errorLabel(error)
+            case .success(let items) where items.isEmpty: Text(t("Zabbix returned no visible numeric items."))
+            case .success(let items): metricContent(items)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(20)
+        .frame(minWidth: 700, minHeight: 440)
+        .task {
+            do { metrics = .success(try await context.client.fetchNumericMetrics(for: context.host)) }
+            catch { if !Task.isCancelled { metrics = .failure(error) } }
+        }
+    }
+
+    private func metricContent(_ items: [ZabbixMetric]) -> some View {
+        let selection = query
+        let metric = items.first { $0.id == selection.metricID }
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Picker(t("Monitoring item"), selection: $query.metricID) {
+                    Text(t("Select a monitoring item")).tag("")
+                    ForEach(items) { Text("\($0.name) · \($0.key)").tag($0.id) }
+                }
+                Picker(t("Minutes on each side"), selection: $query.window) {
+                    ForEach(ZabbixMetricHistory.Window.allCases, id: \.self) { Text("\($0.rawValue)").tag($0) }
+                }
+                .fixedSize()
+                Button { query.revision += 1 } label: { Image(systemName: "arrow.clockwise") }
+                    .help(t("Refresh")).accessibilityLabel(t("Refresh")).disabled(metric == nil)
+            }
+            if let metric {
+                Text(metric.key).font(.caption.monospaced()).textSelection(.enabled)
+                HStack(spacing: 24) {
+                    LabeledContent(t("Unit"), value: metric.units.isEmpty ? "–" : metric.units)
+                    LabeledContent(t("Configured interval"), value: metric.delay.isEmpty ? "–" : metric.delay)
+                }
+                switch history?.query == selection ? history?.result : nil {
+                case nil: ProgressView()
+                case .failure(let error): errorLabel(error)
+                case .success(let result):
+                    historyContent(result)
+                    if let stageMetric {
+                        Button(t("Prepare metric attachment"), systemImage: "paperclip") {
+                            guard query == selection else { return }
+                            stageMetric(context.client.metricObservation(for: metric, history: result,
+                                                                         problem: context.problem, host: context.host))
+                            dismiss()
+                        }
+                        .accessibilityIdentifier("zabbixPrepareMetric")
+                    }
+                }
+            }
+        }
+        .task(id: selection) {
+            guard let metric else { return }
+            let result: Result<ZabbixMetricHistory, Error>
+            do {
+                result = .success(try await context.client.fetchMetricHistory(for: metric, problem: context.problem, window: selection.window))
+            } catch {
+                result = .failure(error)
+            }
+            guard !Task.isCancelled, query == selection else { return }
+            history = (selection, result)
+        }
+    }
+
+    private func historyContent(_ result: ZabbixMetricHistory) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("\(Fmt.dateTime(Date(timeIntervalSince1970: Double(result.range.lowerBound)))) – \(Fmt.dateTime(Date(timeIntervalSince1970: Double(result.range.upperBound)))) · \(TimeZone.current.identifier)")
+                .font(.caption.monospaced())
+            if result.afterWindowOpen { Text(t("Post-alert window was still open at query time.")) }
+            if result.beforeOrAtLimitReached { Text(t("History at or before the alert was truncated.")) }
+            if result.afterLimitReached { Text(t("History after the alert was truncated.")) }
+            if result.samples.isEmpty { Text(t("Zabbix returned no samples in this window.")) }
+            if !result.samples.isEmpty {
+                Table(result.samples.indices.map { SampleRow(id: $0) }) {
+                    TableColumn(t("Timestamp")) { row in
+                        let sample = result.samples[row.id]
+                        let time = Fmt.dateTime(Date(timeIntervalSince1970: Double(sample.seconds)))
+                        Text(time + String(format: ".%09d", sample.nanoseconds)).monospacedDigit()
+                    }.width(min: 218)
+                    TableColumn(t("Alert phase")) { row in
+                        let seconds = result.samples[row.id].seconds
+                        Text(t(seconds < context.problem.clock ? "Before alert" : seconds == context.problem.clock ? "Alert second" : "After alert"))
+                    }
+                    TableColumn(t("Value")) { row in
+                        Text(result.samples[row.id].rawValue).monospacedDigit().textSelection(.enabled)
+                    }.width(min: 140)
+                    TableColumn(t("Since previous sample")) { row in
+                        if row.id > 0 {
+                            let sample = result.samples[row.id]
+                            let previous = result.samples[row.id - 1]
+                            let delta = Double(sample.seconds - previous.seconds)
+                                + Double(sample.nanoseconds - previous.nanoseconds) / 1_000_000_000
+                            Text(Fmt.duration(delta)).monospacedDigit()
+                        }
+                        if row.id == 0 { Text("–") }
+                    }
+                }.frame(minHeight: 180)
+            }
+        }
+    }
+
+    private func errorLabel(_ error: Error) -> some View {
+        let denied = (error as? ZabbixError)?.isAccessDenied == true
+        return Label(denied ? t("Permission denied") : t("Zabbix request failed"), systemImage: denied ? "lock" : "exclamationmark.triangle")
+            .help(t(error.localizedDescription)).accessibilityHint(t(error.localizedDescription))
     }
 }

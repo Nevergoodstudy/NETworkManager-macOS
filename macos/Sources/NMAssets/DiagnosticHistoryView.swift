@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
 import NMCore
@@ -5,27 +6,69 @@ import NMCore
 public struct DiagnosticHistoryView: View {
     @Environment(\.palette) private var palette
     @ObservedObject private var assets = AssetStore.shared
-    @NMStateCompat private var search = ""
-    @NMStateCompat private var selectedWorkspaceID = "all"
-    @NMStateCompat private var selectedKind = "all"
-    @NMStateCompat private var selectedPeriod = "all"
+    @StateObject private var filters: Filters
+    @NMStateCompat private var pagePosition = PagePosition()
+    @NMStateCompat private var loadedPage: LoadedPage?
+    @NMStateCompat private var pageError: String?
+    @NMStateCompat private var retry = 0
     @NMStateCompat private var exportData = Data()
     @NMStateCompat private var exportMarkdown = true
     @NMStateCompat private var showingExporter = false
+    @NMStateCompat private var isExporting = false
     @NMStateCompat private var selectedRerun: DiagnosticRun?
 
+    private struct PageRequest: Equatable {
+        let filter: DiagnosticHistorySearch.Filter
+        let index: Int
+        let revision: Int
+        let retry: Int
+    }
+
+    private final class Filters: ObservableObject {
+        @Published var search: String
+        @Published var workspaceID = "all"
+        @Published var kind = "all"
+        @Published var period = "all"
+
+        init(search: String) { self.search = search }
+    }
+
+    private struct PagePosition {
+        var filter: DiagnosticHistorySearch.Filter?
+        var index = 0
+    }
+
+    private struct LoadedPage {
+        let request: PageRequest
+        let runs: [DiagnosticRun]
+    }
+
+    private var filter: DiagnosticHistorySearch.Filter {
+        DiagnosticHistorySearch.Filter(workspaceID: UUID(uuidString: filters.workspaceID),
+                                       kind: DiagnosticKind(rawValue: filters.kind),
+                                       days: filters.period == "day" ? 1 : filters.period == "week" ? 7 : nil,
+                                       text: filters.search)
+    }
+
+    private var request: PageRequest {
+        let filter = self.filter
+        return PageRequest(filter: filter, index: pagePosition.filter == filter ? pagePosition.index : 0,
+                           revision: assets.diagnosticHistoryRevision, retry: retry)
+    }
+
     public init(initialEventID: String? = nil) {
-        _search = NMStateCompat(wrappedValue: initialEventID ?? "")
+        _filters = StateObject(wrappedValue: Filters(search: initialEventID ?? ""))
     }
 
     public var body: some View {
+        let request = self.request
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                TextField(t("Filter by device, target or result"), text: $search)
+                TextField(t("Filter by device, target or result"), text: $filters.search)
                     .textFieldStyle(.plain)
                     .accessibilityIdentifier("diagnosticHistorySearch")
-                Picker(t("Workspace"), selection: $selectedWorkspaceID) {
+                Picker(t("Workspace"), selection: $filters.workspaceID) {
                     Text(t("All workspaces")).tag("all")
                     ForEach(assets.workspaces) { workspace in
                         Text(workspace.name).tag(workspace.id.uuidString)
@@ -33,12 +76,12 @@ public struct DiagnosticHistoryView: View {
                 }
                 .frame(width: 180)
                 .accessibilityIdentifier("diagnosticHistoryWorkspaceFilter")
-                Picker(t("Check"), selection: $selectedKind) {
+                Picker(t("Check"), selection: $filters.kind) {
                     Text(t("All checks")).tag("all")
                     ForEach(DiagnosticKind.allCases) { Text($0.displayName).tag($0.rawValue) }
                 }
                 .frame(width: 150)
-                Picker(t("Period"), selection: $selectedPeriod) {
+                Picker(t("Period"), selection: $filters.period) {
                     Text(t("All time")).tag("all")
                     Text(t("Last 24 hours")).tag("day")
                     Text(t("Last 7 days")).tag("week")
@@ -50,29 +93,75 @@ public struct DiagnosticHistoryView: View {
                 } label: {
                     Image(systemName: "square.and.arrow.up")
                 }
+                .disabled(isExporting || assets.isLoadingWorkspace)
                 .help(t("Export filtered evidence"))
             }
             .padding(14)
             Divider()
-            if filteredRuns.isEmpty {
-                ContentUnavailableView(t("No matching diagnostics"), systemImage: "waveform.path.ecg", description: Text(t("Completed checks and standalone lookups will appear here.")))
-            } else {
-                List(filteredRuns) { run in
-                    row(run)
+            if let persistenceError = assets.persistenceError {
+                Label(persistenceError, systemImage: "exclamationmark.triangle")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            if assets.isLoadingWorkspace {
+                ProgressView(t("Loading…")).frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if let pageError {
+                ContentUnavailableView {
+                    Label(t("Could not load diagnostic history"), systemImage: "exclamationmark.triangle")
+                } description: {
+                    Text(pageError)
+                } actions: {
+                    Button(t("Retry")) { retry += 1 }
                 }
-                .listStyle(.plain)
+            } else if let loadedPage, loadedPage.request == request {
+                if loadedPage.runs.isEmpty {
+                    ContentUnavailableView(t("No matching diagnostics"), systemImage: "waveform.path.ecg", description: Text(t("Completed checks and standalone lookups will appear here.")))
+                } else {
+                    List(Array(loadedPage.runs.prefix(50))) { run in
+                        row(run)
+                    }
+                    .listStyle(.plain)
+                    Divider()
+                    HStack {
+                        Spacer()
+                        Button(t("Previous page")) {
+                            pagePosition = PagePosition(filter: request.filter, index: request.index - 1)
+                        }
+                        .disabled(request.index == 0)
+                        Text(String(request.index + 1)).monospacedDigit()
+                        Button(t("Next page")) {
+                            pagePosition = PagePosition(filter: request.filter, index: request.index + 1)
+                        }
+                            .disabled(loadedPage.runs.count <= 50)
+                    }
+                    .padding(10)
+                }
+            } else {
+                ProgressView(t("Loading…")).frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .background(palette.background)
         .navigationTitle(t("Diagnostic history"))
+        .task(id: request) { await load(request) }
         .sheet(item: $selectedRerun) { run in
-            if let deviceID = run.deviceID, let device = assets.devices.first(where: { $0.id == deviceID }) {
-                DeviceInspector(device: device, rerun: run)
-                    .frame(minWidth: 760, minHeight: 600)
-            } else {
-                ContentUnavailableView(t("Unknown device"), systemImage: "desktopcomputer", description: Text(t("This device was removed, so the diagnostic cannot be repeated.")))
-                    .frame(minWidth: 420, minHeight: 240)
+            VStack(spacing: 0) {
+                if let deviceID = run.deviceID, let device = assets.devices.first(where: { $0.id == deviceID }) {
+                    DeviceInspector(device: device, rerun: run)
+                        .frame(minWidth: 760, minHeight: 560)
+                } else {
+                    ContentUnavailableView(t("Unknown device"), systemImage: "desktopcomputer", description: Text(t("This device was removed, so the diagnostic cannot be repeated.")))
+                        .frame(minWidth: 420, minHeight: 200)
+                }
+                Divider()
+                Button(t("Close")) { selectedRerun = nil }
+                    .keyboardShortcut(.cancelAction)
+                    .accessibilityIdentifier("closeDiagnosticRerun")
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(12)
             }
+            .background(RerunSheetWindow())
         }
         .fileExporter(
             isPresented: $showingExporter,
@@ -82,38 +171,22 @@ public struct DiagnosticHistoryView: View {
         ) { _ in }
     }
 
-    private var filteredRuns: [DiagnosticRun] {
-        let cutoff: Date?
-        switch selectedPeriod {
-        case "day": cutoff = Calendar.current.date(byAdding: .day, value: -1, to: Date())
-        case "week": cutoff = Calendar.current.date(byAdding: .day, value: -7, to: Date())
-        default: cutoff = nil
-        }
-        let workspaceRuns: [DiagnosticRun]
-        if selectedWorkspaceID == "all" {
-            workspaceRuns = assets.diagnosticRuns
-        } else if let workspaceID = UUID(uuidString: selectedWorkspaceID) {
-            workspaceRuns = assets.runs(in: workspaceID)
-        } else {
-            workspaceRuns = []
-        }
-        return workspaceRuns
-            .filter { run in
-                (selectedKind == "all" || run.kind.rawValue == selectedKind)
-                    && (cutoff == nil || run.startedAt >= cutoff!)
-                    && matches(run)
+    private func load(_ request: PageRequest) async {
+        guard !assets.isLoadingWorkspace, request == self.request, !Task.isCancelled else { return }
+        pageError = nil
+        if request.index == 0 { pagePosition = PagePosition(filter: request.filter) }
+        do {
+            let runs = try await assets.diagnosticHistoryPage(request.filter, offset: request.index * 50)
+            guard request == self.request, !Task.isCancelled else { return }
+            if runs.isEmpty && request.index > 0 {
+                pagePosition = PagePosition(filter: request.filter)
+                return
             }
-            .sorted { $0.startedAt > $1.startedAt }
-    }
-
-    private func matches(_ run: DiagnosticRun) -> Bool {
-        guard !search.isEmpty else { return true }
-        let device = run.deviceID.flatMap { id in assets.devices.first { $0.id == id } }
-        let site = device.flatMap { device in assets.sites.first { $0.id == device.siteID } }
-        let workspace = site.flatMap { site in assets.workspaces.first { $0.id == site.workspaceID } }
-        return [device?.name ?? "", device?.address ?? "", site?.name ?? "", workspace?.name ?? "", run.target ?? "", run.summary, run.detail]
-            .contains { $0.localizedCaseInsensitiveContains(search) }
-            || DiagnosticHistorySearch.matches(run, query: search)
+            loadedPage = LoadedPage(request: request, runs: runs)
+        } catch {
+            guard request == self.request, !Task.isCancelled else { return }
+            pageError = error.localizedDescription
+        }
     }
 
     private func row(_ run: DiagnosticRun) -> some View {
@@ -190,14 +263,30 @@ public struct DiagnosticHistoryView: View {
     }
 
     private func export(markdown: Bool) {
-        do {
-            exportMarkdown = markdown
-            exportData = markdown
-                ? Data(DiagnosticEvidenceExporter.markdown(runs: filteredRuns, devices: assets.devices).utf8)
-                : try DiagnosticEvidenceExporter.json(runs: filteredRuns, devices: assets.devices)
-            showingExporter = true
-        } catch {
-            NSSound.beep()
+        let filter = self.filter
+        isExporting = true
+        Task {
+            defer { isExporting = false }
+            do {
+                exportData = try await assets.exportDiagnosticHistory(filter, markdown: markdown)
+                exportMarkdown = markdown
+                showingExporter = true
+            } catch {
+                NSSound.beep()
+            }
+        }
+    }
+}
+
+private struct RerunSheetWindow: NSViewRepresentable {
+    func makeNSView(context: Context) -> SheetView { SheetView() }
+
+    func updateNSView(_ view: SheetView, context: Context) {}
+
+    final class SheetView: NSView {
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            window?.preventsApplicationTerminationWhenModal = false
         }
     }
 }

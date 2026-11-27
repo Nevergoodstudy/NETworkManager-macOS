@@ -22,6 +22,7 @@ enum ProcessRuntimeChecks {
         try await checkTaskCancellation(fixture)
         try await checkInheritedPipes(fixture)
         try await checkTerminalRaces(fixture)
+        try await checkShutdown(fixture)
     }
 
     private static func checkExitResults(_ fixture: ProcessRuntimeFixture) async throws {
@@ -299,6 +300,54 @@ enum ProcessRuntimeChecks {
             }
             try await waitForExit(pid, "A terminal-race child has been reaped")
         }
+    }
+
+    private static func checkShutdown(_ fixture: ProcessRuntimeFixture) async throws {
+        let child = try fixture.blocked("shutdown child", ignoresTermination: true)
+        let parentPID = fixture.path("shutdown parent.pid")
+        let arguments = ["-c", """
+        trap '' TERM
+        parent_pid=$1
+        shift
+        /bin/sh "$@" &
+        printf '%s\\n' "$$" > "$parent_pid"
+        wait
+        """, "runtime-shutdown", parentPID] + child.arguments
+        let spec = job("application shutdown", terminationGrace: 0.2)
+        let execution = Task { await Shell.run("/bin/sh", arguments, job: spec) }
+        let childPID = try await waitForStartedProcess(child, execution: execution)
+        let leader = try await readPID(parentPID)
+        let diagnostic = DiagnosticCancellation()
+        try check(ProcessRuntime.registerDiagnostic(diagnostic), "An active socket diagnostic joins shutdown")
+        defer { ProcessRuntime.finishDiagnostic(diagnostic) }
+        let sleepingDiagnostic = DiagnosticCancellation()
+        let sleeper = await ProcessRuntime.startDiagnosticTask(sleepingDiagnostic) {
+            try? await Task.sleep(for: .seconds(10))
+        }
+        try check(sleeper != nil, "A diagnostic task is admitted before shutdown")
+
+        let hadJobs = ProcessRuntime.beginShutdown()
+        defer { ProcessRuntime.cancelShutdown() }
+        try check(diagnostic.isCancelled && sleepingDiagnostic.isCancelled && sleeper?.isCancelled == true &&
+                  !ProcessRuntime.registerDiagnostic(DiagnosticCancellation()),
+                  "Shutdown cancels admitted socket diagnostics and closes admission")
+        let marker = fixture.path("shutdown marker")
+        let rejected = Shell.runSync("/bin/sh", markerArguments(marker))
+        ProcessRuntime.finishDiagnostic(diagnostic)
+        await ProcessRuntime.waitForShutdown()
+        let result = await execution.value
+        try check(hadJobs && result.cancelled && result.forcedTermination && result.cleanupCompleted,
+                  "Shutdown waits for forced termination and cleanup of admitted process groups")
+        try await waitForExit(leader, "Shutdown reaps the shell before allowing the app to exit")
+        try await waitForExit(childPID, "Shutdown stops the shell's child")
+        try check(rejected.cancelled && rejected.processEvidence?.events.map(\.state) == [.queued, .cancelled] &&
+                  !FileManager.default.fileExists(atPath: marker),
+                  "A command submitted during shutdown cannot launch")
+
+        ProcessRuntime.cancelShutdown()
+        let resumed = await Shell.run("/bin/sh", markerArguments(marker), job: job("quit cancelled"))
+        try check(resumed.succeeded && FileManager.default.fileExists(atPath: marker),
+                  "Cancelling application shutdown reopens admission for subsequent jobs")
     }
 
     private static func job(_ scope: String, deadline: Date = Date().addingTimeInterval(5),

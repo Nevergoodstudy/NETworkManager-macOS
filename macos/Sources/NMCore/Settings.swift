@@ -5,18 +5,19 @@ import Foundation
 /// Core application preferences are typed properties; feature modules that only
 /// need to remember a value or two can use the `extra` string dictionary, which
 /// avoids inventing new settings surfaces for every tool.
+@MainActor
 public final class SettingsStore: ObservableObject {
     public static let shared = SettingsStore()
 
     // MARK: Persistence
 
-    public static var supportDirectory: URL {
+    public nonisolated static var supportDirectory: URL {
         let dir = resolvedSupportDirectory()
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }
 
-    public static func resolvedSupportDirectory(environment: [String: String] = ProcessInfo.processInfo.environment) -> URL {
+    public nonisolated static func resolvedSupportDirectory(environment: [String: String] = ProcessInfo.processInfo.environment) -> URL {
         if let override = environment["NETWORKMANAGER_SUPPORT_DIRECTORY"]?.trimmingCharacters(in: .whitespacesAndNewlines),
            override.hasPrefix("/") {
             return URL(fileURLWithPath: override, isDirectory: true)
@@ -26,7 +27,7 @@ public final class SettingsStore: ObservableObject {
         return base.appendingPathComponent("NETworkManager", isDirectory: true)
     }
 
-    private static var fileURL: URL { supportDirectory.appendingPathComponent("settings.json") }
+    private nonisolated static var fileURL: URL { supportDirectory.appendingPathComponent("settings.json") }
 
     private struct Payload: Codable {
         var language: String?
@@ -38,6 +39,12 @@ public final class SettingsStore: ObservableObject {
         var lastTool: String?
         var windowWidth: Double?
         var windowHeight: Double?
+    }
+
+    nonisolated static var persistedLanguage: AppLanguage? {
+        guard let data = try? Data(contentsOf: fileURL),
+              let payload = try? JSONDecoder().decode(Payload.self, from: data) else { return nil }
+        return payload.language.flatMap(AppLanguage.init(rawValue:))
     }
 
     private let storageURL: URL
@@ -53,8 +60,6 @@ public final class SettingsStore: ObservableObject {
     @Published public private(set) var persistenceError: String?
     @Published public private(set) var preservedCorruptFileURL: URL?
 
-    /// Defer localization until after initialization: Loc.shared itself loads
-    /// SettingsStore.shared to obtain the selected language.
     public var recoveryError: String? {
         switch recoveryFailure {
         case .readFailed(let message):
@@ -222,8 +227,9 @@ public final class SettingsStore: ObservableObject {
 /// Compatibility facade for callers that used the pre-macOS-port name.
 /// Registration is delegated to the system-managed `SMAppService.mainApp`
 /// implementation; this facade never writes a LaunchAgent plist.
+@MainActor
 public enum LaunchAgent {
-    public static var label: String { LoginItemManager.legacyLabel }
+    public nonisolated static var label: String { LoginItemManager.legacyLabel }
     public static var isEnabled: Bool { LoginItemManager.shared.state.isEnabled }
 
     @discardableResult

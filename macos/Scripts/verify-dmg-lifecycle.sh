@@ -76,16 +76,27 @@ launch_app() {
 }
 
 cleanup() {
-  local result=$?
+  local result=$? cleanup_failed=0
   trap - EXIT
-  stop_app "$INSTALL_EXECUTABLE" || true
-  if [[ "$MOUNT_ATTACHED" == "1" ]]; then
-    /usr/bin/hdiutil detach -quiet "$MOUNT_DIR" 2>/dev/null || true
+  if ! stop_app "$INSTALL_EXECUTABLE"; then
+    cleanup_failed=1
   fi
-  /bin/rm -rf "$TEMP_ROOT"
+  if [[ "$MOUNT_ATTACHED" == "1" ]] && ! /usr/bin/hdiutil detach -quiet "$MOUNT_DIR"; then
+    cleanup_failed=1
+  fi
+  if [[ "$cleanup_failed" == "1" ]]; then
+    echo "Lifecycle cleanup failed. Temporary paths retained at $TEMP_ROOT" >&2
+    exit 1
+  fi
+  /bin/rm -rf "$TEMP_ROOT" || exit 1
+  if [[ "$result" == "0" ]]; then
+    echo "DMG install, replacement upgrade, bundled MCP, launch, and uninstall checks passed."
+  fi
   exit "$result"
 }
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 /usr/bin/hdiutil attach -quiet -nobrowse -readonly -mountpoint "$MOUNT_DIR" "$DMG_PATH"
 MOUNT_ATTACHED=1
@@ -131,4 +142,3 @@ echo "Testing uninstall..."
 /bin/rm -rf "$INSTALL_APP"
 [[ ! -e "$INSTALL_APP" ]]
 [[ -z "$(app_pids "$INSTALL_EXECUTABLE")" ]]
-echo "DMG install, replacement upgrade, bundled MCP, launch, and uninstall checks passed."

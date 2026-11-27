@@ -11,6 +11,14 @@ DIST_DIR="${DIST_DIR:-$REPO_DIR/dist/macos}"
 APP_NAME="NETworkManager.app"
 APP_DIR="$DIST_DIR/$APP_NAME"
 
+# Field builds should remain reproducible when the Mac is on an isolated
+# customer network. Package.resolved is the dependency contract for release
+# artifacts; opt into resolver/network access explicitly when refreshing it.
+set -- --package-path "$MACOS_DIR" --configuration "$CONFIGURATION" --triple arm64-apple-macos14
+if [[ "${ALLOW_PACKAGE_RESOLUTION:-0}" != "1" ]]; then
+  set -- "$@" --disable-automatic-resolution
+fi
+
 if [[ "$ARCHITECTURE" != "arm64" ]]; then
   echo "Unsupported architecture: $ARCHITECTURE. NETworkManager requires Apple Silicon (arm64); Intel and Universal builds are no longer supported." >&2
   exit 2
@@ -21,13 +29,9 @@ if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 echo "Building NETworkManagerMac and NMCP for Apple Silicon (arm64)..."
-swift build --package-path "$MACOS_DIR" --product NETworkManagerMac \
-  --configuration "$CONFIGURATION" --triple arm64-apple-macos14
-swift build --package-path "$MACOS_DIR" --product NMCP \
-  --configuration "$CONFIGURATION" --triple arm64-apple-macos14
-BIN_DIR="$(swift build --package-path "$MACOS_DIR" --show-bin-path \
-  --product NETworkManagerMac --configuration "$CONFIGURATION" \
-  --triple arm64-apple-macos14)"
+swift build "$@" --product NETworkManagerMac
+swift build "$@" --product NMCP
+BIN_DIR="$(swift build "$@" --product NETworkManagerMac --show-bin-path)"
 
 rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Helpers" "$APP_DIR/Contents/Resources"

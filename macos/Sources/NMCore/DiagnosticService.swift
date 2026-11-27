@@ -87,9 +87,12 @@ public enum DiagnosticService {
         }
     }
 
-    public static func runTCP(host: String, port: Int, timeout: TimeInterval = 2) async -> DiagnosticExecutionResult {
+    public static func runTCP(host: String, port: Int, timeout: TimeInterval = 2,
+                              deadline: DispatchTime? = nil) async -> DiagnosticExecutionResult {
         await executeBlocking(preserveTerminal: true) { cancellation in
-            let result = TCPProbe.probe(host: host, port: port, timeout: timeout, cancellation: cancellation)
+            let outcome = TCPProbe.probeOutcome(host: host, port: port, timeout: timeout, cancellation: cancellation,
+                                                absoluteDeadline: deadline)
+            let result = TCPProbe.result(port: port, outcome: outcome)
             switch result.status {
             case .open:
                 return DiagnosticExecutionResult(status: .succeeded, summary: tf("Port %d open", port),

@@ -6,7 +6,7 @@ import Foundation
 ///
 /// The XML files are the very same data sets that ship with the Windows
 /// application, so lookups return identical results.
-public final class DataStore {
+public final class DataStore: @unchecked Sendable {
     public static let shared = DataStore()
 
     private let lock = NSLock()
@@ -61,8 +61,8 @@ public final class DataStore {
 
     private var ouiTableLoaded: [String: String] {
         lock.lock()
-        if let table = ouiTable { lock.unlock(); return table }
-        lock.unlock()
+        defer { lock.unlock() }
+        if let ouiTable { return ouiTable }
 
         var table: [String: String] = [:]
         if let url = resourceURL("OUI.xml") {
@@ -71,7 +71,7 @@ public final class DataStore {
                 table[String(mac.uppercased().prefix(6))] = vendor
             }
         }
-        lock.lock(); ouiTable = table; lock.unlock()
+        ouiTable = table
         return table
     }
 
@@ -122,8 +122,8 @@ public final class DataStore {
 
     private var portTableLoaded: [Int: [(proto: String, name: String, description: String)]] {
         lock.lock()
-        if let table = portTable { lock.unlock(); return table }
-        lock.unlock()
+        defer { lock.unlock() }
+        if let portTable { return portTable }
 
         var table: [Int: [(proto: String, name: String, description: String)]] = [:]
         if let url = resourceURL("Ports.xml") {
@@ -136,7 +136,7 @@ public final class DataStore {
                 table[number, default: []].append((proto, name, description))
             }
         }
-        lock.lock(); portTable = table; lock.unlock()
+        portTable = table
         return table
     }
 
@@ -156,8 +156,8 @@ public final class DataStore {
 
     private var whoisTableLoaded: [String: String] {
         lock.lock()
-        if let table = whoisTable { lock.unlock(); return table }
-        lock.unlock()
+        defer { lock.unlock() }
+        if let whoisTable { return whoisTable }
 
         var table: [String: String] = [:]
         if let url = resourceURL("WhoisServers.xml") {
@@ -166,7 +166,7 @@ public final class DataStore {
                 table[tld.uppercased()] = server
             }
         }
-        lock.lock(); whoisTable = table; lock.unlock()
+        whoisTable = table
         return table
     }
 

@@ -102,7 +102,7 @@ final class DNSTransportFixture: @unchecked Sendable {
         }
     }
 
-    private func receive(_ connection: NWConnection, count: Int, data: Data = Data(), completion: @escaping (Data) -> Void) {
+    private func receive(_ connection: NWConnection, count: Int, data: Data = Data(), completion: @escaping @Sendable (Data) -> Void) {
         guard !isStopped else { return }
         connection.receive(minimumIncompleteLength: 1, maximumLength: count - data.count) { [weak self] next, _, complete, error in
             guard let self, error == nil else { connection.cancel(); return }

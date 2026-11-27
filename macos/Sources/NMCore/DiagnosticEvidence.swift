@@ -18,14 +18,15 @@ public struct DiagnosticEvidenceItem: Codable, Hashable, Sendable {
 }
 
 public enum DiagnosticEvidenceExporter {
-    public static func items(runs: [DiagnosticRun], devices: [AssetDevice]) -> [DiagnosticEvidenceItem] {
+    public static func items(runs: [DiagnosticRun], devices: [AssetDevice],
+                             useCurrentDeviceAddress: Bool = true) -> [DiagnosticEvidenceItem] {
         let lookup = Dictionary(uniqueKeysWithValues: devices.map { ($0.id, $0) })
         return runs.sorted { $0.startedAt < $1.startedAt }.map { run in
             let device = run.deviceID.flatMap { lookup[$0] }
             return DiagnosticEvidenceItem(
                 id: run.id,
                 device: redact(device?.name ?? "Standalone diagnostic"),
-                address: redact(run.target ?? device?.address ?? "Unknown address"),
+                address: redact(run.target ?? (useCurrentDeviceAddress ? device?.address : nil) ?? "Unknown address"),
                 kind: run.kind.rawValue.uppercased(),
                 status: run.status.rawValue,
                 startedAt: run.startedAt,
@@ -99,7 +100,7 @@ public enum DiagnosticEvidenceExporter {
         })
     }
 
-    private static func redact(_ text: String) -> String {
+    package static func redact(_ text: String) -> String {
         var value = text
         let patterns: [(String, String)] = [
             (#"(?i)([a-z][a-z0-9+.-]*://)[^/@\s]+@"#, "$1[REDACTED]@"),

@@ -5,7 +5,7 @@ import Darwin
 /// File-backed checks for the storage boundary. Fixtures never use the user's
 /// Application Support directory or Keychain.
 enum AssetRepositoryChecks {
-    static func run() throws {
+    static func run(includeWorkspaceOwnership: Bool = true) throws {
         try AssetWorkspaceOwnershipChecks.runChildIfRequested()
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("NMAssetRepository-\(UUID().uuidString)", isDirectory: true)
@@ -21,8 +21,285 @@ enum AssetRepositoryChecks {
         try recoveryChecks(in: directory)
         print("Storage: storeChecks")
         try storeChecks(in: directory)
+        guard includeWorkspaceOwnership else {
+            print("Storage: skipped multi-instance workspace ownership checks")
+            return
+        }
         print("Storage: workspaceOwnershipChecks")
         try AssetWorkspaceOwnershipChecks.run(in: directory)
+    }
+
+    @MainActor
+    static func historyPage() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("NMHistory-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("assets.sqlite")
+        let repository = SQLiteAssetRepository(url: url)
+        var snapshot = fixture()
+        let device = snapshot.devices[1]
+        let now = Date()
+        snapshot.diagnosticRuns = (1...52).reversed().map { index in
+            DiagnosticRun(id: id(index + 100), deviceID: index == 52 ? nil : device.id, kind: .ping,
+                          status: .succeeded, startedAt: now, parameters: index == 51 ? ["eventID": "9001"] : [:],
+                          summary: "Fixture \(index)", source: "Zabbix", target: device.address)
+        }
+        snapshot.diagnosticRuns.append(DiagnosticRun(id: id(153), deviceID: device.id, kind: .tcp,
+                                                    status: .succeeded, startedAt: now.addingTimeInterval(-8 * 86_400)))
+        try repository.save(snapshot)
+        let store = AssetStore(repository: repository)
+        let unfiltered = DiagnosticHistorySearch.Filter(workspaceID: nil, kind: nil, days: nil, text: "")
+        let first = try await store.diagnosticHistoryPage(unfiltered, offset: 0)
+        let last = try await store.diagnosticHistoryPage(unfiltered, offset: 50)
+        let beyond = try await store.diagnosticHistoryPage(unfiltered, offset: 100)
+        try check(first.count == 51 && last.map(\.id) == [id(151), id(152), id(153)] && beyond.isEmpty &&
+                  (first.prefix(50).map(\.id) + last.map(\.id)) == (101...153).map(id),
+                  "History uses a lookahead without duplicating tied rows across page boundaries; standalone evidence stays visible")
+
+        let workspaceID = snapshot.workspaces[0].id
+        let filtered = DiagnosticHistorySearch.Filter(workspaceID: workspaceID, kind: .ping, days: 1, text: "gAtEwAy")
+        let filteredFirst = try await store.diagnosticHistoryPage(filtered, offset: 0)
+        let filteredLast = try await store.diagnosticHistoryPage(filtered, offset: 50)
+        try check(filteredFirst.count == 51 && filteredLast.map(\.id) == [id(151)],
+                  "Workspace, check, age and case-insensitive text are applied before paging")
+        let event = DiagnosticHistorySearch.Filter(workspaceID: nil, kind: nil, days: nil, text: "9001")
+        let evidence = try await store.diagnosticHistoryPage(event, offset: 0)
+        try check(evidence.map(\.id) == [id(151)], "An event ID finds evidence whose position is beyond the first page")
+
+        let json = try await store.exportDiagnosticHistory(filtered, markdown: false)
+        let markdown = try await store.exportDiagnosticHistory(filtered, markdown: true)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let items = try decoder.decode([DiagnosticEvidenceItem].self, from: json)
+        try check(Set(items.map(\.id)) == Set((101...151).map(id)) &&
+                  String(decoding: markdown, as: UTF8.self).contains("Fixture 51"),
+                  "Both export formats include matching rows beyond the first 50")
+
+        let revision = store.diagnosticHistoryRevision
+        let runID = store.beginDiagnostic(kind: .ping, target: "192.0.2.5")
+        store.finishDiagnostic(id: runID, status: .succeeded, summary: "New history row")
+        let refreshed = try await store.diagnosticHistoryPage(unfiltered, offset: 0)
+        try check(store.diagnosticHistoryRevision > revision && refreshed.first?.id == runID &&
+                  refreshed.first?.summary == "New history row", "Committed diagnostics invalidate and refresh the indexed history")
+
+        try sqlite(url, "CREATE TRIGGER fail_history BEFORE INSERT ON diagnostic_runs BEGIN SELECT RAISE(ABORT,'injected write failure'); END;")
+        let beforeFailure = store.diagnosticHistoryRevision
+        let unsavedID = store.beginDiagnostic(deviceID: device.id, kind: .ping, target: device.address)
+        store.finishDiagnostic(id: unsavedID, status: .succeeded, summary: "Unsaved diagnostic")
+        let durable = try repository.diagnosticPage(DiagnosticPageQuery(limit: 1))
+        try check(store.persistenceError != nil && durable.first?.id == runID,
+                  "A failed diagnostic insert leaves the previous SQLite history intact")
+
+        let live = try await store.diagnosticHistoryPage(unfiltered, offset: 0)
+        let workspaceOnly = DiagnosticHistorySearch.Filter(workspaceID: workspaceID, kind: nil, days: nil, text: "")
+        let scoped = try await store.diagnosticHistoryPage(workspaceOnly, offset: 0)
+        let exported = try await store.exportDiagnosticHistory(workspaceOnly, markdown: false)
+        let exportedItems = try decoder.decode([DiagnosticEvidenceItem].self, from: exported)
+        try check(store.diagnosticHistoryRevision > beforeFailure && live.first?.id == unsavedID &&
+                  scoped.first?.summary == "Unsaved diagnostic" && exportedItems.contains { $0.id == unsavedID },
+                  "Write failure refreshes history from the same live snapshot used for export")
+
+        try sqlite(url, "DROP TRIGGER fail_history;")
+        store.save()
+        let persisted = try repository.diagnosticPage(DiagnosticPageQuery(limit: 1))
+        let indexed = try await store.diagnosticHistoryPage(unfiltered, offset: 0)
+        try check(store.persistenceError == nil && persisted.first?.id == unsavedID && indexed.first?.id == unsavedID,
+                  "A successful retry clears the save error and returns to indexed history")
+    }
+
+    @MainActor
+    static func backgroundRestore() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("NMRestore-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let source = AssetStore(storageURL: directory.appendingPathComponent("source.sqlite"))
+        let backup = try await source.exportBackupInBackground()
+        let backupURL = directory.appendingPathComponent("backup.json")
+        try backup.write(to: backupURL)
+
+        let url = directory.appendingPathComponent("target.sqlite")
+        let repository = SQLiteAssetRepository(url: url)
+        let original = fixture()
+        try repository.save(original)
+        let store = AssetStore(repository: repository)
+        let runID = store.beginDiagnostic(kind: .ping, target: "192.0.2.1")
+        try sqlite(url, "CREATE TRIGGER fail_restore BEFORE INSERT ON workspaces BEGIN SELECT RAISE(ABORT,'injected restore failure'); END;")
+
+        let descriptor = open(url.path + ".lock", O_RDWR | O_CLOEXEC)
+        try check(descriptor >= 0, "Open the repository lock for the restore fixture")
+        defer { close(descriptor) }
+        try check(flock(descriptor, LOCK_EX) == 0, "Hold restoration at the repository lock")
+        let restore = Task { try await store.importBackupInBackground(from: backupURL) }
+        let timeout = ContinuousClock.now + .seconds(5)
+        while !store.isRestoringBackup && ContinuousClock.now < timeout { await Task.yield() }
+        try check(store.isRestoringBackup, "Restoration enters the busy state before waiting on SQLite")
+
+        let editingBlocked = !store.canEditWorkspace
+        store.removeWorkspace(id: original.workspaces[0].id)
+        store.load()
+        let overlappingRestore = try expectFailure("A synchronous import cannot overlap background restore") {
+            try store.importBackup(backup)
+        }
+        store.finishDiagnostic(id: runID, status: .succeeded, summary: "Finished while restore was pending")
+        let filter = DiagnosticHistorySearch.Filter(workspaceID: nil, kind: nil, days: nil, text: "")
+        let pendingPage = try await store.diagnosticHistoryPage(filter, offset: 0)
+        try check(flock(descriptor, LOCK_UN) == 0, "Release the repository lock")
+        let result = await restore.result
+
+        guard case .restoreInProgress = overlappingRestore as? AssetBackupError else {
+            throw CheckFailure(description: "An overlapping import should be rejected as busy")
+        }
+        try check(editingBlocked && pendingPage.first(where: { $0.id == runID })?.status == .running,
+                  "The main actor remains responsive while the restore excludes writes and reads history from the snapshot")
+        guard case .failure(let error) = result, case .sqlite(_, let message) = error as? AssetRepositoryError,
+              message.contains("injected restore failure") else {
+            throw CheckFailure(description: "The restore should fail inside a real SQLite transaction")
+        }
+        let reopened = AssetStore(storageURL: url)
+        try check(!store.isRestoringBackup && store.canEditWorkspace && store.workspaces == original.workspaces &&
+                  reopened.workspaces == original.workspaces && reopened.devices == original.devices &&
+                  reopened.diagnosticRuns.first(where: { $0.id == runID })?.status == .succeeded,
+                  "A failed restore preserves the original workspace and persists a deferred diagnostic completion")
+
+        try sqlite(url, "DROP TRIGGER fail_restore;")
+        try await store.importBackupInBackground(from: backupURL)
+        let restored = AssetStore(storageURL: url)
+        try check(!store.isRestoringBackup && store.canEditWorkspace && store.workspaces.map(\.id) == source.workspaces.map(\.id) &&
+                  restored.workspaces == store.workspaces && restored.diagnosticRuns.isEmpty,
+                  "A successful retry publishes the backup and a fresh store reads it from SQLite")
+
+        let damagedURL = directory.appendingPathComponent("damaged.sqlite")
+        let damagedBytes = Data("original damaged database".utf8)
+        try damagedBytes.write(to: damagedURL)
+        let damaged = AssetStore(storageURL: damagedURL)
+        let invalidBackupURL = directory.appendingPathComponent("invalid-backup.json")
+        try Data("{}".utf8).write(to: invalidBackupURL)
+        do {
+            try await damaged.importBackupInBackground(from: invalidBackupURL)
+            throw CheckFailure(description: "A damaged workspace must reject an invalid backup")
+        } catch is DecodingError {}
+        let unchangedBytes = try Data(contentsOf: damagedURL)
+        try check(damaged.recoveryError != nil && !damaged.isRestoringBackup && unchangedBytes == damagedBytes,
+                  "Invalid input keeps the original damaged database and leaves recovery available")
+        try await damaged.importBackupInBackground(from: backupURL)
+        guard let preserved = damaged.preservedCorruptFileURL else {
+            throw CheckFailure(description: "The repaired workspace must expose its preserved original")
+        }
+        let preservedBytes = try Data(contentsOf: preserved)
+        let repaired = AssetStore(storageURL: damagedURL)
+        try check(damaged.canEditWorkspace && preservedBytes == damagedBytes && repaired.workspaces == restored.workspaces,
+                  "Background recovery preserves the damaged bytes and publishes a database that reopens")
+    }
+
+    @MainActor
+    static func backgroundMigration() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("NMMigration-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let legacyURL = directory.appendingPathComponent("assets.json")
+        let url = directory.appendingPathComponent("assets.sqlite")
+        var snapshot = fixture()
+        let run = DiagnosticRun(kind: .ping, status: .running, target: "192.0.2.1")
+        snapshot.diagnosticRuns.append(run)
+        let original = try JSONEncoder().encode(snapshot)
+        try original.write(to: legacyURL)
+
+        let owner = open(url.appendingPathExtension("owner.lock").path, O_CREAT | O_RDWR | O_CLOEXEC, S_IRUSR | S_IWUSR)
+        try check(owner >= 0, "Open the workspace ownership lock")
+        defer { close(owner) }
+        try check(flock(owner, LOCK_EX) == 0, "Hold workspace ownership before its first background open")
+        let repository = SQLiteAssetRepository(url: url, legacyURL: legacyURL, requiresExclusiveOwnership: true)
+        let store = AssetStore(openingInBackground: repository)
+        try check(store.isLoadingWorkspace && !store.canEditWorkspace, "First open starts in a non-editable loading state")
+        var deadline = ContinuousClock.now + .seconds(5)
+        while store.isLoadingWorkspace && ContinuousClock.now < deadline { await Task.yield() }
+        try check(store.workspaceAccessError != nil && store.recoveryError == nil && !FileManager.default.fileExists(atPath: url.path),
+                  "A blocked background open does not migrate or offer to replace the workspace")
+
+        let operation = open(url.appendingPathExtension("lock").path, O_CREAT | O_RDWR | O_CLOEXEC, S_IRUSR | S_IWUSR)
+        try check(operation >= 0, "Open the repository operation lock")
+        defer { close(operation) }
+        try check(flock(operation, LOCK_EX) == 0 && flock(owner, LOCK_UN) == 0, "Delay migration after workspace ownership is available")
+        let retry = Task { await store.retryWorkspaceAccessInBackground() }
+        deadline = ContinuousClock.now + .seconds(5)
+        while !store.isLoadingWorkspace && ContinuousClock.now < deadline { await Task.yield() }
+        try check(store.isLoadingWorkspace && !store.canEditWorkspace, "The main actor remains responsive while retry waits on SQLite")
+        store.upsert(OperationsWorkspace(name: "Must not be saved during startup"))
+        let busy = try expectFailure("History cannot query SQLite while the workspace is opening") { _ = try store.diagnosticPage() }
+        try check(busy.localizedDescription == t("Loading…") && store.workspaces.isEmpty,
+                  "History and workspace edits observe the loading state")
+        try check(flock(operation, LOCK_UN) == 0, "Allow migration to finish")
+        await retry.value
+
+        let reopened = try SQLiteAssetRepository(url: url).load()
+        let preserved = try Data(contentsOf: legacyURL)
+        try check(store.canEditWorkspace && store.persistenceError == nil && store.workspaces == snapshot.workspaces &&
+                  reopened?.devices == snapshot.devices && preserved == original &&
+                  reopened?.diagnosticRuns.first(where: { $0.id == run.id })?.status == .interrupted,
+                  "Retry migrates the original bytes, publishes the workspace and persists interruption recovery")
+    }
+
+    @MainActor
+    static func backgroundSave() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("NMSave-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("assets.sqlite")
+        let repository = SQLiteAssetRepository(url: url)
+        try repository.save(fixture())
+        let store = AssetStore(openingInBackground: repository)
+        await store.waitForWorkspaceWrites()
+        let backupURL = directory.appendingPathComponent("backup.json")
+        try await store.exportBackupInBackground().write(to: backupURL)
+
+        let descriptor = open(url.appendingPathExtension("lock").path, O_RDWR | O_CLOEXEC)
+        try check(descriptor >= 0, "Open the repository operation lock")
+        defer { close(descriptor) }
+        try check(flock(descriptor, LOCK_EX) == 0, "Pause the first save")
+        let runID = store.beginDiagnostic(kind: .ping, target: "192.0.2.1")
+        var drained = false
+        let exitWait = Task {
+            await store.waitForWorkspaceWrites()
+            drained = true
+        }
+        await Task.yield()
+        store.finishDiagnostic(id: runID, status: .succeeded, summary: "Coalesced terminal result")
+        let filter = DiagnosticHistorySearch.Filter(workspaceID: nil, kind: nil, days: nil, text: "")
+        let pendingPage = try await store.diagnosticHistoryPage(filter, offset: 0)
+        try check(store.isSavingWorkspace && !drained && pendingPage.first?.status == .succeeded,
+                  "While the save is blocked, exit waits and History sees the latest terminal result")
+        try check(flock(descriptor, LOCK_UN) == 0, "Allow queued saves to finish")
+        await exitWait.value
+        let committed = try repository.diagnosticPage(DiagnosticPageQuery(limit: 1))
+        try check(drained && committed.first?.id == runID && committed.first?.status == .succeeded,
+                  "The wait drains all queued edits before reporting completion")
+
+        try sqlite(url, "CREATE TRIGGER fail_save BEFORE INSERT ON diagnostic_runs BEGIN SELECT RAISE(ABORT,'injected save failure'); END;")
+        let unsaved = store.beginDiagnostic(kind: .tcp, target: "192.0.2.2")
+        await store.waitForWorkspaceWrites()
+        let failedPage = try await store.diagnosticHistoryPage(filter, offset: 0)
+        let durablePage = try repository.diagnosticPage(DiagnosticPageQuery(limit: 1))
+        try check(store.persistenceError != nil && failedPage.first?.id == unsaved && durablePage.first?.id == runID,
+                  "Failed saves preserve SQLite and keep the latest snapshot available for retry")
+        try sqlite(url, "DROP TRIGGER fail_save;")
+        store.save()
+        await store.waitForWorkspaceWrites()
+        let retried = try repository.diagnosticPage(DiagnosticPageQuery(limit: 1))
+        try check(store.persistenceError == nil && retried.first?.id == unsaved, "Retry commits the latest live snapshot")
+
+        try check(flock(descriptor, LOCK_EX) == 0, "Pause a save before backup restore")
+        store.upsert(OperationsWorkspace(name: "Queued before restore"))
+        let restore = Task { try await store.importBackupInBackground(from: backupURL) }
+        let deadline = ContinuousClock.now + .seconds(5)
+        while !store.isRestoringBackup && ContinuousClock.now < deadline { await Task.yield() }
+        try check(store.isRestoringBackup && store.isSavingWorkspace && !store.canEditWorkspace,
+                  "Restore prevents new writes while waiting for the queued save")
+        try check(flock(descriptor, LOCK_UN) == 0, "Let save commit before restore runs")
+        try await restore.value
+        let reopened = try SQLiteAssetRepository(url: url).load()
+        try check(reopened?.workspaces == store.workspaces && store.workspaces.count == 2 &&
+                  !(reopened?.diagnosticRuns.contains { $0.id == unsaved } ?? true),
+                  "The backup is durable and no previously queued write can overwrite it")
     }
 
     private static func fixture() -> AssetSnapshot {
@@ -302,8 +579,21 @@ enum AssetRepositoryChecks {
         print("Storage: creating backup \(backupURL.lastPathComponent)")
         try repository.createBackup(at: backupURL)
         print("Storage: loading backup \(backupURL.lastPathComponent)")
-        let backup = try SQLiteAssetRepository(url: backupURL).load()
+        guard let backup = try SQLiteAssetRepository(url: backupURL).load() else {
+            throw CheckFailure(description: "The standalone WAL backup must contain a snapshot")
+        }
         try check(backup == snapshot, "Online SQLite backup includes the latest committed WAL pages while an older reader remains open")
+        let restoreURL = directory.appendingPathComponent("wal-restored.sqlite")
+        let damaged = Data("damaged database before WAL restore".utf8)
+        try damaged.write(to: restoreURL)
+        let target = SQLiteAssetRepository(url: restoreURL)
+        guard let preserved = try target.restore(backup, preservingDamaged: true) else {
+            throw CheckFailure(description: "WAL backup restoration must preserve the damaged destination")
+        }
+        let restored = try SQLiteAssetRepository(url: restoreURL).load()
+        let preservedBytes = try Data(contentsOf: preserved)
+        try check(restored == snapshot && preservedBytes == damaged,
+                  "Restoring the WAL backup retains the latest committed data and preserves the damaged original")
     }
 
     private static func storeChecks(in directory: URL) throws {
